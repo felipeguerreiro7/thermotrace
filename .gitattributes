@@ -1,0 +1,4 @@
+# O projeto foi escrito em Windows e usa CRLF. Sem isto, um clone em Linux ou
+# macOS reescreveria as quebras de linha e o primeiro diff viria com arquivos
+# inteiros marcados como alterados, escondendo a mudança de verdade.
+* -text

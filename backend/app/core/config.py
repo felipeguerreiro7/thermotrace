@@ -78,8 +78,19 @@ class Config(BaseSettings):
 
     @property
     def database_url_sync(self) -> str:
-        """URL no formato que o SQLAlchemy/psycopg espera."""
-        return str(self.DATABASE_URL)
+        """URL no formato que o SQLAlchemy/psycopg espera.
+
+        Provedores gerenciados (Render, Heroku, Neon) entregam a string como
+        ``postgresql://`` ou ``postgres://``, sem driver. Sem o ``+psycopg``, o
+        SQLAlchemy escolhe psycopg2, que nao esta no requirements — e o erro so
+        aparece no start do contêiner, ja em deploy. Normalizar aqui evita
+        depender de alguem lembrar de editar a URL a mao no painel.
+        """
+        url = str(self.DATABASE_URL)
+        if "+" in url.split("://", 1)[0]:
+            return url
+        esquema, _, resto = url.partition("://")
+        return f"postgresql+psycopg://{resto}"
 
     @property
     def em_producao(self) -> bool:

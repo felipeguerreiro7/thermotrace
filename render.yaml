@@ -1,0 +1,53 @@
+# Blueprint do Render para a API do ThermoTrace.
+#
+# Ponto de partida derivado de backend/Dockerfile e backend/docker-compose.yml.
+# Confira os nomes de plano e a região no painel antes de aplicar: o Render muda
+# essa lista com frequência, e um valor inválido faz o blueprint falhar inteiro.
+#
+# Segredo nenhum entra neste arquivo. SECRET_KEY é gerada pelo próprio Render e
+# a URL do banco vem do serviço de banco, sem passar por ninguém.
+
+services:
+  - type: web
+    name: thermotrace-api
+    runtime: docker
+    region: oregon          # trocar se a decisão de residência de dados (TT-067) exigir
+    plan: starter           # conferir a lista válida de planos no painel
+    rootDir: backend        # o app Android fica na raiz; o serviço é só o backend
+    dockerfilePath: ./Dockerfile
+
+    # O Dockerfile fixa a porta 8000; o Render injeta a porta em $PORT. Sem esta
+    # sobrescrita o serviço sobe, fica verde e nunca recebe tráfego.
+    dockerCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+
+    # Mesmo caminho que o HEALTHCHECK do Dockerfile já usa.
+    healthCheckPath: /api/v1/saude
+
+    # Migração roda uma vez por deploy, não a cada reinício de contêiner.
+    # Requer plano pago; no gratuito, aplicar a migração manualmente.
+    preDeployCommand: alembic upgrade head
+
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: thermotrace-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: AMBIENTE
+        value: homologacao
+      - key: DEBUG
+        value: "false"
+      - key: LOG_JSON
+        value: "true"
+      - key: NIVEL_LOG
+        value: INFO
+      - key: ORIGENS_PERMITIDAS
+        value: "[]"
+      - key: TAMANHO_MAXIMO_MB
+        value: "25"
+
+databases:
+  - name: thermotrace-db
+    plan: basic-256mb       # conferir a lista válida de planos no painel
+    postgresMajorVersion: "17"
