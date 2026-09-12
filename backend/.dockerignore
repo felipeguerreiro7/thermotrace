@@ -1,0 +1,17 @@
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+__pycache__/
+**/__pycache__/
+*.pyc
+.pytest_cache/
+.git/
+dados/
+tests/
+*.pem
+*.key
+*.p12
+*.pfx
+*.log

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <!-- Evidência de auditoria não sai do aparelho por backup nem por
+         transferência entre dispositivos. Ela sai pelo outbox, autenticada. -->
+    <cloud-backup><exclude domain="root" /></cloud-backup>
+    <device-transfer><exclude domain="root" /></device-transfer>
+</data-extraction-rules>

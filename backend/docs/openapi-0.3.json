@@ -1,0 +1,2365 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "ThermoTrace API",
+    "description": "API do ThermoTrace — monitoramento térmico de remessas por etiqueta NFC.\n\nVersão 0.3: acesso, perfis, produtos, cargas, documentos e auditoria. A criação de cargas e configuração de produtos aceitam reenvio idempotente. A sincronização de leituras físicas está em implementação.",
+    "version": "0.3.0"
+  },
+  "paths": {
+    "/api/v1/saude": {
+      "get": {
+        "tags": [
+          "saude"
+        ],
+        "summary": "Processo esta vivo?",
+        "operationId": "saude_api_v1_saude_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/saude/completa": {
+      "get": {
+        "tags": [
+          "saude"
+        ],
+        "summary": "Processo e dependencias estao vivos?",
+        "operationId": "saude_completa_api_v1_saude_completa_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "Acesso"
+        ],
+        "summary": "Login",
+        "operationId": "login_api_v1_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Login"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "tags": [
+          "Acesso"
+        ],
+        "summary": "Refresh",
+        "operationId": "refresh_api_v1_auth_refresh_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Renovacao"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "tags": [
+          "Acesso"
+        ],
+        "summary": "Logout",
+        "operationId": "logout_api_v1_auth_logout_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "tags": [
+          "Acesso"
+        ],
+        "summary": "Me",
+        "operationId": "me_api_v1_auth_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/plataforma/clientes": {
+      "post": {
+        "tags": [
+          "Clientes e equipe"
+        ],
+        "summary": "Criar Cliente",
+        "operationId": "criar_cliente_api_v1_plataforma_clientes_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NovoCliente"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Clientes e equipe"
+        ],
+        "summary": "Listar Clientes",
+        "operationId": "listar_clientes_api_v1_plataforma_clientes_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limite"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/usuarios": {
+      "get": {
+        "tags": [
+          "Clientes e equipe"
+        ],
+        "summary": "Listar Usuarios",
+        "operationId": "listar_usuarios_api_v1_usuarios_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limite"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Clientes e equipe"
+        ],
+        "summary": "Criar Usuario",
+        "operationId": "criar_usuario_api_v1_usuarios_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NovoUsuario"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/usuarios/{usuario_id}/desativar": {
+      "post": {
+        "tags": [
+          "Clientes e equipe"
+        ],
+        "summary": "Desativar Usuario",
+        "operationId": "desativar_usuario_api_v1_usuarios__usuario_id__desativar_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "usuario_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Usuario Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auditoria": {
+      "get": {
+        "tags": [
+          "Clientes e equipe"
+        ],
+        "summary": "Auditoria",
+        "operationId": "auditoria_api_v1_auditoria_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limite"
+            }
+          },
+          {
+            "name": "depois_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Depois Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/perfis/modelos": {
+      "get": {
+        "tags": [
+          "Perfis térmicos"
+        ],
+        "summary": "Modelos",
+        "operationId": "modelos_api_v1_perfis_modelos_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/perfis": {
+      "get": {
+        "tags": [
+          "Perfis térmicos"
+        ],
+        "summary": "Listar",
+        "operationId": "listar_api_v1_perfis_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "somente_ativos",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Somente Ativos"
+            }
+          },
+          {
+            "name": "limite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limite"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Perfis térmicos"
+        ],
+        "summary": "Criar",
+        "operationId": "criar_api_v1_perfis_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NovoPerfil"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/perfis/{perfil_id}": {
+      "get": {
+        "tags": [
+          "Perfis térmicos"
+        ],
+        "summary": "Obter",
+        "operationId": "obter_api_v1_perfis__perfil_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "perfil_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Perfil Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/perfis/{perfil_id}/aprovar": {
+      "post": {
+        "tags": [
+          "Perfis térmicos"
+        ],
+        "summary": "Aprovar",
+        "operationId": "aprovar_api_v1_perfis__perfil_id__aprovar_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "perfil_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Perfil Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AprovarPerfil"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/perfis/{perfil_id}/retirar": {
+      "post": {
+        "tags": [
+          "Perfis térmicos"
+        ],
+        "summary": "Retirar",
+        "operationId": "retirar_api_v1_perfis__perfil_id__retirar_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "perfil_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Perfil Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/produtos": {
+      "post": {
+        "tags": [
+          "Produtos e configuração rápida"
+        ],
+        "summary": "Configurar",
+        "operationId": "configurar_api_v1_produtos_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 16,
+              "maxLength": 160,
+              "pattern": "^[A-Za-z0-9._:-]+$",
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfigurarProduto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProdutoSaida"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Produtos e configuração rápida"
+        ],
+        "summary": "Listar",
+        "operationId": "listar_api_v1_produtos_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limite"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProdutoSaida"
+                  },
+                  "title": "Response Listar Api V1 Produtos Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/produtos/localizar": {
+      "get": {
+        "tags": [
+          "Produtos e configuração rápida"
+        ],
+        "summary": "Localizar",
+        "operationId": "localizar_api_v1_produtos_localizar_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "codigo",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]{0,63}$",
+              "title": "Codigo"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProdutoSaida"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/produtos/{produto_id}": {
+      "get": {
+        "tags": [
+          "Produtos e configuração rápida"
+        ],
+        "summary": "Obter",
+        "operationId": "obter_api_v1_produtos__produto_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "produto_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Produto Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProdutoSaida"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/remessas": {
+      "post": {
+        "tags": [
+          "Cargas e documentos"
+        ],
+        "summary": "Criar",
+        "operationId": "criar_api_v1_remessas_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 16,
+              "maxLength": 160,
+              "pattern": "^[A-Za-z0-9._:-]+$",
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NovaRemessa"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetalheRemessa"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Cargas e documentos"
+        ],
+        "summary": "Listar",
+        "operationId": "listar_api_v1_remessas_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limite"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/StatusRemessa"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RemessaSaida"
+                  },
+                  "title": "Response Listar Api V1 Remessas Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/remessas/localizar": {
+      "get": {
+        "tags": [
+          "Cargas e documentos"
+        ],
+        "summary": "Localizar",
+        "operationId": "localizar_api_v1_remessas_localizar_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "valor",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 96,
+              "title": "Valor"
+            }
+          },
+          {
+            "name": "incluir_canceladas",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Incluir Canceladas"
+            }
+          },
+          {
+            "name": "limite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limite"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocalizacaoRemessa"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/remessas/{remessa_id}": {
+      "get": {
+        "tags": [
+          "Cargas e documentos"
+        ],
+        "summary": "Obter",
+        "operationId": "obter_api_v1_remessas__remessa_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "remessa_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Remessa Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetalheRemessa"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/remessas/{remessa_id}/documentos": {
+      "post": {
+        "tags": [
+          "Cargas e documentos"
+        ],
+        "summary": "Documento",
+        "operationId": "documento_api_v1_remessas__remessa_id__documentos_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "remessa_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Remessa Id"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 16,
+              "maxLength": 160,
+              "pattern": "^[A-Za-z0-9._:-]+$",
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NovoDocumento"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentoSaida"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/remessas/{remessa_id}/cancelar": {
+      "post": {
+        "tags": [
+          "Cargas e documentos"
+        ],
+        "summary": "Cancelar",
+        "operationId": "cancelar_api_v1_remessas__remessa_id__cancelar_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "remessa_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Remessa Id"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 16,
+              "maxLength": 160,
+              "pattern": "^[A-Za-z0-9._:-]+$",
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MotivoAcao"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemessaSaida"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AprovarPerfil": {
+        "properties": {
+          "declaracao_responsavel": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 20,
+            "title": "Declaracao Responsavel"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "declaracao_responsavel"
+        ],
+        "title": "AprovarPerfil"
+      },
+      "ConfigurarProduto": {
+        "properties": {
+          "codigo": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]{0,63}$",
+            "title": "Codigo"
+          },
+          "perfil_termico_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Perfil Termico Id"
+          },
+          "intervalo_segundos": {
+            "type": "integer",
+            "maximum": 86400.0,
+            "minimum": 1.0,
+            "title": "Intervalo Segundos",
+            "default": 600
+          },
+          "versao_anterior": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Versao Anterior"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "codigo",
+          "perfil_termico_id"
+        ],
+        "title": "ConfigurarProduto"
+      },
+      "DetalheRemessa": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "codigo": {
+            "type": "string",
+            "title": "Codigo"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusRemessa"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          },
+          "empresa_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Empresa Id"
+          },
+          "destinatario_nome": {
+            "type": "string",
+            "title": "Destinatario Nome"
+          },
+          "produto_configuracao_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produto Configuracao Id"
+          },
+          "perfil_termico_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Perfil Termico Id"
+          },
+          "intervalo_segundos": {
+            "type": "integer",
+            "title": "Intervalo Segundos"
+          },
+          "criterio": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Criterio"
+          },
+          "descricao_carga": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Descricao Carga"
+          },
+          "documentos": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentoSaida"
+            },
+            "type": "array",
+            "title": "Documentos"
+          },
+          "volumes": {
+            "items": {
+              "$ref": "#/components/schemas/VolumeSaida"
+            },
+            "type": "array",
+            "title": "Volumes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "codigo",
+          "status",
+          "criado_em",
+          "empresa_id",
+          "destinatario_nome",
+          "produto_configuracao_id",
+          "perfil_termico_id",
+          "intervalo_segundos",
+          "criterio",
+          "descricao_carga",
+          "documentos",
+          "volumes"
+        ],
+        "title": "DetalheRemessa"
+      },
+      "DocumentoSaida": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoDocumento"
+          },
+          "numero": {
+            "type": "string",
+            "title": "Numero"
+          },
+          "serie": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Serie"
+          },
+          "chave_acesso": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chave Acesso"
+          },
+          "cnpj_emitente": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cnpj Emitente"
+          },
+          "conteudo_bruto": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conteudo Bruto"
+          },
+          "digitado_manualmente": {
+            "type": "boolean",
+            "title": "Digitado Manualmente"
+          },
+          "validado": {
+            "type": "boolean",
+            "title": "Validado"
+          },
+          "observacao_validacao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observacao Validacao"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "tipo",
+          "numero",
+          "serie",
+          "chave_acesso",
+          "cnpj_emitente",
+          "conteudo_bruto",
+          "digitado_manualmente",
+          "validado",
+          "observacao_validacao"
+        ],
+        "title": "DocumentoSaida"
+      },
+      "EvidenciaPerfil": {
+        "properties": {
+          "produto": {
+            "type": "string",
+            "maxLength": 240,
+            "minLength": 2,
+            "title": "Produto"
+          },
+          "apresentacao": {
+            "type": "string",
+            "maxLength": 240,
+            "minLength": 2,
+            "title": "Apresentacao"
+          },
+          "condicao": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 2,
+            "title": "Condicao"
+          },
+          "fonte_url": {
+            "type": "string",
+            "maxLength": 2083,
+            "minLength": 1,
+            "format": "uri",
+            "title": "Fonte Url"
+          },
+          "fonte_titulo": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Fonte Titulo"
+          },
+          "fonte_versao": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Fonte Versao"
+          },
+          "verificada_em": {
+            "type": "string",
+            "format": "date",
+            "title": "Verificada Em"
+          },
+          "justificativa": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 10,
+            "title": "Justificativa"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "produto",
+          "apresentacao",
+          "condicao",
+          "fonte_url",
+          "fonte_titulo",
+          "fonte_versao",
+          "verificada_em",
+          "justificativa"
+        ],
+        "title": "EvidenciaPerfil"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "LocalizacaoRemessa": {
+        "properties": {
+          "candidatas": {
+            "items": {
+              "$ref": "#/components/schemas/RemessaSaida"
+            },
+            "type": "array",
+            "title": "Candidatas"
+          },
+          "ha_mais": {
+            "type": "boolean",
+            "title": "Ha Mais"
+          }
+        },
+        "type": "object",
+        "required": [
+          "candidatas",
+          "ha_mais"
+        ],
+        "title": "LocalizacaoRemessa"
+      },
+      "Login": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "senha": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 1,
+            "format": "password",
+            "title": "Senha",
+            "writeOnly": true
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "email",
+          "senha"
+        ],
+        "title": "Login"
+      },
+      "MotivoAcao": {
+        "properties": {
+          "motivo": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 10,
+            "title": "Motivo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "motivo"
+        ],
+        "title": "MotivoAcao"
+      },
+      "NovaRemessa": {
+        "properties": {
+          "codigo": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]{0,63}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codigo"
+          },
+          "produto_configuracao_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Produto Configuracao Id"
+          },
+          "destinatario_nome": {
+            "type": "string",
+            "maxLength": 240,
+            "minLength": 2,
+            "title": "Destinatario Nome"
+          },
+          "descricao_carga": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Descricao Carga"
+          },
+          "quantidade_volumes": {
+            "type": "integer",
+            "maximum": 200.0,
+            "minimum": 1.0,
+            "title": "Quantidade Volumes",
+            "default": 1
+          },
+          "documentos": {
+            "items": {
+              "$ref": "#/components/schemas/NovoDocumento"
+            },
+            "type": "array",
+            "maxItems": 30,
+            "title": "Documentos"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "produto_configuracao_id",
+          "destinatario_nome"
+        ],
+        "title": "NovaRemessa"
+      },
+      "NovoCliente": {
+        "properties": {
+          "razao_social": {
+            "type": "string",
+            "maxLength": 240,
+            "minLength": 2,
+            "title": "Razao Social"
+          },
+          "cnpj": {
+            "type": "string",
+            "pattern": "^[A-Z0-9]{12}[0-9]{2}$",
+            "title": "Cnpj"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoEmpresa",
+            "default": "embarcador"
+          },
+          "gestor": {
+            "$ref": "#/components/schemas/NovoUsuario"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "razao_social",
+          "cnpj",
+          "gestor"
+        ],
+        "title": "NovoCliente"
+      },
+      "NovoDocumento": {
+        "properties": {
+          "tipo": {
+            "$ref": "#/components/schemas/TipoDocumento"
+          },
+          "numero": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Numero"
+          },
+          "chave_acesso": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[A-Z0-9]{44}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chave Acesso"
+          },
+          "serie": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 8,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Serie"
+          },
+          "cnpj_emitente": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[A-Z0-9]{12}[0-9]{2}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cnpj Emitente"
+          },
+          "conteudo_bruto": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 8192
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conteudo Bruto"
+          },
+          "digitado_manualmente": {
+            "type": "boolean",
+            "title": "Digitado Manualmente",
+            "default": true
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "tipo",
+          "numero"
+        ],
+        "title": "NovoDocumento"
+      },
+      "NovoPerfil": {
+        "properties": {
+          "codigo": {
+            "type": "string",
+            "pattern": "^[A-Z0-9][A-Z0-9_-]{1,47}$",
+            "title": "Codigo"
+          },
+          "rotulo": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 2,
+            "title": "Rotulo"
+          },
+          "min_c": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 150.0,
+                "minimum": -200.0
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,3}|(?=[\\d.]{1,6}0*$)\\d{0,3}\\.\\d{0,2}0*$)"
+              }
+            ],
+            "title": "Min C"
+          },
+          "max_c": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 150.0,
+                "minimum": -200.0
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,3}|(?=[\\d.]{1,6}0*$)\\d{0,3}\\.\\d{0,2}0*$)"
+              }
+            ],
+            "title": "Max C"
+          },
+          "evidencia": {
+            "$ref": "#/components/schemas/EvidenciaPerfil"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "codigo",
+          "rotulo",
+          "min_c",
+          "max_c",
+          "evidencia"
+        ],
+        "title": "NovoPerfil"
+      },
+      "NovoUsuario": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 2,
+            "title": "Nome"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "senha": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 12,
+            "format": "password",
+            "title": "Senha",
+            "writeOnly": true
+          },
+          "papel": {
+            "$ref": "#/components/schemas/PapelUsuario",
+            "default": "operador"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "nome",
+          "email",
+          "senha"
+        ],
+        "title": "NovoUsuario"
+      },
+      "PapelUsuario": {
+        "type": "string",
+        "enum": [
+          "operador",
+          "gestor",
+          "admin"
+        ],
+        "title": "PapelUsuario"
+      },
+      "ProdutoSaida": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "codigo": {
+            "type": "string",
+            "title": "Codigo"
+          },
+          "versao": {
+            "type": "integer",
+            "title": "Versao"
+          },
+          "ativo": {
+            "type": "boolean",
+            "title": "Ativo"
+          },
+          "perfil_termico_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Perfil Termico Id"
+          },
+          "intervalo_segundos": {
+            "type": "integer",
+            "title": "Intervalo Segundos"
+          },
+          "disponivel_para_nova_carga": {
+            "type": "boolean",
+            "title": "Disponivel Para Nova Carga"
+          },
+          "produto": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produto"
+          },
+          "apresentacao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Apresentacao"
+          },
+          "condicao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Condicao"
+          },
+          "min_c": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min C"
+          },
+          "max_c": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max C"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "codigo",
+          "versao",
+          "ativo",
+          "perfil_termico_id",
+          "intervalo_segundos",
+          "disponivel_para_nova_carga",
+          "produto",
+          "apresentacao",
+          "condicao",
+          "min_c",
+          "max_c"
+        ],
+        "title": "ProdutoSaida"
+      },
+      "RemessaSaida": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "codigo": {
+            "type": "string",
+            "title": "Codigo"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusRemessa"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          },
+          "empresa_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Empresa Id"
+          },
+          "destinatario_nome": {
+            "type": "string",
+            "title": "Destinatario Nome"
+          },
+          "produto_configuracao_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produto Configuracao Id"
+          },
+          "perfil_termico_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Perfil Termico Id"
+          },
+          "intervalo_segundos": {
+            "type": "integer",
+            "title": "Intervalo Segundos"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "codigo",
+          "status",
+          "criado_em",
+          "empresa_id",
+          "destinatario_nome",
+          "produto_configuracao_id",
+          "perfil_termico_id",
+          "intervalo_segundos"
+        ],
+        "title": "RemessaSaida"
+      },
+      "Renovacao": {
+        "properties": {
+          "refresh_token": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 40,
+            "format": "password",
+            "title": "Refresh Token",
+            "writeOnly": true
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "refresh_token"
+        ],
+        "title": "Renovacao"
+      },
+      "StatusRemessa": {
+        "type": "string",
+        "enum": [
+          "preparacao",
+          "aguardando_aceite",
+          "aguardando_coleta",
+          "em_transporte",
+          "entregue_aguardando_leitura",
+          "concluida",
+          "cancelada"
+        ],
+        "title": "StatusRemessa"
+      },
+      "StatusVolume": {
+        "type": "string",
+        "enum": [
+          "sem_etiqueta",
+          "vinculado",
+          "monitorando",
+          "encerrado"
+        ],
+        "title": "StatusVolume"
+      },
+      "TipoDocumento": {
+        "type": "string",
+        "enum": [
+          "nfe",
+          "nfce",
+          "cte",
+          "cte_os",
+          "mdfe",
+          "awb",
+          "pedido",
+          "outro",
+          "sem_documento"
+        ],
+        "title": "TipoDocumento"
+      },
+      "TipoEmpresa": {
+        "type": "string",
+        "enum": [
+          "embarcador",
+          "transportadora",
+          "ambos",
+          "plataforma"
+        ],
+        "title": "TipoEmpresa"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "VolumeSaida": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "sequencia": {
+            "type": "integer",
+            "title": "Sequencia"
+          },
+          "identidade": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Identidade"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusVolume"
+          },
+          "monitorado": {
+            "type": "boolean",
+            "title": "Monitorado"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "sequencia",
+          "identidade",
+          "status",
+          "monitorado"
+        ],
+        "title": "VolumeSaida"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

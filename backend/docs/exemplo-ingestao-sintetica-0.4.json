@@ -1,0 +1,123 @@
+{
+  "aviso": "Somente dados sintéticos; não valida etiqueta, temperatura ou transporte.",
+  "versao_api": "0.4.0",
+  "volume_id": "02162724-8f97-440a-acf0-de3d7295be69",
+  "inicio": {
+    "sessao_id": "1b6e897b-674a-47af-a357-57017b2a3642",
+    "etiqueta_id": "444f6457-2a4c-48dd-a260-0b36ac2ff5ea",
+    "epoch_inicio_etiqueta": 1789214400,
+    "intervalo_segundos": 600,
+    "quantidade_planejada": 100,
+    "min_configurado_c": "2.00",
+    "max_configurado_c": "8.00",
+    "ativacao_confirmada": true,
+    "evidencia": {
+      "evento_id": "fab62739-155d-404a-9dde-8fbfbb7bac6f",
+      "dispositivo_id": "4e774bc2-8931-4389-8dc9-6dcb6461df21",
+      "lida_em": "2026-09-12T12:00:00+00:00",
+      "uid_canonico": "4BAA6EFD892045B6",
+      "versao_sdk": "sintetico-1",
+      "versao_decodificador": "teste-1",
+      "resposta_bruta": [
+        "  raw\n",
+        "00FF"
+      ],
+      "origem": "simulacao"
+    }
+  },
+  "checkpoint": {
+    "evento_id": "52af3e1b-570e-439c-8ea4-69952a49376d",
+    "dispositivo_id": "4e774bc2-8931-4389-8dc9-6dcb6461df21",
+    "lida_em": "2026-09-12T12:10:00+00:00",
+    "uid_canonico": "4BAA6EFD892045B6",
+    "versao_sdk": "sintetico-1",
+    "versao_decodificador": "teste-1",
+    "resposta_bruta": [
+      "EVIDENCIA SIMULADA 10"
+    ],
+    "origem": "simulacao",
+    "tipo": "checkpoint",
+    "epoch_inicio_etiqueta": 1789214400,
+    "intervalo_relatado_s": 600
+  },
+  "final": {
+    "evento_id": "d40de4f9-97a8-4fa0-8f6a-cd2c354e212b",
+    "dispositivo_id": "4e774bc2-8931-4389-8dc9-6dcb6461df21",
+    "lida_em": "2026-09-12T12:20:00+00:00",
+    "uid_canonico": "4BAA6EFD892045B6",
+    "versao_sdk": "sintetico-1",
+    "versao_decodificador": "teste-1",
+    "resposta_bruta": [
+      "EVIDENCIA SIMULADA 20"
+    ],
+    "origem": "simulacao",
+    "tipo": "final",
+    "epoch_inicio_etiqueta": 1789214400,
+    "intervalo_relatado_s": 600
+  },
+  "recibos": [
+    {
+      "leitura_id": "19297a94-dfbe-4355-bcf0-70addf0372ca",
+      "sessao_id": "1b6e897b-674a-47af-a357-57017b2a3642",
+      "evento_id": "fab62739-155d-404a-9dde-8fbfbb7bac6f",
+      "empresa_id": "91b4f78e-9a65-4cbb-8dc2-fe0583b47aac",
+      "volume_id": "02162724-8f97-440a-acf0-de3d7295be69",
+      "remessa_id": "45221043-a6a2-4752-a108-1c0ceefa0177",
+      "tipo": "ativacao",
+      "origem": "simulacao",
+      "ordem_recebimento": 1,
+      "recebida_em_servidor": "2026-09-12T12:38:19.655822Z",
+      "hash_payload": "800a0dac238af22136c972c3d34829bf721fc4ba3e71ce1b20d9c38cbb33b297",
+      "hash_anterior": null,
+      "hash_encadeado": "4063a56ce6e529cefe41695f60af3c4f3585cacb172087184d022ff290e4c726",
+      "algoritmo_integridade": "tt-evidencia-1",
+      "situacao": "evidencia_recebida_sem_validacao_fisica",
+      "stop_fisico": "nao_confirmado_pelo_servidor"
+    },
+    {
+      "leitura_id": "3835c9fb-c5bb-41a9-a93e-7b2a21d9b2ea",
+      "sessao_id": "1b6e897b-674a-47af-a357-57017b2a3642",
+      "evento_id": "52af3e1b-570e-439c-8ea4-69952a49376d",
+      "empresa_id": "91b4f78e-9a65-4cbb-8dc2-fe0583b47aac",
+      "volume_id": "02162724-8f97-440a-acf0-de3d7295be69",
+      "remessa_id": "45221043-a6a2-4752-a108-1c0ceefa0177",
+      "tipo": "checkpoint",
+      "origem": "simulacao",
+      "ordem_recebimento": 2,
+      "recebida_em_servidor": "2026-09-12T12:38:19.687060Z",
+      "hash_payload": "d59abc582afcb073c8d5ef1d116b0bb364e39d8310ee3dd5b8061f8bc84e5527",
+      "hash_anterior": "4063a56ce6e529cefe41695f60af3c4f3585cacb172087184d022ff290e4c726",
+      "hash_encadeado": "64e994e54ba23b7f67e58e025709fd56d0ab67b2ef96b60a26cd3cf0ba6793d6",
+      "algoritmo_integridade": "tt-evidencia-1",
+      "situacao": "evidencia_recebida_sem_validacao_fisica",
+      "stop_fisico": "nao_confirmado_pelo_servidor"
+    },
+    {
+      "leitura_id": "c0dabd70-c388-448b-a4a9-a50dc66175bf",
+      "sessao_id": "1b6e897b-674a-47af-a357-57017b2a3642",
+      "evento_id": "d40de4f9-97a8-4fa0-8f6a-cd2c354e212b",
+      "empresa_id": "91b4f78e-9a65-4cbb-8dc2-fe0583b47aac",
+      "volume_id": "02162724-8f97-440a-acf0-de3d7295be69",
+      "remessa_id": "45221043-a6a2-4752-a108-1c0ceefa0177",
+      "tipo": "final",
+      "origem": "simulacao",
+      "ordem_recebimento": 3,
+      "recebida_em_servidor": "2026-09-12T12:38:19.710610Z",
+      "hash_payload": "ec2ce447cb56409544ffd05db54692e2da453ec20a598775334373c84e27ccd3",
+      "hash_anterior": "64e994e54ba23b7f67e58e025709fd56d0ab67b2ef96b60a26cd3cf0ba6793d6",
+      "hash_encadeado": "323231b7820fc1b7f25e82fd342353d4926e25ec18b817b46d743d05a533394f",
+      "algoritmo_integridade": "tt-evidencia-1",
+      "situacao": "evidencia_recebida_sem_validacao_fisica",
+      "stop_fisico": "nao_confirmado_pelo_servidor"
+    }
+  ],
+  "integridade": {
+    "sessao_id": "1b6e897b-674a-47af-a357-57017b2a3642",
+    "integra": true,
+    "quantidade": 3,
+    "leituras_com_problema": [],
+    "hash_final": "323231b7820fc1b7f25e82fd342353d4926e25ec18b817b46d743d05a533394f",
+    "escopo": "cadeia_local_sem_ancora_externa",
+    "validacao_fisica": false
+  }
+}

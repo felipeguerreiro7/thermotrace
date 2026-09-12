@@ -1,0 +1,23 @@
+# Build
+build/
+.gradle/
+.kotlin/
+*.apk
+*.aab
+
+# Android Studio
+.idea/
+*.iml
+local.properties
+captures/
+
+# SO
+.DS_Store
+Thumbs.db
+
+# Caches locais do Gradle e artefatos de build
+.gradle-user/
+.cxx/
+*.hprof
+app/release/
+/captures

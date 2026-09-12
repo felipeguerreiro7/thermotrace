@@ -1,0 +1,95 @@
+THERMOTRACE - projeto Android
+=============================
+
+ABRIR NO ANDROID STUDIO
+-----------------------
+File > Open  e escolha esta pasta:
+
+    C:\Users\lfgue\ThermoTrace
+
+Escolha ESTA pasta, nao uma subpasta. E aqui que fica o settings.gradle.kts,
+que e o arquivo pelo qual o Android Studio reconhece um projeto Gradle.
+
+O sync deve ser rapido: Gradle e dependencias ja estao em cache, e o
+local.properties ja aponta para o seu SDK.
+
+
+VER AS TELAS SEM CELULAR
+------------------------
+Abra:  app/src/main/java/com/thermotrace/app/ui/Previews.kt
+Clique em "Split" ou "Design" no canto superior direito do editor.
+
+Aparecem 15 previas: o trilho das tres leituras, os quatro estados da
+etiqueta, o painel NFC, o grafico com excursao, o laudo, o tema escuro e
+o veredito de compatibilidade com iPhone.
+O icone de maozinha liga o modo interativo.
+
+
+RODAR NO CELULAR
+----------------
+1. No celular: Opcoes do desenvolvedor > Depuracao USB ligada
+2. Conecte o cabo e autorize a impressao digital que aparece no celular
+3. O aparelho aparece na barra de cima > botao Run (triangulo verde)
+
+Emulador nao serve para NFC. Serve so para navegar as telas.
+
+
+ORDEM DE USO DO APP - TRES BIPES
+---------------------------------
+Na origem:
+  1. BIPAR       encoste a etiqueta. Abre a folha dela.
+     ATIVAR      um toque. A etiqueta e cadastrada sozinha (o codigo sai do
+                 UID), ligada com o perfil padrao dos Ajustes, e a remessa
+                 e criada. Sem formulario.
+  2. BIPAR       a NOTA FISCAL, pela camera, no cartao que aparece na tela
+                 inicial. E a nota que da identidade a remessa.
+
+No recebimento:
+  3. BIPAR       a mesma etiqueta.
+     FINALIZAR   um toque. Baixa o historico, DESLIGA a etiqueta e mostra o
+                 veredito. A etiqueta fica livre para o proximo uso.
+
+Nao da para finalizar sem a nota: o app cobra o passo 2 antes.
+
+O que muda quanto ao perfil termico, intervalo e duracao esta em Ajustes, e
+vale para todas as ativacoes. Para mudar so numa, abra "Alterar" na folha.
+
+CAMINHO LONGO (varios volumes na mesma remessa)
+Nova remessa (botao azul) -> Ativar / Checkpoint / Leitura final por volume,
+com checkpoint no trajeto quantas vezes der. Mesmo laudo no fim.
+
+O celular VIBRA e APITA em toda leitura: um toque curto quando a etiqueta
+entra no campo (nao afaste), dois toques quando conclui (pode afastar) e um
+pulso longo na falha (nada foi gravado). Serve para operar com a tela virada
+para o outro lado, que e o caso quando se encosta o aparelho numa caixa.
+
+
+MENU DE TRES PONTOS (canto superior direito da tela inicial)
+------------------------------------------------------------
+Diagnostico   o que a etiqueta e: interface fisica, se esta acordada, se
+              esta registrando, a configuracao gravada dentro do chip e um
+              termometro ao vivo para conferir contra um termometro aferido.
+              Tudo somente leitura: pode rodar numa etiqueta em uso.
+Ajustes       perfil termico padrao, intervalo entre medicoes, duracao
+              prevista, folga de gravacao, tensao minima para ativar,
+              vibracao, bipe, LED e URL do servidor.
+
+
+O QUE TEM EM CADA PASTA
+-----------------------
+app/            o aplicativo
+nfcinstruct/    modulo NFC do fabricante (Fudan/FMSH), nao editar
+docs/           analise do material, arquitetura, portabilidade iOS,
+                perguntas em aberto com o fornecedor
+db/             banco de auditoria em PostgreSQL (schema, regras, exemplo)
+tools/          exportador de laudo em Excel a partir do banco
+ios/            camada NFC em Swift, para o app iPhone
+
+
+LINHA DE COMANDO
+----------------
+gradlew.bat :app:assembleDebug     gera o APK
+gradlew.bat :app:installDebug      instala no celular conectado
+gradlew.bat :app:testDebugUnitTest roda os testes
+
+O APK sai em:  app\build\outputs\apk\debug\app-debug.apk

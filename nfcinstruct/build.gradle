@@ -1,0 +1,19 @@
+// Módulo do fabricante (Fudan Microelectronics / FMSH), ajustado apenas para
+// compilar com AGP 8. O código Java em src/ não foi alterado — as correções
+// de comportamento ficam em com.thermotrace.app.nfc.
+plugins { id 'com.android.library' }
+
+android {
+    namespace 'com.fmsh.nfcinstruct'
+    compileSdk 35
+    defaultConfig {
+        minSdk 26
+        consumerProguardFiles 'consumer-rules.pro'
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    buildFeatures { buildConfig true }  // LogUtil do fabricante usa BuildConfig.DEBUG
+    lint { abortOnError false }
+}

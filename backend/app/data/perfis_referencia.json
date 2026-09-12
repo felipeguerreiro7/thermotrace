@@ -1,0 +1,555 @@
+{
+  "schema_version": "1.0",
+  "jurisdiction": "BR",
+  "researched_at": "2026-09-11",
+  "notice": "Referências iniciais. Rascunhos não habilitados; não representam aprovação sanitária de produto ou transporte.",
+  "profiles": [
+    {
+      "id": "MED_15_30",
+      "version": 1,
+      "name": "Medicamento com especificação 15–30 °C",
+      "status": "draft",
+      "enabled": false,
+      "client_id": null,
+      "product_gtin": null,
+      "product_registration": null,
+      "condition": "fechado",
+      "reference_kind": "modelo_condicionado",
+      "temperature_c": {
+        "min": 15,
+        "max": 30,
+        "min_inclusive": true,
+        "max_inclusive": true
+      },
+      "max_transport_seconds": null,
+      "sampling_interval_seconds": null,
+      "excursion_allowance_seconds": null,
+      "automatic_product_release": false,
+      "requirements": "Associar bula e transporte qualificado por produto.",
+      "sources": [
+        {
+          "id": "RDC430",
+          "url": "https://anvisalegis.datalegis.net/action/ActionDatalegis.php?acao=abrirTextoAto&cod_menu=9434&cod_modulo=310&numeroAto=00000430&orgao=RDC%2FDC%2FANVISA%2FMS&seqAto=000&tipo=RDC&valorAno=2020",
+          "accessed_at": "2026-09-11"
+        }
+      ],
+      "approval": {
+        "approved_by": null,
+        "approved_at": null,
+        "source_document_hash": null,
+        "transport_validation_id": null,
+        "hardware_validation_id": null
+      }
+    },
+    {
+      "id": "PARA_EMS_100",
+      "version": 1,
+      "name": "Paracetamol EMS suspensão oral 100 mg/mL",
+      "status": "draft",
+      "enabled": false,
+      "client_id": null,
+      "product_gtin": null,
+      "product_registration": null,
+      "condition": "fechado",
+      "reference_kind": "conservacao_bula",
+      "temperature_c": {
+        "min": 15,
+        "max": 30,
+        "min_inclusive": true,
+        "max_inclusive": true
+      },
+      "max_transport_seconds": null,
+      "sampling_interval_seconds": null,
+      "excursion_allowance_seconds": null,
+      "automatic_product_release": false,
+      "requirements": "Conferir apresentação vigente; proteger da luz e umidade.",
+      "sources": [
+        {
+          "id": "PARACETAMOL",
+          "url": "https://www.ems.com.br/arquivos/produtos/bulas/bula_paracetamol_10594_1238.pdf",
+          "accessed_at": "2026-09-11"
+        },
+        {
+          "id": "RDC430",
+          "url": "https://anvisalegis.datalegis.net/action/ActionDatalegis.php?acao=abrirTextoAto&cod_menu=9434&cod_modulo=310&numeroAto=00000430&orgao=RDC%2FDC%2FANVISA%2FMS&seqAto=000&tipo=RDC&valorAno=2020",
+          "accessed_at": "2026-09-11"
+        }
+      ],
+      "approval": {
+        "approved_by": null,
+        "approved_at": null,
+        "source_document_hash": null,
+        "transport_validation_id": null,
+        "hardware_validation_id": null
+      }
+    },
+    {
+      "id": "NOVORAPID_FLEXPEN_FECHADO",
+      "version": 1,
+      "name": "NovoRapid FlexPen 100 U/mL",
+      "status": "draft",
+      "enabled": false,
+      "client_id": null,
+      "product_gtin": null,
+      "product_registration": null,
+      "condition": "antes_de_aberto",
+      "reference_kind": "conservacao_bula",
+      "temperature_c": {
+        "min": 2,
+        "max": 8,
+        "min_inclusive": true,
+        "max_inclusive": true
+      },
+      "max_transport_seconds": null,
+      "sampling_interval_seconds": null,
+      "excursion_allowance_seconds": null,
+      "automatic_product_release": false,
+      "requirements": "Não congelar; proteger da luz; transporte a validar.",
+      "sources": [
+        {
+          "id": "NOVORAPID",
+          "url": "https://www.novonordisk.com.br/content/dam/nncorp/br/pt/pdfs/bulas/hcp/NovoRapid_FlexPen_1_e_5_Bula_do_Profissional.pdf",
+          "accessed_at": "2026-09-11"
+        },
+        {
+          "id": "RDC430",
+          "url": "https://anvisalegis.datalegis.net/action/ActionDatalegis.php?acao=abrirTextoAto&cod_menu=9434&cod_modulo=310&numeroAto=00000430&orgao=RDC%2FDC%2FANVISA%2FMS&seqAto=000&tipo=RDC&valorAno=2020",
+          "accessed_at": "2026-09-11"
+        }
+      ],
+      "approval": {
+        "approved_by": null,
+        "approved_at": null,
+        "source_document_hash": null,
+        "transport_validation_id": null,
+        "hardware_validation_id": null
+      }
+    },
+    {
+      "id": "OZEMPIC_1MG_FECHADO",
+      "version": 1,
+      "name": "Ozempic 1 mg sistema 3 mL",
+      "status": "draft",
+      "enabled": false,
+      "client_id": null,
+      "product_gtin": null,
+      "product_registration": null,
+      "condition": "antes_de_aberto",
+      "reference_kind": "conservacao_bula",
+      "temperature_c": {
+        "min": 2,
+        "max": 8,
+        "min_inclusive": true,
+        "max_inclusive": true
+      },
+      "max_transport_seconds": null,
+      "sampling_interval_seconds": null,
+      "excursion_allowance_seconds": null,
+      "automatic_product_release": false,
+      "requirements": "Não congelar; proteger da luz; transporte a validar.",
+      "sources": [
+        {
+          "id": "OZEMPIC",
+          "url": "https://www.novonordisk.com.br/content/dam/nncorp/br/pt/pdfs/bulas/hcp/Ozempic_3mL_1mg_Bula_Profissional.pdf",
+          "accessed_at": "2026-09-11"
+        },
+        {
+          "id": "RDC430",
+          "url": "https://anvisalegis.datalegis.net/action/ActionDatalegis.php?acao=abrirTextoAto&cod_menu=9434&cod_modulo=310&numeroAto=00000430&orgao=RDC%2FDC%2FANVISA%2FMS&seqAto=000&tipo=RDC&valorAno=2020",
+          "accessed_at": "2026-09-11"
+        }
+      ],
+      "approval": {
+        "approved_by": null,
+        "approved_at": null,
+        "source_document_hash": null,
+        "transport_validation_id": null,
+        "hardware_validation_id": null
+      }
+    },
+    {
+      "id": "VACINA_REFRIGERADA",
+      "version": 1,
+      "name": "Vacina com condição refrigerada confirmada",
+      "status": "draft",
+      "enabled": false,
+      "client_id": null,
+      "product_gtin": null,
+      "product_registration": null,
+      "condition": "produto_e_etapa_a_definir",
+      "reference_kind": "orientacao_tecnica_condicionada",
+      "temperature_c": {
+        "min": 2,
+        "max": 8,
+        "min_inclusive": true,
+        "max_inclusive": true
+      },
+      "max_transport_seconds": null,
+      "sampling_interval_seconds": null,
+      "excursion_allowance_seconds": null,
+      "automatic_product_release": false,
+      "requirements": "Especificar vacina/apresentação; não aplicar a todas.",
+      "sources": [
+        {
+          "id": "PNI",
+          "url": "https://www.gov.br/saude/pt-br/vacinacao/publicacoes/manual-da-rede-de-frio-pni",
+          "accessed_at": "2026-09-11"
+        }
+      ],
+      "approval": {
+        "approved_by": null,
+        "approved_at": null,
+        "source_document_hash": null,
+        "transport_validation_id": null,
+        "hardware_validation_id": null
+      }
+    },
+    {
+      "id": "HEMACIAS_TRANSPORTE",
+      "version": 1,
+      "name": "Concentrado de hemácias",
+      "status": "draft",
+      "enabled": false,
+      "client_id": null,
+      "product_gtin": null,
+      "product_registration": null,
+      "condition": "nao_congelado",
+      "reference_kind": "transporte_norma",
+      "temperature_c": {
+        "min": 1,
+        "max": 10,
+        "min_inclusive": true,
+        "max_inclusive": true
+      },
+      "max_transport_seconds": null,
+      "sampling_interval_seconds": null,
+      "excursion_allowance_seconds": null,
+      "automatic_product_release": false,
+      "requirements": "Finalidade transporte; confirmar procedimento do hemocentro.",
+      "sources": [
+        {
+          "id": "SANGUE",
+          "url": "https://www.idaron.ro.gov.br/wp-content/uploads/2019/08/Portaria-de-Consolidacao-no-5-SUS.pdf",
+          "accessed_at": "2026-09-11"
+        },
+        {
+          "id": "INSPECAO",
+          "url": "https://www.gov.br/anvisa/pt-br/assuntos/sangue/inspecao/arquivos/7407json-file-1",
+          "accessed_at": "2026-09-11"
+        }
+      ],
+      "approval": {
+        "approved_by": null,
+        "approved_at": null,
+        "source_document_hash": null,
+        "transport_validation_id": null,
+        "hardware_validation_id": null
+      }
+    },
+    {
+      "id": "PLAQUETAS_TRANSPORTE",
+      "version": 1,
+      "name": "Concentrado de plaquetas",
+      "status": "draft",
+      "enabled": false,
+      "client_id": null,
+      "product_gtin": null,
+      "product_registration": null,
+      "condition": "transporte",
+      "reference_kind": "transporte_norma",
+      "temperature_c": {
+        "min": 20,
+        "max": 24,
+        "min_inclusive": true,
+        "max_inclusive": true
+      },
+      "max_transport_seconds": null,
+      "sampling_interval_seconds": null,
+      "excursion_allowance_seconds": null,
+      "automatic_product_release": false,
+      "requirements": "Tempo e demais requisitos do hemocentro a definir.",
+      "sources": [
+        {
+          "id": "SANGUE",
+          "url": "https://www.idaron.ro.gov.br/wp-content/uploads/2019/08/Portaria-de-Consolidacao-no-5-SUS.pdf",
+          "accessed_at": "2026-09-11"
+        },
+        {
+          "id": "INSPECAO",
+          "url": "https://www.gov.br/anvisa/pt-br/assuntos/sangue/inspecao/arquivos/7407json-file-1",
+          "accessed_at": "2026-09-11"
+        }
+      ],
+      "approval": {
+        "approved_by": null,
+        "approved_at": null,
+        "source_document_hash": null,
+        "transport_validation_id": null,
+        "hardware_validation_id": null
+      }
+    },
+    {
+      "id": "GRANULOCITOS_TRANSPORTE",
+      "version": 1,
+      "name": "Concentrado de granulócitos",
+      "status": "draft",
+      "enabled": false,
+      "client_id": null,
+      "product_gtin": null,
+      "product_registration": null,
+      "condition": "transporte",
+      "reference_kind": "transporte_norma",
+      "temperature_c": {
+        "min": 20,
+        "max": 24,
+        "min_inclusive": true,
+        "max_inclusive": true
+      },
+      "max_transport_seconds": null,
+      "sampling_interval_seconds": null,
+      "excursion_allowance_seconds": null,
+      "automatic_product_release": false,
+      "requirements": "Tempo e demais requisitos do hemocentro a definir.",
+      "sources": [
+        {
+          "id": "SANGUE",
+          "url": "https://www.idaron.ro.gov.br/wp-content/uploads/2019/08/Portaria-de-Consolidacao-no-5-SUS.pdf",
+          "accessed_at": "2026-09-11"
+        },
+        {
+          "id": "INSPECAO",
+          "url": "https://www.gov.br/anvisa/pt-br/assuntos/sangue/inspecao/arquivos/7407json-file-1",
+          "accessed_at": "2026-09-11"
+        }
+      ],
+      "approval": {
+        "approved_by": null,
+        "approved_at": null,
+        "source_document_hash": null,
+        "transport_validation_id": null,
+        "hardware_validation_id": null
+      }
+    },
+    {
+      "id": "SANGUE_PARA_PLAQUETAS",
+      "version": 1,
+      "name": "Sangue total para produção de plaquetas",
+      "status": "draft",
+      "enabled": false,
+      "client_id": null,
+      "product_gtin": null,
+      "product_registration": null,
+      "condition": "para_producao_plaquetas",
+      "reference_kind": "transporte_norma",
+      "temperature_c": {
+        "min": 20,
+        "max": 24,
+        "min_inclusive": true,
+        "max_inclusive": true
+      },
+      "max_transport_seconds": null,
+      "sampling_interval_seconds": null,
+      "excursion_allowance_seconds": null,
+      "automatic_product_release": false,
+      "requirements": "Finalidade obrigatória; não generalizar a todo sangue.",
+      "sources": [
+        {
+          "id": "SANGUE",
+          "url": "https://www.idaron.ro.gov.br/wp-content/uploads/2019/08/Portaria-de-Consolidacao-no-5-SUS.pdf",
+          "accessed_at": "2026-09-11"
+        }
+      ],
+      "approval": {
+        "approved_by": null,
+        "approved_at": null,
+        "source_document_hash": null,
+        "transport_validation_id": null,
+        "hardware_validation_id": null
+      }
+    },
+    {
+      "id": "HEMOCOMP_DESCONGELADO",
+      "version": 1,
+      "name": "Hemocomponente descongelado",
+      "status": "draft",
+      "enabled": false,
+      "client_id": null,
+      "product_gtin": null,
+      "product_registration": null,
+      "condition": "descongelado",
+      "reference_kind": "transporte_norma",
+      "temperature_c": {
+        "min": 1,
+        "max": 10,
+        "min_inclusive": true,
+        "max_inclusive": true
+      },
+      "max_transport_seconds": null,
+      "sampling_interval_seconds": null,
+      "excursion_allowance_seconds": null,
+      "automatic_product_release": false,
+      "requirements": "Definir componente, hora do descongelamento e prazo aplicável.",
+      "sources": [
+        {
+          "id": "SANGUE",
+          "url": "https://www.idaron.ro.gov.br/wp-content/uploads/2019/08/Portaria-de-Consolidacao-no-5-SUS.pdf",
+          "accessed_at": "2026-09-11"
+        }
+      ],
+      "approval": {
+        "approved_by": null,
+        "approved_at": null,
+        "source_document_hash": null,
+        "transport_validation_id": null,
+        "hardware_validation_id": null
+      }
+    },
+    {
+      "id": "HEMOCOMP_CONGELADO",
+      "version": 1,
+      "name": "Plasma/crioprecipitado congelado",
+      "status": "draft",
+      "enabled": false,
+      "client_id": null,
+      "product_gtin": null,
+      "product_registration": null,
+      "condition": "congelado",
+      "reference_kind": "especificacao_pendente",
+      "temperature_c": {
+        "min": null,
+        "max": null,
+        "min_inclusive": null,
+        "max_inclusive": null
+      },
+      "max_transport_seconds": null,
+      "sampling_interval_seconds": null,
+      "excursion_allowance_seconds": null,
+      "automatic_product_release": false,
+      "requirements": "Manter congelado; cadastrar temperatura específica e qualificação.",
+      "sources": [
+        {
+          "id": "SANGUE",
+          "url": "https://www.idaron.ro.gov.br/wp-content/uploads/2019/08/Portaria-de-Consolidacao-no-5-SUS.pdf",
+          "accessed_at": "2026-09-11"
+        },
+        {
+          "id": "INSPECAO",
+          "url": "https://www.gov.br/anvisa/pt-br/assuntos/sangue/inspecao/arquivos/7407json-file-1",
+          "accessed_at": "2026-09-11"
+        }
+      ],
+      "approval": {
+        "approved_by": null,
+        "approved_at": null,
+        "source_document_hash": null,
+        "transport_validation_id": null,
+        "hardware_validation_id": null
+      }
+    },
+    {
+      "id": "VACINA_NEGATIVA",
+      "version": 1,
+      "name": "Vacina congelada ou ultracongelada",
+      "status": "draft",
+      "enabled": false,
+      "client_id": null,
+      "product_gtin": null,
+      "product_registration": null,
+      "condition": "etapa_a_definir",
+      "reference_kind": "especificacao_pendente",
+      "temperature_c": {
+        "min": null,
+        "max": null,
+        "min_inclusive": null,
+        "max_inclusive": null
+      },
+      "max_transport_seconds": null,
+      "sampling_interval_seconds": null,
+      "excursion_allowance_seconds": null,
+      "automatic_product_release": false,
+      "requirements": "Exige bula, etapa e sensor compatível; sem faixa universal.",
+      "sources": [
+        {
+          "id": "PNI",
+          "url": "https://www.gov.br/saude/pt-br/vacinacao/publicacoes/manual-da-rede-de-frio-pni",
+          "accessed_at": "2026-09-11"
+        }
+      ],
+      "approval": {
+        "approved_by": null,
+        "approved_at": null,
+        "source_document_hash": null,
+        "transport_validation_id": null,
+        "hardware_validation_id": null
+      }
+    },
+    {
+      "id": "AMOSTRA_EXAME",
+      "version": 1,
+      "name": "Amostra humana para exame",
+      "status": "draft",
+      "enabled": false,
+      "client_id": null,
+      "product_gtin": null,
+      "product_registration": null,
+      "condition": "matriz_e_preparo_a_definir",
+      "reference_kind": "especificacao_pendente",
+      "temperature_c": {
+        "min": null,
+        "max": null,
+        "min_inclusive": null,
+        "max_inclusive": null
+      },
+      "max_transport_seconds": null,
+      "sampling_interval_seconds": null,
+      "excursion_allowance_seconds": null,
+      "automatic_product_release": false,
+      "requirements": "Exige exame, matriz, recipiente, estabilidade e POP do laboratório.",
+      "sources": [
+        {
+          "id": "RDC504",
+          "url": "https://anvisalegis.datalegis.net/action/TematicaAction.php?acao=abrirVinculos&cod_menu=8457&cod_modulo=135&cotematica=18517870",
+          "accessed_at": "2026-09-11"
+        }
+      ],
+      "approval": {
+        "approved_by": null,
+        "approved_at": null,
+        "source_document_hash": null,
+        "transport_validation_id": null,
+        "hardware_validation_id": null
+      }
+    },
+    {
+      "id": "REAGENTE_KIT",
+      "version": 1,
+      "name": "Reagente ou kit diagnóstico",
+      "status": "draft",
+      "enabled": false,
+      "client_id": null,
+      "product_gtin": null,
+      "product_registration": null,
+      "condition": "apresentacao_a_definir",
+      "reference_kind": "especificacao_pendente",
+      "temperature_c": {
+        "min": null,
+        "max": null,
+        "min_inclusive": null,
+        "max_inclusive": null
+      },
+      "max_transport_seconds": null,
+      "sampling_interval_seconds": null,
+      "excursion_allowance_seconds": null,
+      "automatic_product_release": false,
+      "requirements": "Obter instrução do fabricante; sem fonte específica nesta pesquisa.",
+      "sources": [],
+      "approval": {
+        "approved_by": null,
+        "approved_at": null,
+        "source_document_hash": null,
+        "transport_validation_id": null,
+        "hardware_validation_id": null
+      }
+    }
+  ]
+}

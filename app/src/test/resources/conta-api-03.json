@@ -1,0 +1,116 @@
+{
+  "origem": "API 0.3 / PostgreSQL 17 / papel mínimo / dados sintéticos",
+  "me": {
+    "id": "18166cf0-4ea4-4f22-b03a-d4c9cf6d2a78",
+    "nome": "Teste",
+    "papel": "gestor",
+    "empresa_id": "81176b02-643e-42b5-adaf-ab6b08fda061",
+    "empresa": "Smoke cargas sintético",
+    "tipo_empresa": "embarcador"
+  },
+  "lista": [
+    {
+      "id": "1f4b5d54-e950-47fb-b83d-25278b61954a",
+      "codigo": "SMOKE",
+      "status": "preparacao",
+      "criado_em": "2026-09-12T03:26:25.203800Z",
+      "empresa_id": "81176b02-643e-42b5-adaf-ab6b08fda061",
+      "destinatario_nome": "Hospital sintético",
+      "produto_configuracao_id": "b22e9cc3-d6d3-4f5e-944b-226c98692a59",
+      "perfil_termico_id": "c5f64ecf-a889-495c-9570-45db8a260821",
+      "intervalo_segundos": 600
+    }
+  ],
+  "busca": {
+    "candidatas": [
+      {
+        "id": "1f4b5d54-e950-47fb-b83d-25278b61954a",
+        "codigo": "SMOKE",
+        "status": "preparacao",
+        "criado_em": "2026-09-12T03:26:25.203800Z",
+        "empresa_id": "81176b02-643e-42b5-adaf-ab6b08fda061",
+        "destinatario_nome": "Hospital sintético",
+        "produto_configuracao_id": "b22e9cc3-d6d3-4f5e-944b-226c98692a59",
+        "perfil_termico_id": "c5f64ecf-a889-495c-9570-45db8a260821",
+        "intervalo_segundos": 600
+      }
+    ],
+    "ha_mais": false
+  },
+  "detalhe": {
+    "id": "1f4b5d54-e950-47fb-b83d-25278b61954a",
+    "codigo": "SMOKE",
+    "status": "preparacao",
+    "criado_em": "2026-09-12T03:26:25.203800Z",
+    "empresa_id": "81176b02-643e-42b5-adaf-ab6b08fda061",
+    "destinatario_nome": "Hospital sintético",
+    "produto_configuracao_id": "b22e9cc3-d6d3-4f5e-944b-226c98692a59",
+    "perfil_termico_id": "c5f64ecf-a889-495c-9570-45db8a260821",
+    "intervalo_segundos": 600,
+    "criterio": {
+      "schema": 1,
+      "produto": {
+        "configuracao_id": "b22e9cc3-d6d3-4f5e-944b-226c98692a59",
+        "codigo": "SKU-SMOKE",
+        "versao": 1
+      },
+      "perfil": {
+        "id": "c5f64ecf-a889-495c-9570-45db8a260821",
+        "codigo": "TESTE-REFRIGERADO",
+        "versao": 1,
+        "min_c": "2.00",
+        "max_c": "8.00",
+        "rotulo": "Produto sintético fechado",
+        "tolerancia_segundos": 0,
+        "alerta_min_c": null,
+        "alerta_max_c": null,
+        "tor_max_segundos": null,
+        "mkt_limite_c": null,
+        "aprovado_em": "2026-09-12T03:26:25.128727+00:00",
+        "aprovado_por": "18166cf0-4ea4-4f22-b03a-d4c9cf6d2a78",
+        "evidencia": {
+          "produto": "Produto sintético",
+          "condicao": "Fechado, transporte",
+          "fonte_url": "https://example.org/bula-teste",
+          "apresentacao": "Frasco teste",
+          "fonte_titulo": "Fonte sintética de teste",
+          "fonte_versao": "1",
+          "justificativa": "Critério sintético exclusivo de teste.",
+          "verificada_em": "2026-01-01"
+        }
+      },
+      "intervalo_segundos": 600
+    },
+    "descricao_carga": null,
+    "documentos": [
+      {
+        "id": "4b8041d2-2464-444a-94ed-6243093ad7d0",
+        "tipo": "pedido",
+        "numero": "PED-SMOKE",
+        "serie": null,
+        "chave_acesso": null,
+        "cnpj_emitente": null,
+        "conteudo_bruto": null,
+        "digitado_manualmente": true,
+        "validado": false,
+        "observacao_validacao": "Identificador armazenado; autenticidade e validade fiscal não verificadas."
+      }
+    ],
+    "volumes": [
+      {
+        "id": "e2f53ee3-fe83-4333-8742-3d88b6620383",
+        "sequencia": 1,
+        "identidade": "1f4b5d54-e950-47fb-b83d-25278b61954a#V001",
+        "status": "sem_etiqueta",
+        "monitorado": false
+      },
+      {
+        "id": "7f1e7fd9-8bad-473a-a80c-84e96fff07f6",
+        "sequencia": 2,
+        "identidade": "1f4b5d54-e950-47fb-b83d-25278b61954a#V002",
+        "status": "sem_etiqueta",
+        "monitorado": false
+      }
+    ]
+  }
+}

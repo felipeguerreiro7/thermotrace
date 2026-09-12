@@ -1,0 +1,42 @@
+# Compose de DESENVOLVIMENTO. O de producao, com Caddy e HTTPS, sai na Fase 9.
+#
+# Para subir so o banco (util se voce roda a API pelo venv):
+#   docker compose up -d db
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: thermotrace
+      POSTGRES_PASSWORD: senha_local
+      POSTGRES_DB: thermotrace
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - dados_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U thermotrace -d thermotrace"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy   # espera o banco aceitar conexao, nao so subir
+    environment:
+      DATABASE_URL: postgresql+psycopg://thermotrace:senha_local@db:5432/thermotrace
+    env_file:
+      - .env
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - dados_arquivos:/app/dados/arquivos
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+volumes:
+  dados_db:
+  dados_arquivos:

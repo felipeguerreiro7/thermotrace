@@ -1,0 +1,26 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Moldura hexagonal aberta, compacta e sem eixo vertical dominante. -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="7"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M27,34 L48,22 M61,23 L83,36 L83,72 M77,82 L55,94 M42,92 L23,80 M22,66 L22,43" />
+
+    <!-- Três pontos conectados representam origem, monitoramento e destino. -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M35,69 L54,50 L73,70" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M35,61 A8,8 0,1 0,35,77 A8,8 0,1 0,35,61 M54,42 A8,8 0,1 0,54,58 A8,8 0,1 0,54,42 M73,62 A8,8 0,1 0,73,78 A8,8 0,1 0,73,62" />
+</vector>
