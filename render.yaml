@@ -28,10 +28,12 @@ services:
     preDeployCommand: alembic upgrade head
 
     envVars:
+      # Preenchida no painel do Render, com a Internal Database URL do banco
+      # que já existe (thermotrace-homologacao-db). `sync: false` faz o Render
+      # pedir o valor em vez de tentar criar banco novo — e mantém a credencial
+      # fora do repositório, que é a regra do projeto.
       - key: DATABASE_URL
-        fromDatabase:
-          name: thermotrace-db
-          property: connectionString
+        sync: false
       - key: SECRET_KEY
         generateValue: true
       - key: AMBIENTE
@@ -47,7 +49,6 @@ services:
       - key: TAMANHO_MAXIMO_MB
         value: "25"
 
-databases:
-  - name: thermotrace-db
-    plan: basic-256mb       # conferir a lista válida de planos no painel
-    postgresMajorVersion: "17"
+# Sem bloco `databases:` de propósito. O banco thermotrace-homologacao-db já
+# foi criado à mão em Oregon com PostgreSQL 17; declarar um aqui faria o Render
+# criar um SEGUNDO banco, cobrado à parte e vazio.
