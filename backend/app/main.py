@@ -8,6 +8,7 @@ import time
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
+from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1 import router_v1
@@ -84,8 +85,20 @@ async def rastrear_requisicao(request: Request, proximo):
 
     duracao_ms = round((time.perf_counter() - inicio) * 1000, 1)
     resposta.headers["X-Request-Id"] = rid
-    if request.headers.get("authorization") or "/auth/" in request.url.path:
+    if request.headers.get("authorization") or "/auth/" in request.url.path or request.url.path.startswith("/portal"):
         resposta.headers["Cache-Control"] = "no-store"
+    resposta.headers["X-Content-Type-Options"] = "nosniff"
+    resposta.headers["Referrer-Policy"] = "no-referrer"
+    if request.url.path == "/":
+        resposta.headers["Vary"] = "Accept"
+        resposta.headers["Cache-Control"] = "no-store"
+    if request.url.path.startswith("/portal"):
+        resposta.headers["Content-Security-Policy"] = (
+            "default-src 'self'; script-src 'self'; style-src 'self'; "
+            "connect-src 'self'; img-src 'self'; object-src 'none'; "
+            "frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
+        )
+        resposta.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
 
     # /saude é chamado pelo healthcheck a cada poucos segundos; logá-lo
     # afogaria o log de verdade.
@@ -106,12 +119,17 @@ registrar_tratadores(app)
 from app.core.limite_corpo import LimitarCorpo
 app.add_middleware(LimitarCorpo)
 app.include_router(router_v1, prefix=cfg.PREFIXO_API)
+from app.portal.routes import registrar_portal
+registrar_portal(app)
 
 
 @app.get("/", include_in_schema=False)
-def raiz():
+def raiz(request: Request):
+    if "text/html" in request.headers.get("accept", ""):
+        return RedirectResponse("/portal", status_code=307)
     return {
         "nome": cfg.NOME_APP,
         "versao": cfg.VERSAO,
+        "portal": "/portal",
         "documentacao": "/docs" if not cfg.em_producao else "indisponível em produção",
     }
