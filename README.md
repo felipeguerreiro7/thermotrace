@@ -1,10 +1,12 @@
 # ThermoTrace — monitoramento térmico por NFC
 
-## Estado em 12/09/2026
+## Estado em 13/09/2026
 
-Projeto pessoal independente. Android 0.8.0 acrescenta **Conta e cargas** ao menu: login, renovação de sessão, busca por código/documento e detalhe da carga pela API compatível 0.4. Consulte `ENTREGA-ANDROID-0.8.0.md` e `backend/ENTREGA-0.4.md` para o escopo atual e evidências.
+Projeto pessoal independente. Android **0.8.3-debug** acrescenta histórico e reconciliação de coletas; checkpoint/final ainda exigem reteste físico. API **0.4** recebe evidências e mantém acesso por empresa. Portal **0.1**, em `/portal`, inicia as áreas de equipe ThermoTrace, cliente (dono da carga) e contratante (transportadora), com login real e consulta de cargas/documentos/coletas. Consulte [a entrega do portal](backend/ENTREGA-PORTAL-0.1.md), [a entrega da API](backend/ENTREGA-0.4.md) e [as notas do projeto](docs/projeto/README.md).
 
-A conta online ainda não está conectada às leituras e ao banco local do protótipo. Isolamento do histórico local por cliente, ingestão, fila offline integrada, portais e publicação permanecem pendentes. Não há endereço público configurado ou versão homologada. As seções abaixo descrevem também componentes e fluxos do protótipo; não equivalem à validação do produto completo.
+A conta online ainda não está conectada às leituras e ao banco local do protótipo. Isolamento local, fila integrada, compartilhamento autorizado entre empresas e gráficos/laudos centrais permanecem pendentes. O serviço `thermotrace-api` aparece como publicado no Render no print do usuário; domínio comprado `thermotrace.com.br` ainda precisa de vínculo DNS/HTTPS. Isso não comprova a publicação deste commit nem homologação física. As seções antigas abaixo descrevem também fluxos do protótipo e não equivalem à validação do produto completo.
+
+Cada entrega passa pelo GitHub com explicação do que mudou e por quê: [rotina de contribuição](CONTRIBUTING.md). Portal e API usam o mesmo serviço, sem recurso pago adicional.
 
 Análise do material existente e base técnica corrigida: leitura da etiqueta por Android e
 iPhone, banco de auditoria e laudo em Excel.
