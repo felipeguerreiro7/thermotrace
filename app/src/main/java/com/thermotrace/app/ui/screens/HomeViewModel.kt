@@ -156,6 +156,11 @@ class HomeViewModel(
         repo.observarPendentesDeEnvio()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 
+    /** Evidencia que existe so aqui dentro. Ver [Repositorio.observarNaoExportadas]. */
+    val naoExportadas: StateFlow<Int> =
+        repo.observarNaoExportadas()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+
     val ocorrenciasAbertas: StateFlow<Int> =
         alertas.contarAbertas()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)

@@ -22,7 +22,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         AcaoCorretivaEntity::class,
         DestinatarioAlertaEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = false,
 )
 @TypeConverters(Conversores::class, ConversoresAlerta::class)
@@ -57,6 +57,15 @@ abstract class ThermoTraceDb : RoomDatabase() {
          * localização, e preencher com zero ou com a posição de hoje seria
          * inventar evidência. Ausência explícita é informação; chute não é.
          */
+        /** Marca de exportacao por leitura (TT-054b). Sem valor retroativo: leitura
+         *  antiga nao tem como saber se ja saiu do aparelho, e supor que saiu seria
+         *  exatamente o engano que este campo existe para evitar. */
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE leitura ADD COLUMN exportadaEmMillis INTEGER")
+            }
+        }
+
         val MIGRATION_2_3 = object : Migration(2, 3) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE leitura ADD COLUMN latitude REAL")
@@ -159,7 +168,7 @@ abstract class ThermoTraceDb : RoomDatabase() {
                     ThermoTraceDb::class.java,
                     escopo.banco,
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                     .build()
     }
 }

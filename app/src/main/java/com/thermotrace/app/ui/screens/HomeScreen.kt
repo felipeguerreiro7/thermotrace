@@ -105,6 +105,7 @@ fun HomeScreen(
     val visiveis by vm.remessasVisiveis.collectAsStateWithLifecycle()
     val contagem by vm.contagem.collectAsStateWithLifecycle()
     val pendentes by vm.pendentesEnvio.collectAsStateWithLifecycle()
+    val naoExportadas by vm.naoExportadas.collectAsStateWithLifecycle()
     val ocorrencias by vm.ocorrenciasAbertas.collectAsStateWithLifecycle()
     val estado by vm.estado.collectAsStateWithLifecycle()
     var menuAberto by remember { mutableStateOf(false) }
@@ -266,6 +267,27 @@ fun HomeScreen(
             TextButton(onClick = aoAbrirConta, modifier = Modifier.fillMaxWidth()) {
                 Text(if (contaVinculada) "Histórico desta conta · envio online em integração"
                     else "Modo local · registros sem vínculo com empresa")
+            }
+
+            if (naoExportadas > 0) {
+                // Enquanto nao ha servidor, o laudo exportado e a unica copia
+                // fora deste aparelho — e o backup automatico esta desligado de
+                // proposito, porque cadeia de custodia nao vai para nuvem de
+                // terceiro. Perder o celular, aqui, apaga a prova.
+                Card(
+                    Modifier.fillMaxWidth().padding(16.dp, 8.dp),
+                    colors = CardDefaults.cardColors(containerColor = AmbarFundo),
+                    shape = RoundedCornerShape(10.dp),
+                ) {
+                    Text(
+                        "$naoExportadas coleta(s) existem somente neste celular. " +
+                            "Abra a remessa e use \"Ver laudo e exportar Excel\" para guardar " +
+                            "uma copia fora do aparelho. Este app nao faz backup automatico.",
+                        Modifier.padding(14.dp),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = AmbarAlerta,
+                    )
+                }
             }
 
             if (pendentes > 0) {

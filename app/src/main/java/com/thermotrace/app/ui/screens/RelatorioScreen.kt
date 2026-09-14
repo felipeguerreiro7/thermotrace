@@ -106,6 +106,9 @@ class RelatorioViewModel(private val repo: Repositorio) : ViewModel() {
                 )
             )
         }
+        // So depois de o arquivo existir. Marcar antes diria que a evidencia
+        // saiu do aparelho quando a geracao ainda podia falhar.
+        repo.marcarExportadas(e.sessoes.flatMap { s -> s.leituras.map { it.id } })
         _arquivo.value = arquivo
         // O seletor de compartilhamento sempre existe, mas um aparelho sem
         // nenhum app que aceite xlsx pode recusar. Falhar aqui nao pode

@@ -66,6 +66,21 @@ class Repositorio(
     fun observarEtiquetas() = etiquetaDao.observarTodas()
     fun observarPendentesDeEnvio() = outboxDao.observarPendentes()
 
+    /**
+     * Leituras que nunca sairam do aparelho num laudo exportado.
+     *
+     * Separado de [observarPendentesDeEnvio] de proposito: aquilo e fila para o
+     * servidor, isto e copia fora do aparelho. Enquanto nao ha servidor, a
+     * exportacao e a UNICA copia possivel — e `allowBackup=false` significa que
+     * nao existe outra rede de seguranca.
+     */
+    fun observarNaoExportadas() = leituraDao.contarNaoExportadas()
+
+    /** Marca as leituras que acabaram de sair num laudo. Idempotente: nao reescreve data ja gravada. */
+    suspend fun marcarExportadas(ids: List<String>, emMillis: Long = System.currentTimeMillis()) {
+        if (ids.isNotEmpty()) leituraDao.marcarExportadas(ids, emMillis)
+    }
+
     suspend fun buscarRemessa(id: String) = remessaDao.buscarCompleta(id)
     suspend fun buscarVolume(id: String) = volumeDao.buscar(id)
     suspend fun buscarEtiqueta(id: String) = etiquetaDao.buscar(id)

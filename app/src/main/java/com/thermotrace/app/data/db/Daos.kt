@@ -210,6 +210,13 @@ interface LeituraDao {
     @Query("SELECT * FROM leitura WHERE sincronizada = 0")
     suspend fun naoSincronizadas(): List<LeituraEntity>
 
+    /** Quantas leituras nunca sairam do aparelho num laudo. Ver [LeituraEntity.exportadaEmMillis]. */
+    @Query("SELECT COUNT(*) FROM leitura WHERE exportadaEmMillis IS NULL")
+    fun contarNaoExportadas(): kotlinx.coroutines.flow.Flow<Int>
+
+    @Query("UPDATE leitura SET exportadaEmMillis = :emMillis WHERE id IN (:ids) AND exportadaEmMillis IS NULL")
+    suspend fun marcarExportadas(ids: List<String>, emMillis: Long)
+
     @Query("UPDATE leitura SET sincronizada = 1 WHERE id = :id")
     suspend fun marcarSincronizada(id: String)
 

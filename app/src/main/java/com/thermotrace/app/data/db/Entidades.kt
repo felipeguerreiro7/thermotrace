@@ -218,6 +218,18 @@ data class LeituraEntity(
     val provedorLocal: String? = null,
     val localizadoEmMillis: Long? = null,
 
+    /**
+     * Quando esta leitura saiu do aparelho num laudo exportado.
+     *
+     * Nulo significa que a evidencia existe em UM lugar so. Com
+     * `allowBackup=false` — que e deliberado, para nao mandar cadeia de
+     * custodia para nuvem de terceiro — perder o celular apaga a prova. Esta
+     * coluna e o que permite o app avisar antes de isso acontecer.
+     *
+     * Nao e o mesmo que [sincronizada]: aquilo e o servidor, isto e o arquivo.
+     */
+    val exportadaEmMillis: Long? = null,
+
     val sincronizada: Boolean = false,
 )
 
