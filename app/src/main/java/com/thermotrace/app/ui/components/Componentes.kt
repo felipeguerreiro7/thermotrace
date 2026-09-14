@@ -2,6 +2,8 @@ package com.thermotrace.app.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -27,6 +29,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -310,7 +317,7 @@ fun GraficoTemperatura(
     minC: Double,
     maxC: Double,
     modifier: Modifier = Modifier,
-    altura: androidx.compose.ui.unit.Dp = 200.dp,
+    altura: androidx.compose.ui.unit.Dp = 220.dp,
     intervaloEsperadoSegundos: Int? = null,
 ) {
     val serie = androidx.compose.runtime.remember(medicoes, intervaloEsperadoSegundos) {
@@ -326,53 +333,203 @@ fun GraficoTemperatura(
         }
         return
     }
-    val menor = min(pontos.minOf { it.medicao.temperaturaC }, minC) - 1.5
-    val maior = max(pontos.maxOf { it.medicao.temperaturaC }, maxC) + 1.5
-    val amplitude = maior - menor
+
+    // ---- Escala ancorada na faixa aprovada ----
+    //
+    // A versão anterior calculava a escala a partir dos extremos da série. No
+    // ensaio de 12/09/2026 um ponto de −29,8 °C esticou a escala para 63 °C e
+    // espremeu a faixa de 7 a 14 °C em 11% da altura: o critério que decide se
+    // a carga passa virou uma tira fina. A faixa é o que o laudo julga, então é
+    // ela que manda na escala. Extremos além disso são desenhados na borda com
+    // marca de recorte e o valor real anotado — nunca escondidos.
+    val folga = ((maxC - minC) * 0.35).coerceAtLeast(1.5)
+    val escalaMin = minC - folga
+    val escalaMax = maxC + folga
+    val amplitude = escalaMax - escalaMin
+    val minSerie = pontos.minOf { it.medicao.temperaturaC }
+    val maxSerie = pontos.maxOf { it.medicao.temperaturaC }
+    val recortados = pontos.count { it.medicao.temperaturaC < escalaMin || it.medicao.temperaturaC > escalaMax }
+
     val corFaixa = VerdeConforme.copy(alpha = 0.12f)
     val corLimite = VermelhoExcursao.copy(alpha = 0.55f)
+    val corExcursao = VermelhoExcursao.copy(alpha = 0.14f)
     val corGrade = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f)
+    val corTexto = MaterialTheme.colorScheme.onSurfaceVariant
     val zona = java.time.ZoneId.systemDefault()
-    val formato = java.time.format.DateTimeFormatter.ofPattern("dd/MM HH:mm:ss").withZone(zona)
+    val formatoLongo = java.time.format.DateTimeFormatter.ofPattern("dd/MM HH:mm:ss").withZone(zona)
+    val formatoCurto = java.time.format.DateTimeFormatter.ofPattern("dd/MM HH:mm").withZone(zona)
     val lacunas = pontos.drop(1).any { it.iniciaTrecho }
 
+    // ---- Leitura por toque ----
+    //
+    // Sem isto o gráfico só mostra forma: dá para ver que subiu, não quanto nem
+    // quando. Arrastar move a linha de leitura e o valor aparece no topo, que é
+    // onde o olho já está — não num balão que o próprio dedo cobre.
+    var selecionado by androidx.compose.runtime.remember(pontos) {
+        androidx.compose.runtime.mutableStateOf<Int?>(null)
+    }
+    val ponto = selecionado?.let { pontos.getOrNull(it) } ?: pontos.last()
+    val temperatura = ponto.medicao.temperaturaC
+    val foraDaFaixa = temperatura < minC || temperatura > maxC
+
+    val densidade = androidx.compose.ui.platform.LocalDensity.current
+    val paintRotulo = androidx.compose.runtime.remember(corTexto, densidade) {
+        android.graphics.Paint().apply {
+            color = corTexto.toArgb()
+            textSize = with(densidade) { 9.sp.toPx() }
+            isAntiAlias = true
+        }
+    }
+
     Column(modifier.fillMaxWidth()) {
-        Text("Temperatura (°C) · escala ${"%.1f".format(menor)} a ${"%.1f".format(maior)}",
-            style = MaterialTheme.typography.labelSmall)
-        Canvas(Modifier.fillMaxWidth().height(altura)) {
-            val w = size.width
+        // Leitura de topo: quem só quer o número não precisa interpretar desenho.
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(
+                "%.1f °C".format(temperatura),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = if (foraDaFaixa) VermelhoExcursao else VerdeConforme,
+            )
+            Text(
+                (if (selecionado == null) "último · " else "ponto ${ponto.medicao.indice + 1} · ") +
+                    formatoCurto.format(ponto.medicao.instante),
+                style = MaterialTheme.typography.labelSmall,
+                color = corTexto,
+            )
+        }
+        Text(
+            if (foraDaFaixa) "Fora da faixa aprovada" else "Dentro da faixa aprovada",
+            style = MaterialTheme.typography.labelSmall,
+            color = if (foraDaFaixa) VermelhoExcursao else corTexto,
+        )
+        Spacer(Modifier.height(6.dp))
+
+        Canvas(
+            Modifier.fillMaxWidth().height(altura)
+                .pointerInput(pontos) {
+                    fun maisProximo(x: Float): Int {
+                        val fracao = (x / size.width).coerceIn(0f, 1f)
+                        return pontos.indices.minByOrNull { kotlin.math.abs(pontos[it].fracaoTempo - fracao) } ?: 0
+                    }
+                    detectTapGestures { selecionado = maisProximo(it.x) }
+                }
+                .pointerInput(pontos) {
+                    fun maisProximo(x: Float): Int {
+                        val fracao = (x / size.width).coerceIn(0f, 1f)
+                        return pontos.indices.minByOrNull { kotlin.math.abs(pontos[it].fracaoTempo - fracao) } ?: 0
+                    }
+                    detectHorizontalDragGestures(
+                        onDragStart = { selecionado = maisProximo(it.x) },
+                    ) { mudanca, _ -> selecionado = maisProximo(mudanca.position.x) }
+                }
+        ) {
+            val margemEsquerda = 34.dp.toPx()
+            val w = size.width - margemEsquerda
             val h = size.height
-            fun y(valor: Double) = (h * (1 - (valor - menor) / amplitude)).toFloat()
+            fun x(fracao: Float) = margemEsquerda + w * fracao
+            fun y(valor: Double) =
+                (h * (1 - (valor.coerceIn(escalaMin, escalaMax) - escalaMin) / amplitude)).toFloat()
+
             val topo = y(maxC)
             val base = y(minC)
-            drawRect(corFaixa, Offset(0f, topo), Size(w, base - topo))
+
+            // Trechos fora da faixa, sombreados: o resumo diz que houve excursão;
+            // o gráfico passa a dizer ONDE.
+            var i = 0
+            while (i < pontos.size) {
+                val fora = pontos[i].medicao.temperaturaC !in minC..maxC
+                if (fora) {
+                    var j = i
+                    while (j + 1 < pontos.size && pontos[j + 1].medicao.temperaturaC !in minC..maxC) j++
+                    val x0 = x(pontos[i].fracaoTempo)
+                    val x1 = x(pontos[j].fracaoTempo)
+                    drawRect(corExcursao, Offset(x0, 0f), Size((x1 - x0).coerceAtLeast(2.dp.toPx()), h))
+                    i = j + 1
+                } else i++
+            }
+
+            drawRect(corFaixa, Offset(margemEsquerda, topo), Size(w, base - topo))
             val tracejado = PathEffect.dashPathEffect(floatArrayOf(10f, 8f))
-            drawLine(corLimite, Offset(0f, topo), Offset(w, topo), 1.5.dp.toPx(), pathEffect = tracejado)
-            drawLine(corLimite, Offset(0f, base), Offset(w, base), 1.5.dp.toPx(), pathEffect = tracejado)
-            drawLine(corGrade, Offset(0f, h), Offset(w, h), 1.dp.toPx())
+            drawLine(corLimite, Offset(margemEsquerda, topo), Offset(size.width, topo), 1.5.dp.toPx(), pathEffect = tracejado)
+            drawLine(corLimite, Offset(margemEsquerda, base), Offset(size.width, base), 1.5.dp.toPx(), pathEffect = tracejado)
+            drawLine(corGrade, Offset(margemEsquerda, h), Offset(size.width, h), 1.dp.toPx())
+            drawLine(corGrade, Offset(margemEsquerda, 0f), Offset(margemEsquerda, h), 1.dp.toPx())
+
+            // Eixo Y rotulado. Sem isto não se lê valor nenhum no gráfico.
+            drawContext.canvas.nativeCanvas.apply {
+                drawText("%.0f".format(escalaMax), 2f, paintRotulo.textSize, paintRotulo)
+                drawText("%.0f".format(maxC), 2f, topo + paintRotulo.textSize / 3, paintRotulo)
+                drawText("%.0f".format(minC), 2f, base + paintRotulo.textSize / 3, paintRotulo)
+                drawText("%.0f".format(escalaMin), 2f, h - 2f, paintRotulo)
+            }
+
             val caminho = Path().apply {
                 pontos.forEach { p ->
-                    val px = w * p.fracaoTempo
+                    val px = x(p.fracaoTempo)
                     val py = y(p.medicao.temperaturaC)
                     if (p.iniciaTrecho) moveTo(px, py) else lineTo(px, py)
                 }
             }
             drawPath(caminho, CianoTrace, style = Stroke(width = 2.dp.toPx()))
-            pontos.forEachIndexed { i, p ->
-                val fora = p.medicao.temperaturaC < minC || p.medicao.temperaturaC > maxC
-                // Trechos isolados também precisam aparecer, inclusive um único ponto.
-                if (fora || pontos.size == 1 || p.iniciaTrecho || pontos.getOrNull(i + 1)?.iniciaTrecho == true) {
-                    drawCircle(if (fora) VermelhoExcursao else CianoTrace,
-                        radius = 3.dp.toPx(), center = Offset(w * p.fracaoTempo, y(p.medicao.temperaturaC)))
+
+            pontos.forEachIndexed { idx, p ->
+                val valor = p.medicao.temperaturaC
+                val fora = valor < minC || valor > maxC
+                val recortado = valor < escalaMin || valor > escalaMax
+                val px = x(p.fracaoTempo)
+                val py = y(valor)
+                if (fora || recortado || pontos.size == 1 || p.iniciaTrecho ||
+                    pontos.getOrNull(idx + 1)?.iniciaTrecho == true
+                ) {
+                    drawCircle(if (fora) VermelhoExcursao else CianoTrace, radius = 3.dp.toPx(), center = Offset(px, py))
+                }
+                // Marca de recorte: o ponto saiu da escala, e isso precisa
+                // aparecer. Esconder um extremo é pior que comprimir o gráfico.
+                if (recortado) {
+                    val sentido = if (valor > escalaMax) 1f else -1f
+                    drawLine(VermelhoExcursao, Offset(px - 5.dp.toPx(), py + sentido * 4.dp.toPx()),
+                        Offset(px, py), 2.dp.toPx())
+                    drawLine(VermelhoExcursao, Offset(px + 5.dp.toPx(), py + sentido * 4.dp.toPx()),
+                        Offset(px, py), 2.dp.toPx())
                 }
             }
+
+            // Linha de leitura.
+            if (selecionado != null) {
+                val px = x(ponto.fracaoTempo)
+                drawLine(CianoTrace.copy(alpha = 0.7f), Offset(px, 0f), Offset(px, h), 1.dp.toPx(),
+                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 6f)))
+                drawCircle(if (foraDaFaixa) VermelhoExcursao else CianoTrace,
+                    radius = 5.dp.toPx(), center = Offset(px, y(temperatura)))
+            }
         }
+
+        // Marcas de tempo intermediárias: numa viagem de dias, início e fim não
+        // localizam quando a excursão aconteceu.
         Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(formato.format(pontos.first().medicao.instante), style = MaterialTheme.typography.labelSmall)
-            Text(formato.format(pontos.last().medicao.instante), style = MaterialTheme.typography.labelSmall)
+            val primeiro = pontos.first().medicao.instante
+            val ultimo = pontos.last().medicao.instante
+            val meio = primeiro.plusSeconds((ultimo.epochSecond - primeiro.epochSecond) / 2)
+            Text(formatoCurto.format(primeiro), style = MaterialTheme.typography.labelSmall, color = corTexto)
+            Text(formatoCurto.format(meio), style = MaterialTheme.typography.labelSmall, color = corTexto)
+            Text(formatoCurto.format(ultimo), style = MaterialTheme.typography.labelSmall, color = corTexto)
         }
-        Text("${zona.id} · faixa ${"%.1f".format(minC)} a ${"%.1f".format(maxC)} °C · ${pontos.size} registros",
-            style = MaterialTheme.typography.labelSmall)
+        Text(
+            "${zona.id} · faixa ${"%.1f".format(minC)} a ${"%.1f".format(maxC)} °C · ${pontos.size} registros · " +
+                "série ${"%.1f".format(minSerie)} a ${"%.1f".format(maxSerie)} °C",
+            style = MaterialTheme.typography.labelSmall,
+            color = corTexto,
+        )
+        Text(
+            "Toque ou arraste sobre o gráfico para ler cada ponto.",
+            style = MaterialTheme.typography.labelSmall,
+            color = corTexto,
+        )
+        if (recortados > 0) Text(
+            "$recortados ponto(s) fora da escala, desenhados na borda com marca de recorte. " +
+                "Extremo da série: ${"%.1f".format(minSerie)} a ${"%.1f".format(maxSerie)} °C.",
+            style = MaterialTheme.typography.labelSmall, color = VermelhoExcursao,
+        )
         if (lacunas) Text("Lacunas no histórico: os trechos não foram unidos.",
             style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
     }
