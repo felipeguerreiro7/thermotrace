@@ -69,6 +69,7 @@ import com.thermotrace.app.ui.components.SeloGravidade
 import com.thermotrace.app.ui.components.SeloResultado
 import com.thermotrace.app.ui.components.TrilhoLeituras
 import com.thermotrace.app.ui.components.TechTopAppBar
+import com.thermotrace.app.ui.theme.AmbarAlerta
 import com.thermotrace.app.ui.theme.AzulClaro
 import com.thermotrace.app.ui.theme.VerdeConforme
 import com.thermotrace.app.ui.theme.VermelhoExcursao
@@ -300,6 +301,17 @@ fun RemessaScreen(
                                 evento.observacao?.let {
                                     Text(it, style = MaterialTheme.typography.labelSmall)
                                 }
+                                // Sem isto, a divergência só aparecia na tela de
+                                // coleta, no momento em que acontece. Quem abre a
+                                // remessa depois — que é quem assina o laudo —
+                                // não via nada.
+                                evento.alerta?.let {
+                                    Text(
+                                        it,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = AmbarAlerta,
+                                    )
+                                }
                             }
                         }
                     }
@@ -464,6 +476,8 @@ private data class EventoLinhaDoTempo(
     val lancadoEmMillis: Long? = null,
     val observacao: String? = null,
     val cor: androidx.compose.ui.graphics.Color,
+    /** Divergência entre o cabeçalho da etiqueta e a série, quando houver. */
+    val alerta: String? = null,
 )
 
 /**
@@ -498,14 +512,26 @@ private fun montarLinhaDoTempo(e: RemessaUiState): List<EventoLinhaDoTempo> {
                 if (leitura.quantidadeMedida > 0) add("${leitura.quantidadeMedida} registros")
                 leitura.temperaturaInstantaneaC?.let { add("%.1f °C".format(it)) }
             }
+            // Recalculada do bruto imutável, não lida de coluna: assim vale
+            // para leitura antiga, gravada antes de a conferência existir.
+            // Mesmo criterio do contador "coleta(s) precisam de conferencia"
+            // do cartao do volume: "nao avaliavel" tambem conta, porque tambem
+            // significa que ninguem conferiu aquela leitura.
+            val conferencia = runCatching {
+                com.thermotrace.app.nfc.Reconciliacao.comparar(leitura.respostaBruta, leitura.temperaturas)
+            }.getOrNull()
+            val pendente = conferencia?.conferida == false
+            val motivo = conferencia?.takeIf { !it.conferida }?.explicacao
             EventoLinhaDoTempo(
                 instanteMillis = leitura.lidaEmMillis,
                 titulo = leitura.tipo.rotulo,
                 detalhe = partes.joinToString(" · "),
-                cor = when (e.resumos[sessao.sessao.id]?.resultado) {
-                    ResultadoTermico.EXCURSAO -> VermelhoExcursao
+                cor = when {
+                    pendente -> AmbarAlerta
+                    e.resumos[sessao.sessao.id]?.resultado == ResultadoTermico.EXCURSAO -> VermelhoExcursao
                     else -> VerdeConforme
                 },
+                alerta = motivo,
             )
         }
     }
