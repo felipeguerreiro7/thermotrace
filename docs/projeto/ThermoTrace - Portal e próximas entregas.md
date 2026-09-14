@@ -63,3 +63,7 @@ Próximo passo implementável independente do hardware: isolamento local e sincr
 ## Dependência Android atualizada — 14/09/2026
 
 Android 0.8.5: isolamento local por conta implementado e testado; revisão de final/STOP, cópia e migrações concluída no código. A próxima integração continua sendo enviar a fila para a API 0.4 e persistir recibos. Ainda não há consolidação central de temperaturas ou compartilhamento automático de cargas entre cliente e contratante. Esta entrega não altera o portal nem a infraestrutura. [[ThermoTrace - Revisão integrada Android 0.8.5]].
+
+## Integração inicial do celular — 14/09/2026
+
+Android 0.8.6 envia manualmente novas sessões com evidência de START para cargas/volumes existentes, preservando recibos. O portal pode consultar evidências que a API efetivamente recebeu; esta entrega não acrescenta gráficos ou laudos centrais. Cadastro de catálogo e carga de homologação precisam estar disponíveis antes do percurso real. Seguirem pendentes vínculo entre empresas, continuidade entre aparelhos e consolidação de temperaturas. [[ThermoTrace - Envio de coletas Android 0.8.6]].

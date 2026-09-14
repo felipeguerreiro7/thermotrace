@@ -97,3 +97,9 @@ Android 0.8.5-debug, código 17: melhorias do Opus preservadas e revisão conclu
 - [[ThermoTrace - Processos do produto e da empresa]] — estrutura inicial para detalhar após estabilização e integração; não tratar como procedimento operacional homologado.
 
 Portal 0.1 e API 0.4 permanecem. Cliente é dono da carga; contratante é transportadora. Código no GitHub não equivale a homologação física ou publicação confirmada no Render.
+
+## Estado vigente — envio com recibos, Android 0.8.6, 14/09/2026
+
+[[ThermoTrace - Envio de coletas Android 0.8.6]]: envio manual por sessão para a API 0.4, vínculo explícito de carga/volume e recibos persistidos. Novas ativações preservam a resposta original de START. Ativações antigas sem essa evidência continuam locais; nenhuma atribuição retroativa de autoria. 149 testes JVM, ensaios no emulador e 142 testes API passaram. Reteste físico e Render continuam pendentes.
+
+Próximas prioridades: homologar cadastro/catálogo e percurso celular→servidor; consolidar temperaturas/gráficos centrais; automatizar fila com contexto preservado; permitir continuidade entre aparelhos e acesso explícito entre dono da carga e transportadora. Processos e custos permanecem nas notas próprias, sem contratação adicional nesta entrega.

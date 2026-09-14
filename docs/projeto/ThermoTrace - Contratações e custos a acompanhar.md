@@ -32,3 +32,7 @@ O usuário autorizou avançar no desenvolvimento e pediu que as necessidades de 
 Apresentação padrão ao usuário: **item, finalidade, impedimento que resolve, alternativa, valor/moeda/impostos, cobrança única ou recorrente, fonte e data do preço, titular da conta**. Verificar o preço quando a necessidade estiver pronta para decisão; estimativas antigas não são autorização de compra.
 
 Relacionados: [[ThermoTrace - Infraestrutura confirmada]], [[ThermoTrace - Hospedagem e custos]], [[ThermoTrace - Processos do produto e da empresa]].
+
+## Entrega 0.8.6 — 14/09/2026
+
+Envio inicial usa a API/portal existentes. Nenhuma nova cobrança, contratação ou alteração do Render. Testes rodaram em banco local descartável. Capacidade, retenção e necessidade de armazenamento adicional serão avaliadas com dados medidos do piloto; não é necessário contratar outro serviço para instalar este APK.

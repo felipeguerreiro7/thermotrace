@@ -43,3 +43,12 @@ Pendências de produto: [[ThermoTrace - Portal e próximas entregas]]. Publicaç
 - Sem custo novo, alteração de infraestrutura ou comprovação de deploy Render. Fila Android integrada à API 0.4 é a próxima entrega.
 
 [[ThermoTrace - Revisão integrada Android 0.8.5]] · [[ThermoTrace - Contratações e custos a acompanhar]] · [[ThermoTrace - Processos do produto e da empresa]]
+
+
+## Android 0.8.6 — envio com recibos, 14/09/2026
+
+Código publicado: [6699e60](https://github.com/felipeguerreiro7/thermotrace/commit/6699e600f2b21c518aaf104b3c46877ee578ec78), conferido contra origin/main. Mudança: envio manual por sessão, vínculo explícito de carga/volume, resposta original de START preservada e recibos transacionais. Motivo: permitir recepção real pela API 0.4 sem duplicar ou reatribuir evidências.
+
+149 testes JVM e 142 testes API passaram. Emulador verificou fila após falhas/rollback/reabertura, isolamento e migrações sintéticas 2/3/4/5/6→7. APK código 18 instalado e aberto. Lint: zero erros e 24 avisos. Nenhum ensaio físico ou publicação Render foi declarado.
+
+Obsidian atualizado com roteiro, limites, backlog e processo de primeiro envio. Sem nova contratação. Próximos passos: homologação integrada com catálogo/conta, consolidação de temperaturas/gráficos centrais e evolução da fila. [[ThermoTrace - Envio de coletas Android 0.8.6]].

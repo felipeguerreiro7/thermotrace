@@ -51,3 +51,7 @@ Android: `gradlew.bat :app:testDebugUnitTest :app:assembleDebug :app:assembleDeb
 Instrumentação: `adb shell am instrument -w com.thermotrace.app.debug.test/com.thermotrace.app.EscopoInstrumentation`.
 Fixture compartilhada: `backend/docs/contrato-android-0.8.6.json`; testes normais comparam com o contrato produzido pelo Kotlin. Para alteração intencional, regenerar usando `'-Ptt.gerarContrato=true'` e revisar o diff.
 API: `backend/scripts/testar.ps1` com URL explícita de banco descartável terminado em `_test`, conforme CONTRIBUTING.md. Não usar o banco do Render.
+
+## Código publicado
+
+[6699e60](https://github.com/felipeguerreiro7/thermotrace/commit/6699e600f2b21c518aaf104b3c46877ee578ec78), main local e remoto conferidos em 14/09/2026. APK SHA-256: `6617fb5b6b65e100193200c05fea73866fa23bfce23968259fb1a53ab82c2ac1`. Atualização documental acompanha em commit separado.

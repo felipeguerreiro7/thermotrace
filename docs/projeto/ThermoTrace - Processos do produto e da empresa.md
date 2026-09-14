@@ -60,3 +60,9 @@ Exceções: convite vencido, recuperação de acesso, operador desativado, trans
 Tempo para ativar e concluir uma carga; bipes concluídos sem repetição; coletas perdidas/duplicadas; atraso da fila; finais sem STOP confirmado; relatórios reproduzíveis; tempo para resolver incidentes. Os alvos serão definidos depois do ensaio, sem prometer prazos ou níveis de serviço que ainda não foram medidos.
 
 Próxima sessão de desenho: acompanhar uma carga fictícia do cadastro ao relatório e registrar cada passagem entre cliente, transportadora, operador e staff. Usar esse percurso para priorizar as telas e as regras do site.
+
+## Processo implementado para primeiro envio — 14/09/2026
+
+Na 0.8.6, o vínculo é por sessão: operador entra antes da nova ativação, coleta, abre a remessa, escolhe carga/volume online, confirma destino e toca em Enviar. Sem recibo válido salvo, o estado continua pendente. No erro, repetir o mesmo envio; em conflito, preservar e revisar, sem gerar uma identidade nova para contornar a recusa.
+
+Definir na próxima rodada o responsável por criar carga/catálogo, corrigir vínculo incorreto, atender conflito, receber evidência de outro aparelho e decidir sobre legado sem START original. Ainda não há procedimento operacional homologado. [[ThermoTrace - Envio de coletas Android 0.8.6]].

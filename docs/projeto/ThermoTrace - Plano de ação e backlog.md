@@ -288,3 +288,16 @@ Este bloco atualiza os estados anteriores sem apagar o histórico do Opus.
 - [ ] Detalhar processos de app, site e empresa a partir de [[ThermoTrace - Processos do produto e da empresa]]. Avaliar contratações por dependência comprovada em [[ThermoTrace - Contratações e custos a acompanhar]].
 
 Evidência: 135 testes JVM, build/lint sem erros e instrumentação no emulador. Detalhe em [[ThermoTrace - Revisão integrada Android 0.8.5]].
+
+## Execução — envio de coletas 0.8.6, 14/09/2026
+
+- [x] Primeira integração Android/API 0.4: escolha explícita de carga e volume, validação de faixa/intervalo/UID, cadastro da instalação, fila preservada e recibos transacionais.
+- [x] Capturar resposta original do START nas novas ativações; proteger o legado sem inventar dados.
+- [x] Testar perda de resposta, conflito, recibo errado, falha SQLite, reabertura e troca de conta. Conferir também o contrato Kotlin contra a API/PostgreSQL sintéticos.
+- [x] TT-056 parcial ampliado: migrações sintéticas 2/3/4/5/6→7; schema 7 exportado. 1→2 e banco físico real seguem pendentes.
+- [ ] Validar fluxo real com conta, carga/volume, etiqueta de catálogo e endereço público HTTPS do Render.
+- [ ] Automatizar envio em segundo plano; continuar sessão entre aparelhos; tratar vínculo errado sem sobrescrever evidência; importação auditada de legado se necessária.
+- [ ] Consolidar temperaturas/gráficos no servidor, enviar localização/STOP e disponibilizar relatórios centrais.
+- [ ] Reteste NFC e TT-005/TT-057 continuam abertos. Nenhum teste automatizado desta etapa equivale a bancada.
+
+Detalhes e roteiro: [[ThermoTrace - Envio de coletas Android 0.8.6]].
