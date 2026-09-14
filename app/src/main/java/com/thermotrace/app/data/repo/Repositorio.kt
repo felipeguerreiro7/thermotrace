@@ -98,9 +98,9 @@ class Repositorio(
      * parou. Evidencia nao se sobrescreve.
      */
     suspend fun marcarLoggerParado(sessaoId: String, emMillis: Long = System.currentTimeMillis()) {
-        val sessao = sessaoDao.buscar(sessaoId) ?: return
-        if (sessao.loggerParadoEmMillis != null) return
-        sessaoDao.atualizar(sessao.copy(loggerParadoEmMillis = emMillis))
+        require(emMillis > 0)
+        val gravados = sessaoDao.confirmarPrimeiroStop(sessaoId, emMillis)
+        check(gravados == 1 || sessaoDao.buscar(sessaoId) != null) { "Sessão não encontrada para registrar o STOP." }
     }
 
     // -----------------------------------------------------------------

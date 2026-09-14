@@ -247,6 +247,8 @@ data class LeituraEntity(
      * Nao e o mesmo que [sincronizada]: aquilo e o servidor, isto e o arquivo.
      */
     val exportadaEmMillis: Long? = null,
+    /** Cópia externa ao cache gravada e relida com SHA-256 igual; não comprova backup remoto. */
+    val copiaConfirmadaEmMillis: Long? = null,
 
     val sincronizada: Boolean = false,
 )

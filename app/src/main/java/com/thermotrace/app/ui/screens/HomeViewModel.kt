@@ -126,6 +126,7 @@ data class HomeUiState(
     val emAberto: RemessaEmAberto? = null,
     /** Passo 3: o veredito, logo depois do bipe de encerramento. */
     val resultado: ResultadoEntrega? = null,
+    val leituraFinalParaAbrir: String? = null,
 )
 
 /**
@@ -211,6 +212,7 @@ class HomeViewModel(
     fun alterarSerial(v: String) = _estado.update { it.copy(serialDigitado = v) }
     fun escolherPerfil(p: PerfilTermico) = _estado.update { it.copy(perfil = p) }
     fun alterarHoras(v: String) = _estado.update { it.copy(horas = v) }
+    fun consumirLeituraFinal() = _estado.update { it.copy(leituraFinalParaAbrir = null, bipada = null) }
     fun consumirNavegacao() = _estado.update { it.copy(remessaParaAbrir = null) }
     fun operacaoConsumida() = _estado.update { it.copy(operacaoPendente = null) }
     fun buscar(v: String) = _estado.update { it.copy(busca = v) }
@@ -226,27 +228,25 @@ class HomeViewModel(
 
             is NfcOperator.NfcEvent.Downloaded -> encerrarComLeitura(evento.read)
 
-            is NfcOperator.NfcEvent.LoggingParado -> {
-                // Mesma razao da tela de coleta: a confirmacao do STOP e
-                // evidencia da sessao, nao recado de tela.
-                if (evento.ok) volumeParaFinalizar?.let { volumeId ->
-                    viewModelScope.launch {
-                        repo.sessaoDoVolume(volumeId)?.sessao?.id?.let { repo.marcarLoggerParado(it) }
+            is NfcOperator.NfcEvent.LoggingParado -> viewModelScope.launch {
+                val volume = volumeParaFinalizar
+                var registrado = false
+                try {
+                    if (evento.ok && volume != null) {
+                        val id = repo.sessaoDoVolume(volume)?.sessao?.id
+                        if (id != null) { repo.marcarLoggerParado(id); registrado = true }
                     }
-                }
-                _estado.update {
-                it.copy(
-                    bipada = it.bipada?.copy(
-                        ocupada = false,
-                        registrando = if (evento.ok) false else it.bipada.registrando,
-                        mensagem = if (evento.ok)
-                            "Registro parado. A etiqueta está livre para o próximo ciclo."
-                        else
-                            "A etiqueta recusou o STOP. Pode não estar registrando, ou " +
-                                "ter senha diferente da padrão de fábrica.",
-                    )
-                )
-                }
+                } catch (e: kotlinx.coroutines.CancellationException) { throw e }
+                catch (_: Exception) { /* A resposta física não equivale a registro persistido. */ }
+                _estado.update { it.copy(bipada = it.bipada?.copy(
+                    ocupada = false,
+                    registrando = if (evento.ok) false else it.bipada.registrando,
+                    mensagem = when {
+                        evento.ok && registrado -> "Etiqueta parada; confirmação registrada."
+                        evento.ok -> "Etiqueta respondeu ao STOP, mas a confirmação não foi registrada na sessão. Confira o vínculo e tente novamente."
+                        else -> "A etiqueta recusou o STOP. Encoste novamente para tentar parar."
+                    },
+                )) }
             }
 
             is NfcOperator.NfcEvent.WrongTag -> _estado.update {
@@ -468,33 +468,12 @@ class HomeViewModel(
 
             AcaoEtiqueta.Ativar -> ativar()
 
-            // Baixa o histórico E desliga a etiqueta, nessa ordem, na mesma
-            // aproximação — é o que fecha o ciclo START/STOP do fabricante e
-            // libera a etiqueta para o próximo uso.
-            //
-            // Encadear duas chamadas do SDK numa aproximação já é o normal
-            // aqui: identificar faz três (dados, LED, status) e ativar faz
-            // três (dados, START, confirmação). O risco real seria parar
-            // antes de baixar, e é justamente o que `Encerrar` não faz: se o
-            // download falhar, o STOP nem chega a ser enviado. Se o STOP é
-            // que falhar, o histórico já está salvo e o cartão de resultado
-            // manda usar "Parar registro".
+            // Um único fluxo: confirmação persiste o histórico antes de solicitar STOP.
             AcaoEtiqueta.Finalizar -> _estado.update {
-                if (it.bipada?.documentoVinculado != true) {
-                    return@update it.copy(
-                        bipada = it.bipada?.copy(
-                            mensagem = "Bipe a nota fiscal antes de finalizar a entrega."
-                        )
-                    )
-                }
-                it.copy(
-                    bipada = it.bipada.copy(
-                        ocupada = true,
-                        mensagem = "Baixando o histórico e desligando a etiqueta. " +
-                            "Mantenha encostado…",
-                    ),
-                    operacaoPendente = NfcOperator.Operation.Encerrar(),
-                )
+                val volume = volumeParaFinalizar
+                if (it.bipada?.documentoVinculado != true || volume == null) {
+                    it.copy(bipada = it.bipada?.copy(mensagem = "Vincule a nota e confira o volume antes da leitura final."))
+                } else it.copy(leituraFinalParaAbrir = volume, operacaoPendente = null)
             }
 
             AcaoEtiqueta.Parar -> _estado.update {

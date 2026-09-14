@@ -42,7 +42,8 @@ class EscopoInstrumentation : Instrumentation() {
                 check(fila.size==1 && fila.single().corpoJson=="{\"sintetico\":true}") { "Fila não sobreviveu à reabertura" }
                 check(Preferencias(targetContext,escopos[0].preferencias).atual.urlServidor=="https://synthetic.example.test")
             }
-            resultado.putString("stream", "PASS: isolamento por empresa, operador e servidor; fila e ajustes preservados após reabrir.\n")
+            MigracoesInstrumentadas.executar(targetContext, context)
+            resultado.putString("stream", "PASS: migrações 2/3/4/5 para 6; STOP atômico; isolamento por empresa, operador e servidor; fila e ajustes preservados após reabrir.\n")
         } catch(e:Throwable) {
             resultado.putString("stream", "FAIL: ${e.javaClass.simpleName}: ${e.message}\n")
             codigo = Activity.RESULT_CANCELED

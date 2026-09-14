@@ -118,11 +118,33 @@ class LeituraViewModelTest {
         preparar(TipoLeitura.FINAL)
         vm.aoEventoNfc(NfcOperator.NfcEvent.Downloaded(raw)); advanceUntilIdle()
         vm.confirmar().join()
-        vm.aoEventoNfc(NfcOperator.NfcEvent.LoggingParado("0102", false))
+        vm.aoEventoNfc(NfcOperator.NfcEvent.LoggingParado("0102", false)); advanceUntilIdle()
         assertEquals(false, vm.estado.value.etiquetaLiberada)
         assertTrue(vm.estado.value.registrada)
         vm.pararRegistro()
         assertTrue(vm.estado.value.operacaoPendente is NfcOperator.Operation.StopLogging)
         verify(fluxo, times(1)).persistir(previa, TipoLeitura.FINAL)
     }
+    @Test fun `STOP aceito com falha ao gravar nao declara confirmacao registrada`() = runTest(dispatcher) {
+        preparar(TipoLeitura.FINAL)
+        vm.aoEventoNfc(NfcOperator.NfcEvent.Downloaded(raw)); advanceUntilIdle()
+        vm.confirmar().join()
+        doThrow(IllegalStateException("falha simulada")).`when`(repo).marcarLoggerParado(eq("s") ?: "s", anyLong())
+        vm.aoEventoNfc(NfcOperator.NfcEvent.LoggingParado("0102", true)); advanceUntilIdle()
+        assertTrue(vm.estado.value.registrada)
+        assertNull(vm.estado.value.etiquetaLiberada)
+        assertTrue(vm.estado.value.erroNfc!!.contains("gravar"))
+        assertFalse(vm.estado.value.salvando)
+    }
+
+    @Test fun `STOP aceito aparece confirmado depois da persistencia`() = runTest(dispatcher) {
+        preparar(TipoLeitura.FINAL)
+        vm.aoEventoNfc(NfcOperator.NfcEvent.Downloaded(raw)); advanceUntilIdle()
+        vm.confirmar().join()
+        vm.aoEventoNfc(NfcOperator.NfcEvent.LoggingParado("0102", true)); advanceUntilIdle()
+        verify(repo).marcarLoggerParado(eq("s") ?: "s", anyLong())
+        assertEquals(true,vm.estado.value.etiquetaLiberada)
+        assertFalse(vm.estado.value.salvando)
+    }
+
 }

@@ -100,6 +100,7 @@ fun HomeScreen(
     aoAbrirLaudo: (String) -> Unit,
     aoAbrirConta: () -> Unit,
     contaVinculada: Boolean = false,
+    aoLeituraFinal: (String) -> Unit,
 ) {
     val remessas by vm.remessas.collectAsStateWithLifecycle()
     val visiveis by vm.remessasVisiveis.collectAsStateWithLifecycle()
@@ -154,6 +155,13 @@ fun HomeScreen(
             operador.cancelarPendente()
             operador.expectedUid = null
             operador.awaitNextTag(NfcOperator.Operation.Identify)
+        }
+    }
+    LaunchedEffect(estado.leituraFinalParaAbrir) {
+        estado.leituraFinalParaAbrir?.let { volume ->
+            operador.cancelarPendente()
+            vm.consumirLeituraFinal()
+            aoLeituraFinal(volume)
         }
     }
     LaunchedEffect(estado.remessaParaAbrir) {
@@ -282,7 +290,7 @@ fun HomeScreen(
                     Text(
                         "$naoExportadas coleta(s) existem somente neste celular. " +
                             "Abra a remessa e use \"Ver laudo e exportar Excel\" para guardar " +
-                            "uma copia fora do aparelho. Este app nao faz backup automatico.",
+                            "uma cópia salva em um destino escolhido. Salvar no celular não equivale a backup remoto.",
                         Modifier.padding(14.dp),
                         style = MaterialTheme.typography.bodySmall,
                         color = AmbarAlerta,

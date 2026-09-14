@@ -22,8 +22,8 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         AcaoCorretivaEntity::class,
         DestinatarioAlertaEntity::class,
     ],
-    version = 5,
-    exportSchema = false,
+    version = 6,
+    exportSchema = true,
 )
 @TypeConverters(Conversores::class, ConversoresAlerta::class)
 abstract class ThermoTraceDb : RoomDatabase() {
@@ -63,6 +63,13 @@ abstract class ThermoTraceDb : RoomDatabase() {
         /** Confirmacao do STOP fisico (TT-055). Sem valor retroativo: sessao
          *  antiga nao tem como saber se a etiqueta chegou a parar, e supor que
          *  parou seria exatamente o engano que esta coluna existe para evitar. */
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Não confiar retroativamente no marcador antigo, que era apenas cache.
+                db.execSQL("ALTER TABLE leitura ADD COLUMN copiaConfirmadaEmMillis INTEGER")
+            }
+        }
+
         val MIGRATION_4_5 = object : Migration(4, 5) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE sessao ADD COLUMN loggerParadoEmMillis INTEGER")
@@ -177,7 +184,7 @@ abstract class ThermoTraceDb : RoomDatabase() {
                     ThermoTraceDb::class.java,
                     escopo.banco,
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                     .build()
     }
 }

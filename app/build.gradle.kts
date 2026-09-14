@@ -13,8 +13,8 @@ android {
         // 26 por causa de java.time. Abaixo disso exigiria desugaring.
         minSdk = 26
         targetSdk = 37
-        versionCode = 16
-        versionName = "0.8.4"
+        versionCode = 17
+        versionName = "0.8.5"
         testInstrumentationRunner = "com.thermotrace.app.EscopoInstrumentation"
     }
 
@@ -48,6 +48,8 @@ kotlin {
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
 }
+
+ksp { arg("room.schemaLocation", "$projectDir/schemas") }
 
 dependencies {
     implementation(project(":nfcinstruct"))

@@ -152,6 +152,9 @@ interface EtiquetaDao {
 
 @Dao
 interface SessaoDao {
+    @Query("UPDATE sessao SET loggerParadoEmMillis = :emMillis WHERE id = :id AND loggerParadoEmMillis IS NULL")
+    suspend fun confirmarPrimeiroStop(id: String, emMillis: Long): Int
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun inserir(sessao: SessaoEntity)
 
@@ -210,11 +213,11 @@ interface LeituraDao {
     @Query("SELECT * FROM leitura WHERE sincronizada = 0")
     suspend fun naoSincronizadas(): List<LeituraEntity>
 
-    /** Quantas leituras nunca sairam do aparelho num laudo. Ver [LeituraEntity.exportadaEmMillis]. */
-    @Query("SELECT COUNT(*) FROM leitura WHERE exportadaEmMillis IS NULL")
+    /** Quantas leituras não têm cópia confirmada fora do cache do aplicativo. */
+    @Query("SELECT COUNT(*) FROM leitura WHERE copiaConfirmadaEmMillis IS NULL")
     fun contarNaoExportadas(): kotlinx.coroutines.flow.Flow<Int>
 
-    @Query("UPDATE leitura SET exportadaEmMillis = :emMillis WHERE id IN (:ids) AND exportadaEmMillis IS NULL")
+    @Query("UPDATE leitura SET copiaConfirmadaEmMillis = :emMillis WHERE id IN (:ids) AND copiaConfirmadaEmMillis IS NULL")
     suspend fun marcarExportadas(ids: List<String>, emMillis: Long)
 
     @Query("UPDATE leitura SET sincronizada = 1 WHERE id = :id")

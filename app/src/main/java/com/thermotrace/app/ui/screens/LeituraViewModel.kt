@@ -128,6 +128,7 @@ class LeituraViewModel(
      * localização. Trocar evidência térmica por um metadado seria inverter a
      * prioridade do produto.
      */
+    private var pedidoLocalizacao: kotlinx.coroutines.Job? = null
     @Volatile private var fixDaColeta: com.thermotrace.app.data.local.FixLocal? = null
 
     // -----------------------------------------------------------------
@@ -288,8 +289,9 @@ class LeituraViewModel(
         // Em paralelo, sem bloquear nada. Entre armar a tela e o operador
         // encostar a etiqueta há segundos de sobra para o fix chegar; se não
         // chegar, segue sem.
+        pedidoLocalizacao?.cancel()
         fixDaColeta = null
-        localizador?.let { l -> viewModelScope.launch { fixDaColeta = l.obter() } }
+        pedidoLocalizacao = localizador?.let { l -> viewModelScope.launch { fixDaColeta = l.obter() } }
         _estado.update {
             it.copy(
                 aguardandoTag = true, processando = false, erroNfc = null,
@@ -367,26 +369,22 @@ class LeituraViewModel(
 
             is NfcOperator.NfcEvent.Downloaded -> processarDownload(evento.read)
 
-            is NfcOperator.NfcEvent.LoggingParado -> {
-                // Persistido, nao so exibido: sem isto a unica prova de que o
-                // chip parou era a frase na tela, que some quando o operador
-                // sai. Marca so o sucesso; recusa nao vira registro nenhum.
-                if (evento.ok) {
-                    _estado.value.sessaoId?.let { id ->
-                        viewModelScope.launch { repo.marcarLoggerParado(id) }
-                    }
-                }
-                _estado.update {
-                it.copy(
-                    aguardandoTag = false, processando = false, operacaoPendente = null,
-                    etiquetaLiberada = evento.ok,
-                    mensagem = if (evento.ok)
-                        "STOP aceito pela etiqueta. Confira o estado antes do próximo ciclo."
-                    else
-                        "A etiqueta recusou o STOP. O histórico já está salvo; " +
-                            "encoste de novo para tentar parar.",
-                )
-                }
+            is NfcOperator.NfcEvent.LoggingParado -> viewModelScope.launch {
+                val id = _estado.value.sessaoId
+                _estado.update { it.copy(salvando = true) }
+                try {
+                    if (evento.ok) repo.marcarLoggerParado(checkNotNull(id))
+                    _estado.update { it.copy(
+                        aguardandoTag = false, processando = false, operacaoPendente = null,
+                        etiquetaLiberada = evento.ok,
+                        mensagem = if (evento.ok) "STOP aceito e confirmação registrada. Confira o estado antes do próximo ciclo."
+                        else "A etiqueta recusou o STOP. O histórico está salvo; encoste novamente para tentar parar.",
+                    ) }
+                } catch (e: CancellationException) { throw e }
+                catch (_: Exception) {
+                    _estado.update { it.copy(aguardandoTag = false, processando = false,
+                        etiquetaLiberada = null, erroNfc = "A etiqueta respondeu, mas não foi possível gravar a confirmação do STOP. Confira novamente.") }
+                } finally { _estado.update { it.copy(salvando = false) } }
             }
 
             is NfcOperator.NfcEvent.Failed -> _estado.update {
@@ -425,6 +423,7 @@ class LeituraViewModel(
         }
 
     private fun processarDownload(leitura: NfcOperator.RawRead) = viewModelScope.launch {
+        pedidoLocalizacao?.cancel() // O fix já disponível é o único elegível para este bipe.
         fluxo.analisar(_estado.value.volumeId, leitura)
             .onSuccess { previa ->
                 previaPendente = previa

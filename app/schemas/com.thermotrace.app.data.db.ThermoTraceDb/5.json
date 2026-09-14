@@ -1,0 +1,1283 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 5,
+    "identityHash": "1a1f568ff6aa5a796e63da0118d33177",
+    "entities": [
+      {
+        "tableName": "remessa",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `codigo` TEXT NOT NULL, `remetente` TEXT NOT NULL, `transportadora` TEXT NOT NULL, `destinatario` TEXT NOT NULL, `destinoEndereco` TEXT NOT NULL, `contatoRecebimento` TEXT NOT NULL, `perfilTermicoCodigo` TEXT NOT NULL, `descricaoCarga` TEXT NOT NULL, `intervaloSegundos` INTEGER NOT NULL, `previsaoColetaMillis` INTEGER, `previsaoEntregaMillis` INTEGER, `identidadeDocumento` TEXT, `status` TEXT NOT NULL, `criadaEmMillis` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "codigo",
+            "columnName": "codigo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "remetente",
+            "columnName": "remetente",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "transportadora",
+            "columnName": "transportadora",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "destinatario",
+            "columnName": "destinatario",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "destinoEndereco",
+            "columnName": "destinoEndereco",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "contatoRecebimento",
+            "columnName": "contatoRecebimento",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "perfilTermicoCodigo",
+            "columnName": "perfilTermicoCodigo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "descricaoCarga",
+            "columnName": "descricaoCarga",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "intervaloSegundos",
+            "columnName": "intervaloSegundos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "previsaoColetaMillis",
+            "columnName": "previsaoColetaMillis",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "previsaoEntregaMillis",
+            "columnName": "previsaoEntregaMillis",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "identidadeDocumento",
+            "columnName": "identidadeDocumento",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "criadaEmMillis",
+            "columnName": "criadaEmMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_remessa_codigo",
+            "unique": true,
+            "columnNames": [
+              "codigo"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_remessa_codigo` ON `${TABLE_NAME}` (`codigo`)"
+          }
+        ]
+      },
+      {
+        "tableName": "documento",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `remessaId` TEXT NOT NULL, `tipo` TEXT NOT NULL, `numero` TEXT NOT NULL, `chaveAcesso` TEXT, `cnpjEmitente` TEXT, `serie` TEXT, `ufEmitente` TEXT, `competencia` TEXT, `validado` INTEGER NOT NULL, `observacaoValidacao` TEXT, `conteudoBruto` TEXT, `simbologia` TEXT, `digitadoManualmente` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`remessaId`) REFERENCES `remessa`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "remessaId",
+            "columnName": "remessaId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tipo",
+            "columnName": "tipo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "numero",
+            "columnName": "numero",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "chaveAcesso",
+            "columnName": "chaveAcesso",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "cnpjEmitente",
+            "columnName": "cnpjEmitente",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "serie",
+            "columnName": "serie",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "ufEmitente",
+            "columnName": "ufEmitente",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "competencia",
+            "columnName": "competencia",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "validado",
+            "columnName": "validado",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "observacaoValidacao",
+            "columnName": "observacaoValidacao",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "conteudoBruto",
+            "columnName": "conteudoBruto",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "simbologia",
+            "columnName": "simbologia",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "digitadoManualmente",
+            "columnName": "digitadoManualmente",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_documento_remessaId",
+            "unique": false,
+            "columnNames": [
+              "remessaId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_documento_remessaId` ON `${TABLE_NAME}` (`remessaId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "remessa",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "remessaId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "volume",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `remessaId` TEXT NOT NULL, `sequencia` INTEGER NOT NULL, `codigoExterno` TEXT, `identidade` TEXT, `monitorado` INTEGER NOT NULL, `status` TEXT NOT NULL, `etiquetaId` TEXT, PRIMARY KEY(`id`), FOREIGN KEY(`remessaId`) REFERENCES `remessa`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "remessaId",
+            "columnName": "remessaId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sequencia",
+            "columnName": "sequencia",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "codigoExterno",
+            "columnName": "codigoExterno",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "identidade",
+            "columnName": "identidade",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "monitorado",
+            "columnName": "monitorado",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "etiquetaId",
+            "columnName": "etiquetaId",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_volume_remessaId",
+            "unique": false,
+            "columnNames": [
+              "remessaId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_volume_remessaId` ON `${TABLE_NAME}` (`remessaId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "remessa",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "remessaId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "etiqueta",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `serial` TEXT NOT NULL, `qrPayload` TEXT NOT NULL, `uidNfc` TEXT NOT NULL, `uhfEpc` TEXT, `uhfTid` TEXT, `loteId` TEXT, `certificadoCalibracao` TEXT, `calibracaoValidaAteMillis` INTEGER, `ciclosAtivacao` INTEGER NOT NULL, `ultimaTensaoV` REAL, `aposentadaEmMillis` INTEGER, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "serial",
+            "columnName": "serial",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "qrPayload",
+            "columnName": "qrPayload",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uidNfc",
+            "columnName": "uidNfc",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uhfEpc",
+            "columnName": "uhfEpc",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "uhfTid",
+            "columnName": "uhfTid",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "loteId",
+            "columnName": "loteId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "certificadoCalibracao",
+            "columnName": "certificadoCalibracao",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "calibracaoValidaAteMillis",
+            "columnName": "calibracaoValidaAteMillis",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "ciclosAtivacao",
+            "columnName": "ciclosAtivacao",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ultimaTensaoV",
+            "columnName": "ultimaTensaoV",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "aposentadaEmMillis",
+            "columnName": "aposentadaEmMillis",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_etiqueta_uidNfc",
+            "unique": true,
+            "columnNames": [
+              "uidNfc"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_etiqueta_uidNfc` ON `${TABLE_NAME}` (`uidNfc`)"
+          },
+          {
+            "name": "index_etiqueta_serial",
+            "unique": true,
+            "columnNames": [
+              "serial"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_etiqueta_serial` ON `${TABLE_NAME}` (`serial`)"
+          }
+        ]
+      },
+      {
+        "tableName": "sessao",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `remessaId` TEXT NOT NULL, `volumeId` TEXT NOT NULL, `etiquetaId` TEXT NOT NULL, `perfilTermicoCodigo` TEXT NOT NULL, `epochInicioEtiqueta` INTEGER NOT NULL, `inicioDispositivoMillis` INTEGER NOT NULL, `desvioRelogioMs` INTEGER, `baseDeTempo` TEXT NOT NULL, `plataformaAtivacao` TEXT NOT NULL, `delayMinutos` INTEGER NOT NULL, `intervaloSegundos` INTEGER NOT NULL, `quantidadePlanejada` INTEGER NOT NULL, `minConfiguradoC` REAL NOT NULL, `maxConfiguradoC` REAL NOT NULL, `modoArmazenamento` INTEGER NOT NULL, `verificadoEmMillis` INTEGER, `registrandoNaVerificacao` INTEGER, `ativacaoConfirmada` INTEGER NOT NULL, `tensaoNoStartV` REAL, `encerradaEmMillis` INTEGER, `loggerParadoEmMillis` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`volumeId`) REFERENCES `volume`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "remessaId",
+            "columnName": "remessaId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "volumeId",
+            "columnName": "volumeId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "etiquetaId",
+            "columnName": "etiquetaId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "perfilTermicoCodigo",
+            "columnName": "perfilTermicoCodigo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "epochInicioEtiqueta",
+            "columnName": "epochInicioEtiqueta",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "inicioDispositivoMillis",
+            "columnName": "inicioDispositivoMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "desvioRelogioMs",
+            "columnName": "desvioRelogioMs",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "baseDeTempo",
+            "columnName": "baseDeTempo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "plataformaAtivacao",
+            "columnName": "plataformaAtivacao",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "delayMinutos",
+            "columnName": "delayMinutos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "intervaloSegundos",
+            "columnName": "intervaloSegundos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "quantidadePlanejada",
+            "columnName": "quantidadePlanejada",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "minConfiguradoC",
+            "columnName": "minConfiguradoC",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "maxConfiguradoC",
+            "columnName": "maxConfiguradoC",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "modoArmazenamento",
+            "columnName": "modoArmazenamento",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "verificadoEmMillis",
+            "columnName": "verificadoEmMillis",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "registrandoNaVerificacao",
+            "columnName": "registrandoNaVerificacao",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "ativacaoConfirmada",
+            "columnName": "ativacaoConfirmada",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tensaoNoStartV",
+            "columnName": "tensaoNoStartV",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "encerradaEmMillis",
+            "columnName": "encerradaEmMillis",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "loggerParadoEmMillis",
+            "columnName": "loggerParadoEmMillis",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_sessao_volumeId",
+            "unique": false,
+            "columnNames": [
+              "volumeId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_sessao_volumeId` ON `${TABLE_NAME}` (`volumeId`)"
+          },
+          {
+            "name": "index_sessao_remessaId",
+            "unique": false,
+            "columnNames": [
+              "remessaId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_sessao_remessaId` ON `${TABLE_NAME}` (`remessaId`)"
+          },
+          {
+            "name": "index_sessao_etiquetaId_epochInicioEtiqueta",
+            "unique": true,
+            "columnNames": [
+              "etiquetaId",
+              "epochInicioEtiqueta"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_sessao_etiquetaId_epochInicioEtiqueta` ON `${TABLE_NAME}` (`etiquetaId`, `epochInicioEtiqueta`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "volume",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "volumeId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "leitura",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `sessaoId` TEXT NOT NULL, `tipo` TEXT NOT NULL, `chaveIdempotencia` TEXT NOT NULL, `lidaEmMillis` INTEGER NOT NULL, `desvioRelogioMs` INTEGER, `respostaBruta` TEXT NOT NULL, `versaoSdk` TEXT NOT NULL, `versaoDecodificador` TEXT NOT NULL, `codigoEstado` TEXT, `quantidadeMedida` INTEGER NOT NULL, `intervaloRelatado` INTEGER NOT NULL, `tensaoV` REAL, `temperaturaInstantaneaC` REAL, `derivaRelogioSegundos` INTEGER NOT NULL, `horariosCorrigidos` INTEGER NOT NULL, `primeiroPontoMillis` INTEGER NOT NULL, `temperaturas` TEXT NOT NULL, `hashPayload` TEXT NOT NULL, `hashAnterior` TEXT, `hashEncadeado` TEXT NOT NULL, `latitude` REAL, `longitude` REAL, `precisaoMetros` REAL, `provedorLocal` TEXT, `localizadoEmMillis` INTEGER, `exportadaEmMillis` INTEGER, `sincronizada` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`sessaoId`) REFERENCES `sessao`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sessaoId",
+            "columnName": "sessaoId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tipo",
+            "columnName": "tipo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "chaveIdempotencia",
+            "columnName": "chaveIdempotencia",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lidaEmMillis",
+            "columnName": "lidaEmMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "desvioRelogioMs",
+            "columnName": "desvioRelogioMs",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "respostaBruta",
+            "columnName": "respostaBruta",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "versaoSdk",
+            "columnName": "versaoSdk",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "versaoDecodificador",
+            "columnName": "versaoDecodificador",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "codigoEstado",
+            "columnName": "codigoEstado",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "quantidadeMedida",
+            "columnName": "quantidadeMedida",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "intervaloRelatado",
+            "columnName": "intervaloRelatado",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tensaoV",
+            "columnName": "tensaoV",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "temperaturaInstantaneaC",
+            "columnName": "temperaturaInstantaneaC",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "derivaRelogioSegundos",
+            "columnName": "derivaRelogioSegundos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "horariosCorrigidos",
+            "columnName": "horariosCorrigidos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "primeiroPontoMillis",
+            "columnName": "primeiroPontoMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "temperaturas",
+            "columnName": "temperaturas",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hashPayload",
+            "columnName": "hashPayload",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hashAnterior",
+            "columnName": "hashAnterior",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "hashEncadeado",
+            "columnName": "hashEncadeado",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "latitude",
+            "columnName": "latitude",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "longitude",
+            "columnName": "longitude",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "precisaoMetros",
+            "columnName": "precisaoMetros",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "provedorLocal",
+            "columnName": "provedorLocal",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "localizadoEmMillis",
+            "columnName": "localizadoEmMillis",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "exportadaEmMillis",
+            "columnName": "exportadaEmMillis",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "sincronizada",
+            "columnName": "sincronizada",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_leitura_sessaoId",
+            "unique": false,
+            "columnNames": [
+              "sessaoId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_leitura_sessaoId` ON `${TABLE_NAME}` (`sessaoId`)"
+          },
+          {
+            "name": "index_leitura_chaveIdempotencia",
+            "unique": true,
+            "columnNames": [
+              "chaveIdempotencia"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_leitura_chaveIdempotencia` ON `${TABLE_NAME}` (`chaveIdempotencia`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "sessao",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "sessaoId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "custodia",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `remessaId` TEXT NOT NULL, `de` TEXT, `para` TEXT NOT NULL, `ocorridoEmMillis` INTEGER NOT NULL, `registradoEmMillis` INTEGER NOT NULL, `origem` TEXT NOT NULL, `volumesConfirmados` INTEGER, `recebedor` TEXT, `observacao` TEXT, `local` TEXT, PRIMARY KEY(`id`), FOREIGN KEY(`remessaId`) REFERENCES `remessa`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "remessaId",
+            "columnName": "remessaId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "de",
+            "columnName": "de",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "para",
+            "columnName": "para",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ocorridoEmMillis",
+            "columnName": "ocorridoEmMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "registradoEmMillis",
+            "columnName": "registradoEmMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "origem",
+            "columnName": "origem",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "volumesConfirmados",
+            "columnName": "volumesConfirmados",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "recebedor",
+            "columnName": "recebedor",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "observacao",
+            "columnName": "observacao",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "local",
+            "columnName": "local",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_custodia_remessaId",
+            "unique": false,
+            "columnNames": [
+              "remessaId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_custodia_remessaId` ON `${TABLE_NAME}` (`remessaId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "remessa",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "remessaId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "outbox",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `chaveIdempotencia` TEXT NOT NULL, `endpoint` TEXT NOT NULL, `corpoJson` TEXT NOT NULL, `criadoEmMillis` INTEGER NOT NULL, `tentativas` INTEGER NOT NULL, `ultimoErro` TEXT)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "chaveIdempotencia",
+            "columnName": "chaveIdempotencia",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "endpoint",
+            "columnName": "endpoint",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "corpoJson",
+            "columnName": "corpoJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "criadoEmMillis",
+            "columnName": "criadoEmMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tentativas",
+            "columnName": "tentativas",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ultimoErro",
+            "columnName": "ultimoErro",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_outbox_chaveIdempotencia",
+            "unique": true,
+            "columnNames": [
+              "chaveIdempotencia"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_outbox_chaveIdempotencia` ON `${TABLE_NAME}` (`chaveIdempotencia`)"
+          }
+        ]
+      },
+      {
+        "tableName": "ocorrencia",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `remessaId` TEXT NOT NULL, `volumeId` TEXT, `sessaoId` TEXT, `chaveNatural` TEXT NOT NULL, `tipo` TEXT NOT NULL, `gravidade` TEXT, `status` TEXT NOT NULL, `titulo` TEXT NOT NULL, `detalhe` TEXT, `ocorridoEmMillis` INTEGER NOT NULL, `detectadoEmMillis` INTEGER NOT NULL, `registradoEmMillis` INTEGER NOT NULL, `picoC` REAL, `limiteC` REAL, `duracaoSegundos` INTEGER, `versaoRegra` TEXT NOT NULL, `alertaEnviadoEmMillis` INTEGER, `alertaDestinatarios` TEXT, `alertaCanal` TEXT, `fechadaEmMillis` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`remessaId`) REFERENCES `remessa`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "remessaId",
+            "columnName": "remessaId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "volumeId",
+            "columnName": "volumeId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "sessaoId",
+            "columnName": "sessaoId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "chaveNatural",
+            "columnName": "chaveNatural",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tipo",
+            "columnName": "tipo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "gravidade",
+            "columnName": "gravidade",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "titulo",
+            "columnName": "titulo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "detalhe",
+            "columnName": "detalhe",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "ocorridoEmMillis",
+            "columnName": "ocorridoEmMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "detectadoEmMillis",
+            "columnName": "detectadoEmMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "registradoEmMillis",
+            "columnName": "registradoEmMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "picoC",
+            "columnName": "picoC",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "limiteC",
+            "columnName": "limiteC",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "duracaoSegundos",
+            "columnName": "duracaoSegundos",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "versaoRegra",
+            "columnName": "versaoRegra",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "alertaEnviadoEmMillis",
+            "columnName": "alertaEnviadoEmMillis",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "alertaDestinatarios",
+            "columnName": "alertaDestinatarios",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "alertaCanal",
+            "columnName": "alertaCanal",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "fechadaEmMillis",
+            "columnName": "fechadaEmMillis",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_ocorrencia_remessaId",
+            "unique": false,
+            "columnNames": [
+              "remessaId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_ocorrencia_remessaId` ON `${TABLE_NAME}` (`remessaId`)"
+          },
+          {
+            "name": "index_ocorrencia_sessaoId",
+            "unique": false,
+            "columnNames": [
+              "sessaoId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_ocorrencia_sessaoId` ON `${TABLE_NAME}` (`sessaoId`)"
+          },
+          {
+            "name": "index_ocorrencia_chaveNatural",
+            "unique": true,
+            "columnNames": [
+              "chaveNatural"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_ocorrencia_chaveNatural` ON `${TABLE_NAME}` (`chaveNatural`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "remessa",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "remessaId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "acao_corretiva",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `ocorrenciaId` TEXT NOT NULL, `tipo` TEXT NOT NULL, `descricao` TEXT, `ocorridoEmMillis` INTEGER NOT NULL, `registradoEmMillis` INTEGER NOT NULL, `origem` TEXT NOT NULL, `executadaPor` TEXT, `empresa` TEXT, `evidenciaUri` TEXT, `sincronizada` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`ocorrenciaId`) REFERENCES `ocorrencia`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ocorrenciaId",
+            "columnName": "ocorrenciaId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tipo",
+            "columnName": "tipo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "descricao",
+            "columnName": "descricao",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "ocorridoEmMillis",
+            "columnName": "ocorridoEmMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "registradoEmMillis",
+            "columnName": "registradoEmMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "origem",
+            "columnName": "origem",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "executadaPor",
+            "columnName": "executadaPor",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "empresa",
+            "columnName": "empresa",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "evidenciaUri",
+            "columnName": "evidenciaUri",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "sincronizada",
+            "columnName": "sincronizada",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_acao_corretiva_ocorrenciaId",
+            "unique": false,
+            "columnNames": [
+              "ocorrenciaId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_acao_corretiva_ocorrenciaId` ON `${TABLE_NAME}` (`ocorrenciaId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "ocorrencia",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "ocorrenciaId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "destinatario_alerta",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `nome` TEXT NOT NULL, `email` TEXT NOT NULL, `papel` TEXT NOT NULL, `gravidadeMinima` TEXT NOT NULL, `ativo` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nome",
+            "columnName": "nome",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "email",
+            "columnName": "email",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "papel",
+            "columnName": "papel",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "gravidadeMinima",
+            "columnName": "gravidadeMinima",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ativo",
+            "columnName": "ativo",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_destinatario_alerta_email",
+            "unique": true,
+            "columnNames": [
+              "email"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_destinatario_alerta_email` ON `${TABLE_NAME}` (`email`)"
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '1a1f568ff6aa5a796e63da0118d33177')"
+    ]
+  }
+}

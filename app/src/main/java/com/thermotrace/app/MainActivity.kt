@@ -195,6 +195,7 @@ fun Navegacao(app: ThermoTraceApp, dados: DadosLocais) {
                 aoAbrirLaudo = { nav.navigate(Rotas.relatorio(it)) },
                 aoAbrirConta = { nav.navigate(Rotas.CONTA) },
                 contaVinculada = dados.escopo.vinculado,
+                aoLeituraFinal = { nav.navigate(Rotas.leitura(it, TipoLeitura.FINAL)) },
             )
         }
 

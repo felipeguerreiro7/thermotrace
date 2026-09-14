@@ -1,6 +1,11 @@
 package com.thermotrace.app.ui.screens
 
 import android.content.Context
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import com.thermotrace.app.data.export.CopiaConferida
+import kotlinx.coroutines.CancellationException
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -69,6 +74,11 @@ class RelatorioViewModel(private val repo: Repositorio) : ViewModel() {
 
     private val _arquivo = MutableStateFlow<File?>(null)
     val arquivo = _arquivo.asStateFlow()
+    private val _exportando = MutableStateFlow(false)
+    val exportando = _exportando.asStateFlow()
+    private val _mensagemExportacao = MutableStateFlow<String?>(null)
+    val mensagemExportacao = _mensagemExportacao.asStateFlow()
+    private var leiturasDoArquivo: List<String> = emptyList()
 
     fun carregar(remessaId: String) = viewModelScope.launch {
         val remessa = repo.buscarRemessa(remessaId) ?: return@launch
@@ -92,29 +102,48 @@ class RelatorioViewModel(private val repo: Repositorio) : ViewModel() {
         }
     }
 
-    fun exportar(context: Context) = viewModelScope.launch {
+    fun exportar(context: Context, escolherDestino: (String) -> Unit) = viewModelScope.launch {
+        if (_exportando.value) return@launch
         val e = _estado.value
         val remessa = e.remessa ?: return@launch
-        val arquivo = withContext(Dispatchers.IO) {
-            ExportadorLaudo(context).gerar(
-                ExportadorLaudo.Entrada(
-                    remessa = remessa,
-                    sessoes = e.sessoes,
-                    etiquetas = e.etiquetas,
-                    resumos = e.resumos,
-                    medicoes = _medicoes.value,
-                )
-            )
+        _exportando.value = true
+        _mensagemExportacao.value = null
+        try {
+            val arquivo = withContext(Dispatchers.IO) {
+                ExportadorLaudo(context).gerar(ExportadorLaudo.Entrada(
+                    remessa, e.sessoes, e.etiquetas, e.resumos, _medicoes.value))
+            }
+            leiturasDoArquivo = e.sessoes.flatMap { sessao -> sessao.leituras.map { it.id } }
+            _arquivo.value = arquivo
+            escolherDestino(arquivo.name)
+        } catch (e: CancellationException) { throw e }
+        catch (_: Exception) {
+            _exportando.value = false
+            _mensagemExportacao.value = "Não foi possível preparar o laudo. Nenhuma cópia foi confirmada."
         }
-        // So depois de o arquivo existir. Marcar antes diria que a evidencia
-        // saiu do aparelho quando a geracao ainda podia falhar.
-        repo.marcarExportadas(e.sessoes.flatMap { s -> s.leituras.map { it.id } })
-        _arquivo.value = arquivo
-        // O seletor de compartilhamento sempre existe, mas um aparelho sem
-        // nenhum app que aceite xlsx pode recusar. Falhar aqui nao pode
-        // derrubar o app depois de o laudo ja ter sido gerado com sucesso.
-        runCatching { context.startActivity(ExportadorLaudo(context).compartilhar(arquivo)) }
     }
+
+    fun salvarCopia(context: Context, destino: Uri?) = viewModelScope.launch {
+        val arquivo = _arquivo.value
+        if (destino == null || arquivo == null) {
+            _exportando.value = false
+            _mensagemExportacao.value = "Cópia não concluída. Gere o laudo novamente para salvar."
+            return@launch
+        }
+        try {
+            withContext(Dispatchers.IO) {
+                CopiaConferida.salvar(arquivo,
+                    { checkNotNull(context.contentResolver.openOutputStream(destino, "wt")) },
+                    { checkNotNull(context.contentResolver.openInputStream(destino)) })
+            }
+            repo.marcarExportadas(leiturasDoArquivo)
+            _mensagemExportacao.value = "Cópia salva e conferida no destino escolhido. Para backup remoto, escolha um serviço de nuvem."
+        } catch (e: CancellationException) { throw e }
+        catch (_: Exception) {
+            _mensagemExportacao.value = "Não foi possível confirmar a cópia. As leituras continuam pendentes de exportação."
+        } finally { _exportando.value = false; _arquivo.value = null; leiturasDoArquivo = emptyList() }
+    }
+
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -127,6 +156,11 @@ fun RelatorioScreen(
     val e by vm.estado.collectAsStateWithLifecycle()
     val medicoes by vm.medicoes.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val exportando by vm.exportando.collectAsStateWithLifecycle()
+    val mensagemExportacao by vm.mensagemExportacao.collectAsStateWithLifecycle()
+    val salvarArquivo = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    ) { destino -> vm.salvarCopia(context, destino) }
     LaunchedEffect(remessaId) { vm.carregar(remessaId) }
 
     val formato = DateTimeFormatter.ofPattern("dd/MM HH:mm").withZone(ZoneId.systemDefault())
@@ -266,10 +300,11 @@ fun RelatorioScreen(
             }
 
             Button(
-                onClick = { vm.exportar(context) },
+                onClick = { vm.exportar(context) { salvarArquivo.launch(it) } },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = e.sessoes.isNotEmpty(),
-            ) { Text("Exportar laudo em Excel") }
+                enabled = e.sessoes.isNotEmpty() && !exportando,
+            ) { Text(if (exportando) "Preparando cópia…" else "Salvar laudo em Excel") }
+            mensagemExportacao?.let { Text(it) }
 
             Text(
                 "A planilha traz seis abas: Laudo, Resumo, Medições, Excursões, Custódia e " +
