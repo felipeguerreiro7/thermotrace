@@ -313,3 +313,25 @@ class Conversores {
     @TypeConverter fun textoParaListaDouble(v: String): List<Double> =
         if (v.isEmpty()) emptyList() else v.split(",").mapNotNull { it.toDoubleOrNull() }
 }
+
+/**
+ * Recompõe o fix desta leitura, ou `null` se ela não teve localização.
+ *
+ * Exige as três coisas juntas — coordenada, provedor e instante do fix. Uma
+ * coordenada sem o instante não permite dizer se o fix é do bipe ou de meia
+ * hora antes, e é exatamente essa diferença que decide se o ponto significa
+ * alguma coisa. Meia evidência aqui vira evidência inventada na tela.
+ */
+fun LeituraEntity.fixDaColeta(): com.thermotrace.app.data.local.FixLocal? {
+    val lat = latitude ?: return null
+    val lon = longitude ?: return null
+    val provedor = provedorLocal ?: return null
+    val obtidoEm = localizadoEmMillis ?: return null
+    return com.thermotrace.app.data.local.FixLocal(
+        latitude = lat,
+        longitude = lon,
+        precisaoMetros = precisaoMetros,
+        provedor = provedor,
+        obtidoEmMillis = obtidoEm,
+    )
+}

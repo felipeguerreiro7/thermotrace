@@ -52,6 +52,8 @@ import com.thermotrace.app.data.db.EtiquetaEntity
 import com.thermotrace.app.data.db.RemessaCompleta
 import com.thermotrace.app.data.db.SessaoComLeituras
 import com.thermotrace.app.data.db.VolumeEntity
+import com.thermotrace.app.data.db.fixDaColeta
+import com.thermotrace.app.data.local.descricao
 import com.thermotrace.app.data.repo.Repositorio
 import com.thermotrace.app.data.repo.RepositorioAlertas
 import com.thermotrace.app.data.db.OcorrenciaComAcoes
@@ -425,6 +427,16 @@ private fun CartaoVolume(
                 LinhaInfo("Temperatura na coleta", "%.1f °C".format(t))
             }
             LinhaInfo("Coletas feitas", "${leituras.size}")
+            // Pedido direto do usuário: "pode trazer na tela a localização
+            // exata que foi feita a última coleta". A idade do fix é medida
+            // contra o instante do BIPE, não contra agora — aqui a pergunta é
+            // "o fix era do momento da coleta?", e não "quanto tempo faz".
+            // Sem localização a linha continua aparecendo, dizendo que não
+            // houve: silêncio se confunde com "não olhei".
+            LinhaInfo(
+                "Onde foi a coleta",
+                ultima.fixDaColeta().descricao(ultima.lidaEmMillis),
+            )
             Spacer(Modifier.height(10.dp))
         }
 
@@ -532,6 +544,9 @@ private fun montarLinhaDoTempo(e: RemessaUiState): List<EventoLinhaDoTempo> {
                 add("$volume")
                 if (leitura.quantidadeMedida > 0) add("${leitura.quantidadeMedida} registros")
                 leitura.temperaturaInstantaneaC?.let { add("%.1f °C".format(it)) }
+                leitura.fixDaColeta()?.let {
+                    add("%.5f, %.5f".format(it.latitude, it.longitude))
+                }
             }
             // Recalculada do bruto imutável, não lida de coluna: assim vale
             // para leitura antiga, gravada antes de a conferência existir.
