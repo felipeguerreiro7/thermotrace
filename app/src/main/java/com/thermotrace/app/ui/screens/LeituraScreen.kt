@@ -48,6 +48,7 @@ import com.thermotrace.app.ui.theme.VerdeConforme
 import com.thermotrace.app.ui.components.TechTopAppBar
 import com.thermotrace.app.nfc.NfcOperator
 import com.thermotrace.app.nfc.rememberNfcOperator
+import com.thermotrace.app.data.local.descricao
 
 /**
  * A tela de leitura. Uma só, para os três momentos.
@@ -67,6 +68,19 @@ fun LeituraScreen(
     vm: LeituraViewModel,
 ) {
     val estado by vm.estado.collectAsStateWithLifecycle()
+
+    // Permissão pedida em contexto, e só depois de a coleta existir: pedir
+    // localização na primeira abertura, antes de o operador entender para que
+    // serve, é o pedido que se nega por reflexo.
+    val contextoTela = androidx.compose.ui.platform.LocalContext.current
+    var localizadorTelaTemPermissao by remember {
+        mutableStateOf(com.thermotrace.app.data.local.Localizador(contextoTela).temPermissao())
+    }
+    val pedirLocalizacao = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()
+    ) { concedidas ->
+        localizadorTelaTemPermissao = concedidas.values.any { it }
+    }
 
     LaunchedEffect(volumeId, tipo) { vm.carregar(volumeId, tipo) }
 
@@ -339,6 +353,45 @@ fun LeituraScreen(
             }
 
             // ---- Resultado da leitura ----
+            // ---- Localização da coleta ----
+            //
+            // Aparece só depois de registrar, porque é o que foi de fato
+            // gravado com a evidência — e não uma posição de tela. O texto
+            // sempre diz precisão e idade, e sempre diz que é a posição do
+            // celular: um ponto com quilômetros de erro anunciado como "local
+            // da coleta" é pior que nenhum ponto.
+            if (estado.registrada) {
+                Secao("Localização") {
+                    Text(
+                        estado.localizacao.descricao(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (estado.localizacao == null) MaterialTheme.colorScheme.onSurfaceVariant
+                        else VerdeConforme,
+                    )
+                    if (estado.localizacao == null && !localizadorTelaTemPermissao) {
+                        Spacer(Modifier.height(10.dp))
+                        Text(
+                            "A localização é opcional e não altera a leitura da etiqueta. " +
+                                "Serve para o laudo dizer de onde a coleta foi feita.",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        OutlinedButton(
+                            onClick = {
+                                pedirLocalizacao.launch(
+                                    arrayOf(
+                                        android.Manifest.permission.ACCESS_COARSE_LOCATION,
+                                        android.Manifest.permission.ACCESS_FINE_LOCATION,
+                                    )
+                                )
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) { Text("Permitir localização nas próximas coletas") }
+                    }
+                }
+            }
+
             // ---- STOP físico: só na leitura final, e sempre explícito ----
             //
             // Fechar a remessa no banco não prova que a etiqueta parou. Se o

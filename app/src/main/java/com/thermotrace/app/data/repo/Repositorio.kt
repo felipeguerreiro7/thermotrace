@@ -511,6 +511,7 @@ class Repositorio(
         tensaoV: Double?,
         temperaturaInstantaneaC: Double?,
         versaoSdk: String,
+        localizacao: com.thermotrace.app.data.local.FixLocal? = null,
     ): LeituraEntity {
         val sequencia = leituraDao.porSessao(sessaoId).size + 1
         val chave = "dev:$installId:sess:$sessaoId:read:$sequencia"
@@ -542,6 +543,11 @@ class Repositorio(
             hashPayload = hashPayload,
             hashAnterior = anterior,
             hashEncadeado = encadeado,
+            latitude = localizacao?.latitude,
+            longitude = localizacao?.longitude,
+            precisaoMetros = localizacao?.precisaoMetros,
+            provedorLocal = localizacao?.provedor,
+            localizadoEmMillis = localizacao?.obtidoEmMillis,
         )
         leituraDao.inserir(leitura)
 

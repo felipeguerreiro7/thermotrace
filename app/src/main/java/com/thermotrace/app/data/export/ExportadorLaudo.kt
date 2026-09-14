@@ -289,6 +289,10 @@ class ExportadorLaudo(private val context: Context) {
             "Mínima declarada pela etiqueta (°C)", "Máxima declarada pela etiqueta (°C)",
             "Pontos abaixo (etiqueta)", "Pontos acima (etiqueta)",
             "Conferência cabeçalho e série", "Resposta bruta da etiqueta", "Versão da conferência", "ID da coleta",
+            // Posição do CELULAR no instante do fix, não da carga. Precisão e
+            // idade vão junto: sem elas a coordenada sugere uma exatidão que o
+            // dado não tem.
+            "Latitude", "Longitude", "Precisão (m)", "Provedor do fix", "Fix obtido em",
         )
         val linhas = mutableListOf<List<EscritorXlsx.Celula>>()
         dados.sessoes.forEach { sessao ->
@@ -324,6 +328,11 @@ class ExportadorLaudo(private val context: Context) {
                     // ordenados e codificados em JSON da aba Evidência bruta.
                     texto(l.respostaBruta.joinToString("|").takeIf { it.length <= 30000 } ?: "Resposta longa: consulte a aba Evidência bruta"),
                     texto(Reconciliacao.VERSION), texto(l.id),
+                    numero(l.latitude),
+                    numero(l.longitude),
+                    numero(l.precisaoMetros),
+                    texto(l.provedorLocal),
+                    instante(l.localizadoEmMillis),
                 )
             }
         }

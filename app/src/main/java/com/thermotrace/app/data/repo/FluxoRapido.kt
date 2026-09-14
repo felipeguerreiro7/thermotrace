@@ -129,7 +129,17 @@ class FluxoRapido(
      * mais rápido de alguém criar uma regra de caixa de entrada para o
      * remetente — e aí o alerta que importa também não é lido.
      */
-    suspend fun persistir(previa: Previa, tipo: TipoLeitura): Resultado = db.withTransaction {
+    /**
+     * @param localizacao fix obtido em paralelo ao bipe, ou nulo. Entra na
+     *        MESMA transação da evidência: gravar a coordenada depois seria
+     *        abrir uma janela em que a leitura existe e a localização não, e
+     *        evidência com estado intermediário não se audita.
+     */
+    suspend fun persistir(
+        previa: Previa,
+        tipo: TipoLeitura,
+        localizacao: com.thermotrace.app.data.local.FixLocal? = null,
+    ): Resultado = db.withTransaction {
         val sessaoId = previa.sessao.sessao.id
 
         repo.registrarLeitura(
@@ -141,6 +151,7 @@ class FluxoRapido(
             tensaoV = previa.leitura.voltageV,
             temperaturaInstantaneaC = previa.leitura.instantTempC,
             versaoSdk = versaoSdkFmsh(),
+            localizacao = localizacao,
         )
 
         var novas = 0

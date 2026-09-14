@@ -200,6 +200,24 @@ data class LeituraEntity(
     val hashAnterior: String?,
     val hashEncadeado: String,
 
+    /**
+     * Onde o CELULAR estava quando o fix foi obtido — não onde a carga estava,
+     * e não necessariamente no instante do bipe.
+     *
+     * Por isso a precisão e o instante do fix vêm junto e são obrigatórios
+     * sempre que houver coordenada: um ponto com 2 km de erro apresentado como
+     * "local da coleta" é pior que nenhum ponto. Tudo nulo significa, de forma
+     * explícita, que não houve localização — nunca se inventa uma.
+     *
+     * A coordenada é evidência; o endereço legível não é, e por isso não mora
+     * aqui: ele exige rede, e doca e câmara fria são justamente onde não há.
+     */
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    val precisaoMetros: Double? = null,
+    val provedorLocal: String? = null,
+    val localizadoEmMillis: Long? = null,
+
     val sincronizada: Boolean = false,
 )
 

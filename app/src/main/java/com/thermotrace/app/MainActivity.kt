@@ -108,7 +108,8 @@ private class Fabrica(private val app: ThermoTraceApp, private val dados: DadosL
         modelClass.isAssignableFrom(NovaRemessaViewModel::class.java) -> NovaRemessaViewModel(repo)
         modelClass.isAssignableFrom(RemessaViewModel::class.java) -> RemessaViewModel(repo, alertas)
         modelClass.isAssignableFrom(LeituraViewModel::class.java) ->
-            LeituraViewModel(repo, alertas, dados.preferencias, dados.fluxo)
+            LeituraViewModel(repo, alertas, dados.preferencias, dados.fluxo,
+                com.thermotrace.app.data.local.Localizador(app))
         modelClass.isAssignableFrom(RelatorioViewModel::class.java) -> RelatorioViewModel(repo)
         modelClass.isAssignableFrom(EtiquetasViewModel::class.java) -> EtiquetasViewModel(repo)
         modelClass.isAssignableFrom(OcorrenciaViewModel::class.java) ->

@@ -22,7 +22,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         AcaoCorretivaEntity::class,
         DestinatarioAlertaEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = false,
 )
 @TypeConverters(Conversores::class, ConversoresAlerta::class)
@@ -50,6 +50,23 @@ abstract class ThermoTraceDb : RoomDatabase() {
          * apagaria evidência de auditoria numa atualização de app — o que num
          * sistema de cadeia fria é o mesmo que destruir a prova.
          */
+        /**
+         * Localização da coleta (TT-047).
+         *
+         * Colunas anuláveis e nenhum valor retroativo: leitura antiga não tem
+         * localização, e preencher com zero ou com a posição de hoje seria
+         * inventar evidência. Ausência explícita é informação; chute não é.
+         */
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE leitura ADD COLUMN latitude REAL")
+                db.execSQL("ALTER TABLE leitura ADD COLUMN longitude REAL")
+                db.execSQL("ALTER TABLE leitura ADD COLUMN precisaoMetros REAL")
+                db.execSQL("ALTER TABLE leitura ADD COLUMN provedorLocal TEXT")
+                db.execSQL("ALTER TABLE leitura ADD COLUMN localizadoEmMillis INTEGER")
+            }
+        }
+
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 // ---- identidade pelo documento fiscal ----------------------
@@ -142,7 +159,7 @@ abstract class ThermoTraceDb : RoomDatabase() {
                     ThermoTraceDb::class.java,
                     escopo.banco,
                 )
-                    .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                     .build()
     }
 }

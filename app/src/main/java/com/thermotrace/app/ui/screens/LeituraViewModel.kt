@@ -87,6 +87,8 @@ data class LeituraUiState(
      * tela: fechamento lógico não é prova de STOP físico.
      */
     val etiquetaLiberada: Boolean? = null,
+    /** O fix que foi de fato gravado com a leitura. Nulo = sem localização. */
+    val localizacao: com.thermotrace.app.data.local.FixLocal? = null,
 )
 
 class LeituraViewModel(
@@ -94,6 +96,12 @@ class LeituraViewModel(
     private val alertas: RepositorioAlertas,
     private val prefs: Preferencias,
     private val fluxo: FluxoRapido,
+    /**
+     * Nulo em teste e em aparelho sem serviços Google. A ausência é um caminho
+     * previsto, não um defeito: a coleta acontece igual e a leitura fica sem
+     * localização, de forma explícita.
+     */
+    private val localizador: com.thermotrace.app.data.local.Localizador? = null,
 ) : ViewModel() {
 
     private val _estado = MutableStateFlow(LeituraUiState())
@@ -111,6 +119,16 @@ class LeituraViewModel(
      * caminhos gravando evidência de auditoria não podem divergir.
      */
     private var previaPendente: FluxoRapido.Previa? = null
+
+    /**
+     * Fix da coleta em andamento.
+     *
+     * Pedido quando a tela arma e consumido quando a leitura é persistida. O
+     * bipe NUNCA espera por ele: se não tiver chegado, a leitura é gravada sem
+     * localização. Trocar evidência térmica por um metadado seria inverter a
+     * prioridade do produto.
+     */
+    @Volatile private var fixDaColeta: com.thermotrace.app.data.local.FixLocal? = null
 
     // -----------------------------------------------------------------
 
@@ -267,6 +285,11 @@ class LeituraViewModel(
             return
         }
         previaPendente = null
+        // Em paralelo, sem bloquear nada. Entre armar a tela e o operador
+        // encostar a etiqueta há segundos de sobra para o fix chegar; se não
+        // chegar, segue sem.
+        fixDaColeta = null
+        localizador?.let { l -> viewModelScope.launch { fixDaColeta = l.obter() } }
         _estado.update {
             it.copy(
                 aguardandoTag = true, processando = false, erroNfc = null,
@@ -530,7 +553,9 @@ class LeituraViewModel(
                 // FluxoRapido: duplicar isso produziria dois laudos possíveis
                 // para a mesma leitura.
                 val previa = previaPendente ?: return false
-                val resultado = fluxo.persistir(previa, e.tipo)
+                val fix = fixDaColeta
+                val resultado = fluxo.persistir(previa, e.tipo, fix)
+                _estado.update { it.copy(localizacao = fix) }
                 _estado.update { it.copy(ocorrenciasNovas = resultado.ocorrenciasNovas) }
             }
         }

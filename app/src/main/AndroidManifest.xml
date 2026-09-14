@@ -7,8 +7,18 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.VIBRATE" />
 
+    <!--
+      Localizacao da coleta. Apenas em primeiro plano: o app nunca precisa da
+      posicao com a tela apagada, e pedir background seria coletar mais do que
+      a funcao exige. Aproximada basta para dizer a cidade; fina, para a doca.
+      Negar a permissao nao impede nenhuma operacao.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
     <uses-feature android:name="android.hardware.nfc" android:required="true" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.location" android:required="false" />
 
     <application
         android:name=".ThermoTraceApp"

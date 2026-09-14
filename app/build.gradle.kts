@@ -52,6 +52,11 @@ kotlin {
 dependencies {
     implementation(project(":nfcinstruct"))
 
+    // Localizacao da coleta (D07). Primeira dependencia Google do app: o
+    // caminho recomendado para um fix novo e o FusedLocationProviderClient, e
+    // a alternativa sem Play Services so existe da API 30 em diante, enquanto
+    // o minSdk aqui e 26.
+    implementation(libs.play.services.location)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
