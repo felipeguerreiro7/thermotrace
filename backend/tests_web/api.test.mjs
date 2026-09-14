@@ -5,6 +5,13 @@ import {createApi, audience} from '../app/portal/assets/api.mjs';
 const reply = (data, status=200) => new Response(status===204?null:JSON.stringify(data), {status, headers:{'Content-Type':'application/json'}});
 const tokens = n => ({access_token:`access-${n}`,refresh_token:`refresh-${n}`});
 const me = {papel:'gestor',tipo_empresa:'embarcador',nome:'Pessoa sintética'};
+
+test('download usa a mesma autenticação e devolve arquivo',async()=>{
+  const api=base((url,o)=>{assert.equal(o.headers.Authorization,'Bearer access-1');return new Response('indice;temperatura\n0;5',{headers:{'Content-Type':'text/csv'}});});
+  await api.login('sintetico@example.test','sintetico');
+  const arquivo=await api.request('/sessoes/abc/leituras/def/temperaturas?formato=csv',{download:true});
+  assert.equal(await arquivo.text(),'indice;temperatura\n0;5');
+});
 function base(handler) { return createApi(async (url, options) => {
   if(url.endsWith('/auth/login')) return reply(tokens(1));
   if(url.endsWith('/auth/me')) return reply(me);

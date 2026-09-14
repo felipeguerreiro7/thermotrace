@@ -24,7 +24,7 @@ class Evidencia(Entrada):
     uid_canonico: UID
     versao_sdk: str = Field(min_length=1, max_length=64)
     versao_decodificador: str = Field(min_length=1, max_length=64)
-    resposta_bruta: list[Bruto] = Field(min_length=1, max_length=64)
+    resposta_bruta: list[Bruto] = Field(min_length=1, max_length=65547)
     origem: Literal['declaracao_android', 'simulacao']
 
     @field_validator('lida_em')

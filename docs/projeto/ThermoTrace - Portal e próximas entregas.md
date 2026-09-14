@@ -67,3 +67,10 @@ Android 0.8.5: isolamento local por conta implementado e testado; revisão de fi
 ## Integração inicial do celular — 14/09/2026
 
 Android 0.8.6 envia manualmente novas sessões com evidência de START para cargas/volumes existentes, preservando recibos. O portal pode consultar evidências que a API efetivamente recebeu; esta entrega não acrescenta gráficos ou laudos centrais. Cadastro de catálogo e carga de homologação precisam estar disponíveis antes do percurso real. Seguirem pendentes vínculo entre empresas, continuidade entre aparelhos e consolidação de temperaturas. [[ThermoTrace - Envio de coletas Android 0.8.6]].
+
+
+## Atualização — Portal 0.2, 14/09/2026
+
+WEB-12 parcial entregue: projeção por coleta, gráfico, CSV/SVG/relatório e auditoria. WEB-09 parcialmente verificado com dados fictícios no navegador, inclusive largura de celular; homologação com empresas reais de teste no servidor continua pendente. Prioridade seguinte: WEB-10, vínculo autorizado entre empresas, e WEB-03/04, ambiente publicado. As observações anteriores sobre ausência total de gráficos descrevem o Portal 0.1.
+
+[[ThermoTrace - Portal 0.2 e gráficos por coleta]].

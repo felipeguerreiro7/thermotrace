@@ -11,8 +11,36 @@ from app.schemas.ingestao import RegistrarDispositivo, IniciarSessao, ReceberLei
 from app.services import ingestao, idempotencia
 from app.services.auditoria import auditar
 from app.services.cargas import remessa_por_id
+from typing import Literal
+from fastapi import Response
+from app.services import temperaturas
+import hashlib
 
 router=APIRouter(tags=['Recepção de evidências'])
+
+
+@router.get('/sessoes/{sessao_id}/leituras/{leitura_id}/temperaturas')
+def temperaturas_da_coleta(sessao_id:UUID, leitura_id:UUID,
+        formato:Literal['json','csv','svg','html']='json',
+        acesso:Acesso=Depends(operador), db:Session=Depends(obter_sessao)):
+    s,r,v=ingestao.sessao_por_id(db,acesso.empresa.id,sessao_id)
+    l=db.scalar(select(LeituraEtiqueta).where(LeituraEtiqueta.id==leitura_id,
+        LeituraEtiqueta.sessao_id==sessao_id,LeituraEtiqueta.contrato_ingestao=='1'))
+    if not l: raise NaoEncontrado()
+    integra=ingestao.verificar_integridade(db,acesso.empresa.id,sessao_id)['integra']
+    dados=temperaturas.resultado(s,l,r,integra)
+    evento={'sessao_id':str(sessao_id),'formato':formato,'versao':temperaturas.VERSAO,
+            'hash_projecao':dados['hash_projecao'],'conferencia':dados['conferencia']}
+    if formato=='json':
+        auditar(db,'temperaturas_consultadas','leitura_etiqueta',l.id,acesso.usuario,depois=evento)
+        return dados
+    conteudo,mime=temperaturas.exportar(dados,formato)
+    evento['sha256_arquivo']=hashlib.sha256(conteudo.encode('utf-8')).hexdigest()
+    auditar(db,'temperaturas_exportadas','leitura_etiqueta',l.id,acesso.usuario,depois=evento)
+    return Response(conteudo,media_type=mime,headers={
+        'Content-Disposition':f'attachment; filename="ThermoTrace-{leitura_id}.{formato}"',
+        'Cache-Control':'no-store','X-Content-Type-Options':'nosniff',
+        'Content-Security-Policy':"default-src 'none'; style-src 'unsafe-inline'; sandbox"})
 
 
 @router.get('/volumes/{volume_id}/sessoes')

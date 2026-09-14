@@ -14,7 +14,7 @@ export function createApi(fetcher = globalThis.fetch.bind(globalThis)) {
   function clear() { access = ''; refresh = ''; generation++; pendingRefresh = null; }
   const expired = () => new ApiError('Sua sessão terminou. Entre novamente.', 401);
 
-  async function send(path, {method = 'GET', body, token = ''} = {}) {
+  async function send(path, {method = 'GET', body, token = '', download = false} = {}) {
     // Impede o envio de credenciais a destinos externos, inclusive redirects.
     if (!/^\/[a-z][a-z0-9/?=&_%.-]*$/i.test(path) || path.includes('..')) throw new ApiError('Endereço inválido.');
     let response;
@@ -34,7 +34,7 @@ export function createApi(fetcher = globalThis.fetch.bind(globalThis)) {
       throw new ApiError(response.status >= 500 ? 'O serviço está indisponível. Tente novamente em instantes.' : (data.mensagem || fallback[response.status] || 'Não foi possível concluir a consulta.'), response.status);
     }
     if (response.status === 204) return null;
-    return response.json();
+    return download ? response.blob() : response.json();
   }
 
   async function renew() {
@@ -53,11 +53,11 @@ export function createApi(fetcher = globalThis.fetch.bind(globalThis)) {
     try { await task; } finally { if (pendingRefresh === task) pendingRefresh = null; }
   }
 
-  async function request(path) {
+  async function request(path, {download = false} = {}) {
     if (!access) throw expired();
     const current = generation, previous = access;
     try {
-      const data = await send(path, {token:previous});
+      const data = await send(path, {token:previous, download});
       if (current !== generation) throw expired();
       return data;
     } catch (error) {
@@ -66,7 +66,7 @@ export function createApi(fetcher = globalThis.fetch.bind(globalThis)) {
       if (access === previous) await renew();
       if (current !== generation) throw expired();
       try {
-        const data = await send(path, {token:access});
+        const data = await send(path, {token:access, download});
         if (current !== generation) throw expired();
         return data;
       } catch (retryError) {

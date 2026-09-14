@@ -301,3 +301,14 @@ Evidência: 135 testes JVM, build/lint sem erros e instrumentação no emulador.
 - [ ] Reteste NFC e TT-005/TT-057 continuam abertos. Nenhum teste automatizado desta etapa equivale a bancada.
 
 Detalhes e roteiro: [[ThermoTrace - Envio de coletas Android 0.8.6]].
+
+
+## Atualização — Portal 0.2, 14/09/2026
+
+- [x] Gráficos e exportações centrais por coleta, sem consolidar snapshots.
+- [x] Corrigir limite do histórico no Android/API e validar 648 medições.
+- [ ] WEB-10: compartilhar uma carga por autorização explícita, com escopo e revogação.
+- [ ] Conferir domínio/Render e fluxo integrado de homologação.
+- [ ] Consolidar viagem e excursões, completar administração e processos de atendimento.
+
+[[ThermoTrace - Portal 0.2 e gráficos por coleta]].

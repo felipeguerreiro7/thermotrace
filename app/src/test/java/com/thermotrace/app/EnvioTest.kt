@@ -39,6 +39,13 @@ class EnvioTest {
         val old=d.inicio().copy(corpoJson=JSONObject(d.inicio().corpoJson).put("resposta_start",JSONArray().put("á".repeat(131072)).put("x")).toString())
         assertThrows(IllegalArgumentException::class.java) { ContratoEnvio.inicio(d.sessao(),d.vinculo(),old) }
     }
+    @Test fun historicoDe648MedicoesNaoEhLimitadoA64Campos() {
+        val l=d.leitura(30)
+        val raw=JSONArray((0 until 660).map { "5" })
+        val origem=d.outbox(l).copy(corpoJson=JSONObject(d.outbox(l).corpoJson).put("raw_sdk_response",raw).toString())
+        val p=ContratoEnvio.leitura(d.sessao(),d.vinculo(),l,origem)
+        assertEquals(660,JSONObject(p.corpo).getJSONArray("resposta_bruta").length())
+    }
     @Test fun reciboValidoConfere() { ContratoEnvio.conferirRecibo(d.recibo(inicio()).toString(),inicio(),d.vinculo()) }
     @Test fun reciboDeOutraColetaEmpresaCargaOuVolumeNaoConfirma() {
         for(campo in listOf("evento_id","sessao_id","empresa_id","volume_id","remessa_id")) {

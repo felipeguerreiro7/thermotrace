@@ -66,3 +66,10 @@ Próxima sessão de desenho: acompanhar uma carga fictícia do cadastro ao relat
 Na 0.8.6, o vínculo é por sessão: operador entra antes da nova ativação, coleta, abre a remessa, escolhe carga/volume online, confirma destino e toca em Enviar. Sem recibo válido salvo, o estado continua pendente. No erro, repetir o mesmo envio; em conflito, preservar e revisar, sem gerar uma identidade nova para contornar a recusa.
 
 Definir na próxima rodada o responsável por criar carga/catálogo, corrigir vínculo incorreto, atender conflito, receber evidência de outro aparelho e decidir sobre legado sem START original. Ainda não há procedimento operacional homologado. [[ThermoTrace - Envio de coletas Android 0.8.6]].
+
+
+## Atualização — Portal 0.2, 14/09/2026
+
+Processo implementado no portal: operador autorizado localiza a carga → escolhe volume/sessão/comprovante → confere curva/avisos → exporta medições, gráfico ou relatório. Consulta/exportação registra autoria na auditoria. Em divergência, preservar a evidência e encaminhar para responsável de qualidade; não tratar a cor de reconciliação como aprovação do produto. Próximo desenho: autorização de acesso entre dono da carga e transportadora, com aceite, escopo e revogação.
+
+[[ThermoTrace - Portal 0.2 e gráficos por coleta]].

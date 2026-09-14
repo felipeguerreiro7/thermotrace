@@ -28,3 +28,10 @@ Média amostral deve ser nomeada assim. Tempo fora da faixa e MKT só após homo
 Servidor emite relatório a partir de snapshot validado, salva arquivo e manifesto, registra hash e evento. Leitura tardia não muda PDF anterior: gera versão substituta com justificativa. Link de verificação exige autenticação ou token de escopo mínimo, sem expor nota/carga publicamente.
 
 O kit inicial trata apenas consolidação/deduplicação/conflito de pontos. Renderização, métricas térmicas e assinatura ainda precisam ser integradas.
+
+
+## Atualização — Portal 0.2, 14/09/2026
+
+Gráfico central por coleta disponível no Portal 0.2: curva, faixa, mínima/máxima, exploração de pontos, CSV, SVG e relatório HTML imprimível. Divergências ficam visíveis e a base nominal de tempo é explicitada. Hash e versão acompanham a projeção; não há fusão de snapshots, correção de relógio, diagnóstico de causa ou liberação automática de carga.
+
+[[ThermoTrace - Portal 0.2 e gráficos por coleta]].

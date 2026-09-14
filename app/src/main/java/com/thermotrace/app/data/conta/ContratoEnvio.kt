@@ -30,7 +30,7 @@ object ContratoEnvio {
                     if(it.isNull("identidade")) null else it.getString("identidade")) })
     }
     private fun evidencia(v: VinculoEnvio, evento: String, em: Long, sdk: String, decoder: String, bruto: JSONArray): JSONObject {
-        require(bruto.length() in 1..64) { "Resposta original ausente ou fora do limite de envio." }
+        require(bruto.length() in 1..65547) { "Resposta original ausente ou fora do limite de envio." }
         var bytes = 0
         for (i in 0 until bruto.length()) {
             val s = bruto.get(i); require(s is String && s.length <= 131072)

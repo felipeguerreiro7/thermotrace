@@ -2,9 +2,9 @@
 
 ## Estado em 14/09/2026
 
-Projeto pessoal independente. Android **0.8.6-debug** acrescenta envio manual das coletas para a API 0.4, vínculo explícito de carga/volume e recibos preservados. Novas ativações guardam a resposta original de START; legado sem essa evidência permanece local. **149 testes JVM**, ensaios de fila/migração no emulador e **142 testes API** passaram. Consulte [a entrega Android](ENTREGA-ANDROID-0.8.6.md), [o portal](backend/ENTREGA-PORTAL-0.1.md) e [as notas do projeto](docs/projeto/README.md).
+Projeto pessoal independente. Portal **0.2** e API **0.5** acrescentam gráficos e exportações por coleta, com faixa térmica, avisos de divergência e auditoria. Android **0.8.7-debug** corrige o limite de histórico no envio. **158 testes API, 150 JVM e 13 web** aprovados. Consulte [a entrega do portal](backend/ENTREGA-PORTAL-0.2.md), [a integração Android](ENTREGA-ANDROID-0.8.6.md) e [as notas do projeto](docs/projeto/README.md).
 
-O banco e as preferências locais são separados por servidor, empresa e operador. Envio em segundo plano, continuidade entre aparelhos, compartilhamento autorizado entre empresas e gráficos/laudos centrais permanecem pendentes. Localização e STOP físico ainda não são enviados pela API 0.4. O serviço `thermotrace-api` aparece publicado no print do usuário; URL pública, domínio `thermotrace.com.br`/HTTPS e ensaio integrado real precisam de conferência. As seções históricas abaixo não equivalem à homologação do produto completo.
+O portal oferece CSV, SVG e relatório HTML imprimível em PDF. Cada gráfico representa uma coleta recebida; consolidação da viagem, envio em segundo plano, continuidade entre aparelhos, vínculo autorizado cliente/transportadora e localização/STOP online permanecem pendentes. O serviço `thermotrace-api` aparece publicado no print do usuário; URL pública, domínio `thermotrace.com.br`/HTTPS e ensaio integrado real precisam de conferência. As seções históricas abaixo não equivalem à homologação do produto completo.
 
 Cada entrega passa pelo GitHub com explicação do que mudou e por quê: [rotina de contribuição](CONTRIBUTING.md). Portal e API usam o mesmo serviço, sem recurso pago adicional.
 

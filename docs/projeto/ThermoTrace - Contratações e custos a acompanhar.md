@@ -36,3 +36,10 @@ Relacionados: [[ThermoTrace - Infraestrutura confirmada]], [[ThermoTrace - Hospe
 ## Entrega 0.8.6 — 14/09/2026
 
 Envio inicial usa a API/portal existentes. Nenhuma nova cobrança, contratação ou alteração do Render. Testes rodaram em banco local descartável. Capacidade, retenção e necessidade de armazenamento adicional serão avaliadas com dados medidos do piloto; não é necessário contratar outro serviço para instalar este APK.
+
+
+## Atualização — Portal 0.2, 14/09/2026
+
+Portal 0.2/API 0.5 aproveita o serviço atual no Render, sem dependência paga nova ou compra. Custos da infraestrutura continuam sujeitos à confirmação do ambiente/backup e decisão comercial já registrada.
+
+[[ThermoTrace - Portal 0.2 e gráficos por coleta]].

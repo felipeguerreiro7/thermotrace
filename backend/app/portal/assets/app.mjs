@@ -1,4 +1,5 @@
 import {createApi, audience} from './api.mjs';
+import {temperaturePanel} from './chart.mjs';
 
 const api = createApi();
 const root = document.querySelector('#app');
@@ -101,7 +102,7 @@ async function detail(id) {
   try {
     const r=await api.request(`/remessas/${id}`); if(ticket!==view)return;
     content.replaceChildren(button('← Voltar às cargas',()=>navigate('cargas'),'secondary back'),heading(r.codigo,r.descricao_carga||'Detalhes e evidências da carga'));
-    content.append(notice('As coletas abaixo são comprovantes recebidos pelo servidor. Temperaturas consolidadas, gráfico e relatório central ainda não estão disponíveis. O encerramento lógico não comprova a parada física da etiqueta.'));
+    content.append(notice('Escolha uma coleta para consultar o gráfico e baixar os registros recebidos. Cada gráfico mostra o histórico daquele bipe; não soma coletas repetidas. A confirmação de parada da etiqueta ainda permanece no aplicativo.'));
     const grid=el('div',undefined,'grid'), summary=el('section',undefined,'card'), docs=el('section',undefined,'card');
     summary.append(el('h2','Resumo da carga'),values([['Situação',statuses[r.status]||r.status],['Destinatário',r.destinatario_nome],['Criada em',date(r.criado_em)],['Intervalo',`${r.intervalo_segundos} segundos`]]));
     if(r.criterio) { const d=el('details');d.append(el('summary','Critério térmico preservado'),json(r.criterio));summary.append(d); }
@@ -144,10 +145,28 @@ function receipts(id,target,trigger,ticket,after=0){
   return action(target,trigger,ticket,async()=>{
     const rows=await api.request(`/sessoes/${id}/leituras?limite=20&apos_ordem=${after}`), panel=el('div'), evidence=el('div',undefined,'result');
     if(!rows.length) panel.append(el('p','Nenhum comprovante nesta página.','muted'));
-    else panel.append(table(['Ordem','Coleta','Recebida no servidor','Evidência'],rows.map(r=>[r.ordem_recebimento,r.tipo,date(r.recebida_em_servidor),button('Abrir',e=>action(evidence,e.currentTarget,ticket,async()=>json(await api.request(`/sessoes/${id}/leituras/${r.leitura_id}`))),'link-button')])));
+    else panel.append(table(['Ordem','Coleta','Recebida no servidor','Temperaturas','Evidência'],rows.map(r=>[r.ordem_recebimento,r.tipo,date(r.recebida_em_servidor),button('Gráfico e relatório',e=>temperatures(id,r.leitura_id,evidence,e.currentTarget,ticket),'link-button'),button('Abrir',e=>action(evidence,e.currentTarget,ticket,async()=>json(await api.request(`/sessoes/${id}/leituras/${r.leitura_id}`))),'link-button')])));
     if(after>0)panel.append(button('Voltar ao início',e=>receipts(id,target,e.currentTarget,ticket)));
     if(rows.length===20)panel.append(button('Próximos comprovantes',e=>receipts(id,target,e.currentTarget,ticket,rows.at(-1).ordem_recebimento)));
     panel.append(evidence);return panel;
+  });
+}
+
+function temperatures(session,id,target,trigger,ticket) {
+  const path=`/sessoes/${session}/leituras/${id}/temperaturas`;
+  return action(target,trigger,ticket,async()=>{
+    const data=await api.request(path);
+    return temperaturePanel(data,async(format,control,error)=>{
+      control.disabled=true; error.textContent='';
+      try {
+        const blob=await api.request(`${path}?formato=${format}`,{download:true});
+        if(ticket!==view)return;
+        const url=URL.createObjectURL(blob),a=document.createElement('a');
+        a.href=url; a.download=`ThermoTrace-${id}.${format}`; a.click();
+        setTimeout(()=>URL.revokeObjectURL(url),1000);
+      } catch(e) { if(ticket===view)showError(e,error); }
+      finally { control.disabled=false; }
+    });
   });
 }
 
