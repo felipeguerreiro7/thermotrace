@@ -43,3 +43,10 @@ A prévia local em http://127.0.0.1:8765/portal usa dados fictícios e não aces
 3. WEB-11: telas de cadastro/convite e recuperação segura do acesso; controlar permissões de gestor e suporte.
 4. WEB-12 restante: consolidação versionada entre snapshots, excursões/duração e relatório da viagem; não somar históricos repetidos. Validar regra de tempo e dados divergentes antes de análise avançada.
 5. Operação: verificar backup/restauração e acesso restrito do banco antes de dados reais. Detalhar processos de contratação, preparação da carga, transporte, recebimento, triagem de desvio e suporte.
+
+
+## Publicação no GitHub — Portal 0.2, 14/09/2026
+
+Código enviado: [4ba684a](https://github.com/felipeguerreiro7/thermotrace/commit/4ba684ad6d48e981405f6e07e9471f0137d5ce7b). Push em main concluído e SHA remoto conferido igual ao local. Mensagem explica gráficos/exportações auditadas por coleta, correção do limite de histórico, testes e limites. 158 testes API, 150 JVM e 13 web aprovados; APK 0.8.7-debug gerado.
+
+37 notas do projeto sincronizadas. O envio ao GitHub não comprova deploy bem-sucedido no Render; domínio/HTTPS e ensaio integrado continuam pendentes. Nenhuma contratação nova. Detalhes: [[ThermoTrace - Portal 0.2 e gráficos por coleta]].

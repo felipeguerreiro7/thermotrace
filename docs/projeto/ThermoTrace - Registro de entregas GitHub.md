@@ -52,3 +52,10 @@ Código publicado: [6699e60](https://github.com/felipeguerreiro7/thermotrace/com
 149 testes JVM e 142 testes API passaram. Emulador verificou fila após falhas/rollback/reabertura, isolamento e migrações sintéticas 2/3/4/5/6→7. APK código 18 instalado e aberto. Lint: zero erros e 24 avisos. Nenhum ensaio físico ou publicação Render foi declarado.
 
 Obsidian atualizado com roteiro, limites, backlog e processo de primeiro envio. Sem nova contratação. Próximos passos: homologação integrada com catálogo/conta, consolidação de temperaturas/gráficos centrais e evolução da fila. [[ThermoTrace - Envio de coletas Android 0.8.6]].
+
+
+## Publicação no GitHub — Portal 0.2, 14/09/2026
+
+Código enviado: [4ba684a](https://github.com/felipeguerreiro7/thermotrace/commit/4ba684ad6d48e981405f6e07e9471f0137d5ce7b). Push em main concluído e SHA remoto conferido igual ao local. Mensagem explica gráficos/exportações auditadas por coleta, correção do limite de histórico, testes e limites. 158 testes API, 150 JVM e 13 web aprovados; APK 0.8.7-debug gerado.
+
+37 notas do projeto sincronizadas. O envio ao GitHub não comprova deploy bem-sucedido no Render; domínio/HTTPS e ensaio integrado continuam pendentes. Nenhuma contratação nova. Detalhes: [[ThermoTrace - Portal 0.2 e gráficos por coleta]].
