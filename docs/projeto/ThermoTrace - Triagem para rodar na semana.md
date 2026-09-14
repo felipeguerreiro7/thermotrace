@@ -95,3 +95,48 @@ do projeto já sabe que não pode cumprir.
 Um aparelho, uma etiqueta, sem termômetro aferido e sem servidor. Nada aqui substitui
 TT-011, TT-004, TT-006 ou o aval do responsável de qualidade, todos em
 [[ThermoTrace - Plano de ação e backlog]].
+
+## Sessão de 14/09/2026 — o que saiu
+
+Trabalho feito nos itens que o Codex não havia pego, para não colidir com a frente dele
+(portal e backend). Commits no repositório, com o porquê em cada mensagem.
+
+1. **`291c329` — isolamento por empresa e operador.** Estava pronto no disco desde 13/09
+   19:16 e **não commitado**: 18 arquivos sem rede de proteção. Revisado e registrado.
+   Fecha TT-020/TT-031 do lado Android.
+2. **`82354f1` — gráfico (TT-042 e TT-046).** `Componentes.kt` estava intocado desde o
+   commit inicial. Escala ancorada na faixa, eixo Y rotulado, excursão sombreada, marca de
+   tempo intermediária e leitura por toque. Detalhe deliberado: a legenda mostra sempre o
+   extremo real da série, para o número suspeito do TT-005 continuar visível.
+3. **`188b620` — localização da coleta (TT-047).** Detalhes em
+   [[ThermoTrace - Transparência da coleta e localização]].
+4. **`09fb961` — correção de fim de linha.** Erro meu; a regra ficou registrada.
+5. **`6ee0cab` — aviso de evidência não exportada (TT-054b).** Cada leitura registra quando
+   saiu do aparelho num laudo; a tela inicial avisa quantas existem somente no celular.
+   Separado de `sincronizada` de propósito: aquilo é fila para servidor, isto é cópia em
+   arquivo — e enquanto não há servidor, a exportação é a única cópia possível.
+
+### O que segue aberto, e por quê
+
+1. **TT-005** continua o bloqueador declarado. Precisa da leitura do Diagnóstico na etiqueta
+   e da comparação com o app do fabricante — nada disso se resolve em código.
+2. **Suíte de testes sem executar** desde o build de 12/09 11:23. Entraram desde então o
+   `ReconciliacaoTest`, o `EscopoLocalTest`, o `LeituraViewModelTest` e o
+   `ExportacaoAuditoriaTest`, além de tudo desta sessão. `:app:testDebugUnitTest` é o menor
+   esforço com maior retorno em confiança hoje.
+3. **Nada desta sessão foi exercitado em aparelho.** Gráfico novo, fix de GPS e aviso de
+   exportação foram compilados, não usados.
+4. **WEB-10** (vínculo dono da carga ↔ transportadora) deixado para o Codex, que declarou
+   como próximo passo dele. Dois agentes no mesmo arquivo foi o que quase deu errado em
+   12/09.
+
+### Atualização no fim da sessão — bloco C, item 1, fechado em código
+
+O item que esta triagem declarou prioridade máxima do bloco C — "a tela precisa deixar
+impossível achar que a etiqueta parou quando o STOP falhou" — saiu no commit `65431d9`.
+A confirmação do STOP deixou de ser frase de tela e virou coluna da sessão, com aviso na
+remessa e coluna própria na aba Auditoria. Detalhe e limites em
+[[ThermoTrace - Fechamento do ciclo e STOP]].
+
+Continua valendo, sem atenuação: **nada disso foi exercitado em etiqueta real**, e o
+ensaio da semana encosta nisso primeiro.

@@ -97,3 +97,31 @@ Nada aqui corrige o TT-005. A mínima de −29,8 °C do ensaio de 12/09 é anter
 apresentação: melhorar o gráfico sem resolver a decodificação só deixaria um número errado
 mais bonito. A ordem correta é comparar com o app do fabricante e com termômetro aferido,
 depois desenhar.
+
+## Executado em 14/09/2026 — commit 82354f1
+
+Os sete problemas do gráfico listados acima foram atacados. O que mudou, e por quê:
+
+1. **Escala ancorada na faixa aprovada**, com folga de 35% da largura da faixa. Ponto fora
+   da escala é desenhado na borda com marca de recorte, e o extremo real da série aparece na
+   legenda. Era o problema principal: no ensaio de 12/09 a faixa de 7 a 14 °C ocupava 11% da
+   altura porque um ponto de −29,8 °C ditava a escala.
+2. **Eixo Y rotulado** nos limites da faixa e nos extremos da escala, desenhado no próprio
+   canvas. Antes o único número era a legenda "escala X a Y", então não se lia valor nenhum.
+3. **Marca de tempo intermediária** além de início e fim.
+4. **Trechos de excursão sombreados**, agrupando pontos consecutivos fora da faixa.
+5. **Pontos fora da faixa em cor de excursão** e **lacunas como interrupção da linha** —
+   ambos já existiam e foram preservados.
+6. **Leitura por toque e arraste** (TT-046): linha de leitura sobre o gráfico e o valor,
+   horário e situação do ponto no topo. No topo, e não em balão, porque balão num gráfico de
+   celular fica embaixo do dedo que o invocou.
+7. **Leitura de topo** com o último valor para quem só quer o número.
+
+Decisão mantida: código próprio sobre o `Canvas` existente, sem biblioteca de gráfico. A
+semântica de auditoria — faixa preservada na criação da carga, lacunas por `iniciaTrecho`,
+excursões — não se encaixa no modelo de dados de uma biblioteca genérica sem a evidência se
+acomodar ao gráfico.
+
+**Não corrige o TT-005.** A legenda passou a mostrar sempre o extremo real da série ao lado
+da faixa, justamente para o número suspeito continuar visível em vez de ficar escondido
+atrás de um desenho melhor. Pendente de validação visual no aparelho.

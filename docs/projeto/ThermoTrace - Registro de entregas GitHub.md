@@ -32,3 +32,14 @@ A documentação é enviada em commit separado, com a rotina de trabalho e as 31
 Estado Render da entrega: ainda não verificado. O print do usuário é anterior ao envio deste código. Confirmar o commit b20678f na página de deploys e abrir /portal na URL pública real. Domínio/HTTPS continuam pendentes. Nenhuma configuração de infraestrutura foi alterada.
 
 Pendências de produto: [[ThermoTrace - Portal e próximas entregas]]. Publicação/domínio: [[ThermoTrace - Infraestrutura confirmada]].
+
+
+## Android 0.8.5 — revisão integrada, 14/09/2026
+
+- Código publicado: [43563f6](https://github.com/felipeguerreiro7/thermotrace/commit/43563f6f2ac0f0df718fff8c1b867adf38f2ce55); main local e remoto conferidos iguais após push. Os commits do Opus 1b76ec9, 65431d9 e ca28bde foram preservados e incluídos no envio.
+- Motivo: evitar STOP antes da persistência no atalho Home, evitar confirmação indevida de cópia, preservar a primeira confirmação de STOP e verificar migrações do histórico.
+- Evidências: 135 testes JVM passaram, lint sem erros, APK 0.8.5-debug/código 17 instalado e aberto no emulador; testes de isolamento e migrações sintéticas 2/3/4/5→6 passaram. Migração 1→2, banco antigo real e NFC no aparelho permanecem pendentes.
+- Obsidian: revisão integrada, backlog, central e fechamento atualizados. Criadas as notas de processos e de contratações/custos. Cópia em docs/projeto acompanha em commit documental próprio.
+- Sem custo novo, alteração de infraestrutura ou comprovação de deploy Render. Fila Android integrada à API 0.4 é a próxima entrega.
+
+[[ThermoTrace - Revisão integrada Android 0.8.5]] · [[ThermoTrace - Contratações e custos a acompanhar]] · [[ThermoTrace - Processos do produto e da empresa]]

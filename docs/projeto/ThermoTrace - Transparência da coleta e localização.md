@@ -127,3 +127,55 @@ Razões:
 ## Implementação parcial — 0.8.3
 
 Histórico das coletas da sessão implementado no cartão do volume e no relatório, com detalhes expansíveis e conferência interna dos dados. [[ThermoTrace - Histórico e auditoria Android 0.8.3]]. Temperatura instantânea e histórico da série ficam identificados separadamente. Decisão de Play Services já aprovada em D07; o trecho “decisão pendente” acima é histórico. Localização e gráfico interativo ainda não implementados.
+
+## Executado em 14/09/2026 — TT-047, commit 188b620
+
+Implementação da localização da coleta, seguindo a decisão D07 (Play Services).
+
+### O que foi construído
+
+1. `data/local/Localizador.kt` — `FusedLocationProviderClient.getCurrentLocation` com prazo de
+   8 s, prioridade alta quando há permissão fina e balanceada quando só há aproximada.
+   Devolve `FixLocal` com latitude, longitude, precisão em metros, provedor e **instante do
+   fix**, mais o cálculo de idade do ponto.
+2. Banco na versão 3, com migração escrita à mão. Cinco colunas anuláveis em `leitura`.
+   Nada retroativo: leitura antiga não tem localização, e preencher com a posição de hoje
+   seria inventar evidência.
+3. O fix entra na **mesma transação** da leitura, pelo `FluxoRapido`. Gravar depois abriria
+   uma janela em que a evidência existe e a localização não, e evidência com estado
+   intermediário não se audita.
+4. Permissão pedida em contexto, só depois de a coleta existir, com a explicação de para que
+   serve. Apenas primeiro plano. Negar não impede operação nenhuma.
+5. Aba Auditoria do laudo ganhou latitude, longitude, precisão, provedor e instante do fix.
+
+### As três regras que guiaram o desenho
+
+1. **O bipe nunca espera o GPS.** O pedido sai em paralelo quando a tela arma; entre armar e
+   o operador encostar a etiqueta há segundos de sobra. Não chegou, grava sem — falha de fix
+   é resultado normal, não erro.
+2. **A coordenada é evidência; o endereço não.** Geocodificação exige rede, e doca, câmara
+   fria e caminhão são exatamente onde não há. Endereço fica fora.
+3. **Precisão e idade andam sempre junto da coordenada**, e o texto diz que é a posição do
+   celular, não da carga. Um ponto com quilômetros de erro anunciado como "local da coleta" é
+   pior que nenhum ponto.
+
+### Fora de escopo, de propósito
+
+Endereço legível; exibição na linha do tempo da remessa; e a **divulgação de privacidade** —
+localização é dado pessoal do operador e precisa entrar na política prevista em
+[[ThermoTrace - Publicação e operação]]. Sem ensaio em aparelho ainda: o fix real nunca foi
+obtido em campo.
+
+### Erro de processo corrigido no mesmo dia — commit 09fb961
+
+As edições por script gravaram cinco arquivos inteiros em LF, e o projeto usa CRLF. O git
+passou a ver arquivo reescrito por completo: `Repositorio.kt` aparecia com 1402 linhas
+alteradas quando a mudança real eram 6.
+
+Não é cosmético. Diff ilegível esconde a mudança de verdade na revisão, e arquivo inteiro
+reescrito vira conflito garantido quando outro agente edita o mesmo arquivo em paralelo —
+que é o cenário deste projeto. O `.gitattributes` com `* -text` impede o git de converter,
+mas não impede um editor de gravar tudo em LF.
+
+Regra para as próximas edições por script, de qualquer IA: preservar o fim de linha original
+do arquivo.

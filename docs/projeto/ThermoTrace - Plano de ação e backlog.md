@@ -133,7 +133,7 @@ Pedido do usuário: gráfico e tela de coleta mais claros e intuitivos. Proposta
 problemas com origem no código e a decisão pendente em
 [[ThermoTrace - Proposta de gráfico e coleta]].
 
-- [ ] TT-042 P1 — Gráfico: escala ancorada na faixa com marca de recorte, eixo Y rotulado, marcas de tempo intermediárias, excursão sombreada, limites rotulados, pontos fora da faixa em cor distinta, lacuna visível e leitura de topo com o último valor. Aceite: a faixa aprovada permanece legível mesmo com ponto extremo, e nenhum extremo é escondido.
+- [x] TT-042 P1 — FEITO em 14/09 (commit 82354f1): Gráfico: escala ancorada na faixa com marca de recorte, eixo Y rotulado, marcas de tempo intermediárias, excursão sombreada, limites rotulados, pontos fora da faixa em cor distinta, lacuna visível e leitura de topo com o último valor. Aceite: a faixa aprovada permanece legível mesmo com ponto extremo, e nenhum extremo é escondido.
 - [ ] TT-043 **P0** — Tela de coleta. ELEVADO A P0 em 12/09/2026: o ensaio mostrou coletas baixadas e nunca registradas, com a etiqueta gravando e o app dizendo SEM LEITURA. É perda de evidência, não conforto. Evidência em [[ThermoTrace - Ensaio em aparelho 2026-09-12]]. Escopo: barra de ação fixa com o registrar sempre visível, estados nomeados no painel (aguardando, lendo, baixado, registrado), estado de sucesso explícito, "Verificar agora" como ação secundária. Aceite: nenhuma coleta bem-sucedida depende de rolagem para ser registrada.
 - [x] TT-044 P0 de produto — DECIDIDO em 12/09/2026 pelo usuário: checkpoint registra automaticamente no bipe; ativação e leitura final seguem exigindo ato explícito. Registro em [[ThermoTrace - Decisões e pendências]] (D08). Implementado no build 13:51, pendente de validação no aparelho. Antes do piloto, a decisão ainda precisa do aval do responsável de qualidade.
 - [ ] Unificar vocabulário: "check-in" do usuário x "Checkpoint" da tela x "Trajeto" do trilho.
@@ -146,8 +146,8 @@ estar errado só deixa o erro mais convincente.
 Pedido do usuário e pesquisa técnica em [[ThermoTrace - Transparência da coleta e localização]].
 
 - [ ] TT-045 P1 — Histórico completo de coletas no cartão do volume: tipo, data/hora, temperatura instantânea, registros baixados e veredito por coleta, com desvio de relógio e versão do decodificador num detalhe expansível. Só apresentação; dados já persistidos. Aceite: o laudo pode ser explicado meses depois sem abrir o banco.
-- [ ] TT-046 P1 — Gráfico interativo: linha de leitura por toque/arraste com temperatura, horário e situação do ponto; seleção de janela de tempo. Depende do TT-042. Decisão tomada: código próprio sobre o Canvas atual, sem biblioteca de gráfico.
-- [ ] TT-047 P1 — Localização da coleta: gravar latitude, longitude, precisão, provedor e instante do fix na mesma transação da evidência; endereço apenas como enriquecimento posterior marcado como tal; coleta nunca espera o GPS; "sem localização" explícito. Aceite: nenhuma leitura é perdida ou atrasada por falta de fix, e nenhum ponto é apresentado sem precisão e idade.
+- [x] TT-046 P1 — FEITO em 14/09 (commit 82354f1), por código próprio sobre o Canvas, sem biblioteca: Gráfico interativo: linha de leitura por toque/arraste com temperatura, horário e situação do ponto; seleção de janela de tempo. Depende do TT-042. Decisão tomada: código próprio sobre o Canvas atual, sem biblioteca de gráfico.
+- [x] TT-047 P1 — FEITO em 14/09 (commit 188b620), pendente de ensaio em aparelho: Localização da coleta: gravar latitude, longitude, precisão, provedor e instante do fix na mesma transação da evidência; endereço apenas como enriquecimento posterior marcado como tal; coleta nunca espera o GPS; "sem localização" explícito. Aceite: nenhuma leitura é perdida ou atrasada por falta de fix, e nenhum ponto é apresentado sem precisão e idade.
 - [x] TT-048 P0 de produto — DECIDIDO em 12/09/2026 pelo usuário: adicionar Google Play Services e usar `FusedLocationProviderClient.getCurrentLocation()`. Registro em [[ThermoTrace - Decisões e pendências]] (D07). Aparelhos sem serviços Google ficam sem localização e o app deve operar inteiro nessa condição.
 - [ ] TT-049 — Divulgação e privacidade da localização: é dado pessoal do operador. Entra na política de privacidade e nos campos protegidos contra alteração.
 - [ ] A confirmar antes de qualquer adoção de biblioteca de gráfico: suporte de Vico a marcador por toque, zoom/pan e API mínima.
@@ -189,7 +189,7 @@ Triagem completa, com o que impede liberação e o que foi feito, em
 - [x] TT-051b — Evidência bruta e confronto na exportação: a aba Auditoria passou a levar mínima/máxima declaradas pela etiqueta, contagens de pontos fora da faixa, coluna "Reconciliado" e a resposta bruta inteira. Antes só os hashes iam, o que provava integridade mas não permitia redecodificar. Torna o TT-005 investigável a partir do Excel.
 - [x] TT-052b — Removido cast morto `context as ComponentActivity` na tela de leitura: podia lançar ClassCastException sem entregar nada.
 - [x] TT-053b P0 — RESOLVIDO no build 14:32. Defeito encontrado na revisão: a tela formal de leitura final usava `Download`, que só baixa, em vez de `Encerrar`, que baixa e depois envia o STOP — a remessa era encerrada e a etiqueta continuava gravando, sem aviso. Agora usa `Encerrar`, distingue os três estados do STOP na tela e oferece "Parar registro" quando ele não se confirma. Atende ao aceite do TT-012 na tela de leitura. Pendente de ensaio contra etiqueta real.
-- [ ] TT-054b P1 — Aviso de evidência não exportada: com um só aparelho e `allowBackup=false`, o app deve dizer quando há coleta que nunca saiu do celular.
+- [x] TT-054b P1 — FEITO em 14/09 (commit 6ee0cab): Aviso de evidência não exportada: com um só aparelho e `allowBackup=false`, o app deve dizer quando há coleta que nunca saiu do celular.
 - [ ] Rodar `:app:testDebugUnitTest`. 97 passaram no build 11:23; desde então houve cinco casos novos e várias mudanças sem teste executado. Menor esforço, maior retorno em confiança.
 
 
@@ -225,3 +225,66 @@ Prioridade atual: checkpoint e leitura final no aparelho, junto da coleta de evi
 TT-010: remoto privado já criado pelo usuário e origin/main conferido. Rotina permanente de commits com motivo em CONTRIBUTING.md; notas do projeto copiadas para docs/projeto. Aceite de clone limpo do Android ainda aberto. TT-064: serviço Render aparece publicado; endereço público, vínculo DNS/HTTPS e fluxo completo de homologação ainda pendentes.
 
 Cliente = dono da carga; contratante = transportadora. Nenhuma autorização entre empresas será inferida por NF, destinatário ou nome da empresa. O detalhamento da entrega e dos testes fica em [[ThermoTrace - Registro de entregas GitHub]].
+
+
+## Sessão de 14/09/2026 — evidência que sobrevive à saída da tela
+
+Duas mudanças da mesma família: verificação que o app fazia e esquecia passou a
+ser registro consultável depois. Detalhe em
+[[ThermoTrace - Fechamento do ciclo e STOP]].
+
+- [x] TT-055b P1 — Commit `1b76ec9`. A linha do tempo da remessa mostra **qual**
+  coleta não foi conferida e **por quê**. O cartão do volume já contava
+  "N coleta(s) precisam de conferência" e mandava consultar o histórico abaixo,
+  mas o histórico não dizia nada — quem assina o laudo via o número e não tinha
+  como chegar na coleta. A conferência é recalculada de `respostaBruta`, que é
+  imutável, então vale também para leitura gravada antes de a conferência existir,
+  sem migração e sem reescrever evidência. Mesmo critério do contador (`!conferida`),
+  para os dois números nunca se contradizerem.
+- [x] TT-055 P0 — Commit `65431d9`. Confirmação do STOP virou coluna da sessão
+  (`loggerParadoEmMillis`, migração 4 → 5). Antes, "encerrada" só dizia que o
+  celular gravou o histórico; se o STOP falhasse, a etiqueta seguia gravando e
+  nada contradizia a palavra ENCERRADO depois que o operador saía da tela de
+  coleta. Agora a tela da remessa avisa em vermelho e a aba Auditoria separa
+  "Sessão encerrada em" de "STOP confirmado pela etiqueta em". Regra única em
+  `FechamentoDoCiclo`, no domínio, com teste. Fecha o item 1 do bloco C da
+  triagem e a primeira metade do aceite do TT-012.
+- [ ] TT-056 P1 — **Nenhuma migração de banco tem teste.** `exportSchema = false`
+  deixa `MigrationTestHelper` sem referência, e 1→2, 2→3, 3→4 e 4→5 foram escritas
+  à mão. Como `fallbackToDestructiveMigration` está proibido de propósito, migração
+  errada não perde dado: trava o app na abertura, com a evidência presa dentro.
+  Ligar `exportSchema`, versionar os JSONs e testar daqui em diante. Ressalva
+  honesta: isso só exporta a v5, então 4→5 continua sem teste retroativo — o valor
+  é para as próximas.
+- [ ] TT-057 P2 — Reuso seguro da etiqueta depois do STOP confirmado (segunda
+  metade do aceite do TT-012). Depende de bancada, não de código.
+- [x] TT-047b P1 — Commit `ca28bde`. **Onde foi a coleta**, no cartão do volume e na
+  linha do tempo. A coordenada já era gravada desde `188b620`, mas só aparecia no
+  instante do bipe — mesmo defeito de família das duas linhas acima. Pedido direto do
+  usuário em 13/09: "pode trazer na tela a localização exata que foi feita a última
+  coleta". Detalhe que importa: a idade do fix é medida contra o instante do **bipe**,
+  não contra agora — no histórico, "fix de 4 meses antes" não responderia nada; a
+  pergunta é "o fix era do momento da coleta?". `fixDaColeta()` exige coordenada,
+  provedor e instante juntos, porque meia evidência vira evidência inventada na tela.
+  Sem localização a linha continua aparecendo e diz que não houve.
+- [ ] TT-047c P2 — Endereço legível e aviso de privacidade sobre a localização do
+  operador. Continuam fora de escopo: endereço exige rede, e doca e câmara fria são
+  justamente onde não há.
+- [ ] Ensaiar em etiqueta real tudo que saiu em 14/09: gráfico, localização,
+  aviso de exportação, alerta de conferência e confirmação de STOP. **Nada disso
+  passou por hardware** — só compilou e instalou no emulador.
+
+## Revisão integrada — Android 0.8.5, 14/09/2026
+
+Este bloco atualiza os estados anteriores sem apagar o histórico do Opus.
+
+- [x] Isolamento local por servidor/empresa/operador implementado e ensaiado no emulador, incluindo reabertura, fila e preferências.
+- [x] TT-055: confirmação do primeiro STOP atômica e erro de persistência visível; atalho Home usa fluxo que grava a leitura antes de solicitar STOP. Aceite físico de TT-012 continua pendente.
+- [x] Correção do aviso de cópia: destino escolhido, escrita fechada e conteúdo relido/conferido antes de marcar. Nova coluna não herda confirmações inseguras antigas; arquivo no celular não comprova backup remoto.
+- [x] TT-056 parcial: exportSchema ligado, schemas 5/6 versionados e migrações 2/3/4/5→6 ensaiadas com fixtures sintéticas; V2–V4 reconstruídas, V5 exportada.
+- [ ] TT-056 restante: migração 1→2 e atualização de banco físico real com histórico preservado.
+- [ ] Retestar NFC checkpoint/final/STOP, exportação pelo seletor de arquivos e localização no A57. TT-005 e TT-057 continuam abertos.
+- [ ] Próxima implementação P0: fila autenticada da API 0.4, vínculo de carga/volume e recibos idempotentes. Depois, temperaturas/gráficos centrais e compartilhamento explícito por contrato.
+- [ ] Detalhar processos de app, site e empresa a partir de [[ThermoTrace - Processos do produto e da empresa]]. Avaliar contratações por dependência comprovada em [[ThermoTrace - Contratações e custos a acompanhar]].
+
+Evidência: 135 testes JVM, build/lint sem erros e instrumentação no emulador. Detalhe em [[ThermoTrace - Revisão integrada Android 0.8.5]].

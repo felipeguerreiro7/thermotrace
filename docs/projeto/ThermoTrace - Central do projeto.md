@@ -29,6 +29,7 @@ Cliente entra na própria conta, identifica uma carga, aproxima o celular da eti
 - [[ThermoTrace - Ensaio em aparelho 2026-09-12]]
 - [[ThermoTrace - Proposta de gráfico e coleta]]
 - [[ThermoTrace - Transparência da coleta e localização]]
+- [[ThermoTrace - Fechamento do ciclo e STOP]]
 - [[ThermoTrace - TT-005 reconciliação cabeçalho x série]]
 
 ## Prioridade imediata
@@ -86,3 +87,13 @@ Confirmado pelo usuário: ThermoTrace é um projeto pessoal independente, sem v�
 Portal 0.1 implementado junto da API: login real, cargas/documentos/volumes/comprovantes, equipe/auditoria por permissão e lista de empresas para staff. Não dá acesso automático entre empresas e não apresenta gráfico central sem temperaturas consolidadas. [[ThermoTrace - Infraestrutura confirmada]] e [[ThermoTrace - Registro de entregas GitHub]].
 
 Android permanece 0.8.3, com reteste físico de checkpoint/final e TT-005 abertos. Próximo desenvolvimento independente da bancada: isolamento local e fila integrada; depois, compartilhamento autorizado dono/transportadora e gráficos/exportações. Decisões e status mais antigos acima são registros históricos.
+
+## Estado atual — revisão integrada de 14/09/2026
+
+Android 0.8.5-debug, código 17: melhorias do Opus preservadas e revisão concluída. 135 testes JVM passaram; isolamento local e migrações sintéticas 2/3/4/5→6 passaram no emulador. O isolamento por conta está implementado; a fila autenticada com recibos da API 0.4 é a próxima prioridade. Leitura final/STOP e exportação receberam correções, ainda sujeitos a reteste físico.
+
+- [[ThermoTrace - Revisão integrada Android 0.8.5]] — alterações, evidências e limites.
+- [[ThermoTrace - Contratações e custos a acompanhar]] — avisar cada necessidade com custo verificado antes da contratação; nenhuma despesa nova nesta rodada.
+- [[ThermoTrace - Processos do produto e da empresa]] — estrutura inicial para detalhar após estabilização e integração; não tratar como procedimento operacional homologado.
+
+Portal 0.1 e API 0.4 permanecem. Cliente é dono da carga; contratante é transportadora. Código no GitHub não equivale a homologação física ou publicação confirmada no Render.

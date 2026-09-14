@@ -59,3 +59,7 @@ O portal mostra dados efetivamente recebidos pela API. Não há valores fictíci
 Validação automatizada e identificação dos commits: [[ThermoTrace - Registro de entregas GitHub]]. Ensaio visual e publicação desse commit no Render precisam de verificação própria; a prévia local não os substitui.
 
 Próximo passo implementável independente do hardware: isolamento local e sincronização de evidências, seguido do vínculo autorizado dono/transportadora. Android permanece 0.8.3; esta entrega não gera novo APK.
+
+## Dependência Android atualizada — 14/09/2026
+
+Android 0.8.5: isolamento local por conta implementado e testado; revisão de final/STOP, cópia e migrações concluída no código. A próxima integração continua sendo enviar a fila para a API 0.4 e persistir recibos. Ainda não há consolidação central de temperaturas ou compartilhamento automático de cargas entre cliente e contratante. Esta entrega não altera o portal nem a infraestrutura. [[ThermoTrace - Revisão integrada Android 0.8.5]].
