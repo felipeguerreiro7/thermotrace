@@ -48,9 +48,10 @@ fun rememberNfcOperator(aoEvento: (NfcOperator.NfcEvent) -> Unit): NfcOperator {
     }
     val donoCicloDeVida = LocalLifecycleOwner.current
     val app = activity.application as ThermoTraceApp
+    val preferencias = com.thermotrace.app.LocalDadosLocais.current?.preferencias ?: app.preferencias
 
     val retorno = remember(activity, donoCicloDeVida) {
-        FeedbackOperador(activity) { app.preferencias.atual }
+        FeedbackOperador(activity) { preferencias.atual }
     }
 
     // O callback pode mudar a cada recomposição; o operador, não. Sem isto,

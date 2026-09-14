@@ -99,17 +99,11 @@ class OcorrenciaViewModel(
         }
     }
 
-    /** Caminho normal: enfileira e o servidor envia. */
-    fun enviarPeloServidor(context: Context) = viewModelScope.launch {
-        val alerta = _estado.value.alerta ?: return@launch
-        alertas.enfileirarAlerta(alerta)
-        alertas.marcarAlertaEnviado(
-            alerta.ocorrenciaId, "servidor",
-            alerta.destinatarios.filter { it.recebe(alerta.gravidade) }.map { d -> d.email },
-        )
-        EnvioAlertaWorker.agendar(context)
+    /** Não registrar envio sem comprovação do servidor. */
+    @Suppress("UNUSED_PARAMETER")
+    fun enviarPeloServidor(context: Context) {
         _estado.update {
-            it.copy(mensagem = "Alerta na fila. O servidor envia assim que houver conexão.")
+            it.copy(mensagem = "O envio automático está em integração. Os registros continuam preservados no aparelho.")
         }
     }
 
@@ -290,9 +284,9 @@ fun OcorrenciaScreen(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(
                         onClick = { vm.enviarPeloServidor(context) },
-                        enabled = e.temDestinatarios,
+                        enabled = false,
                         modifier = Modifier.weight(1f),
-                    ) { Text("Enviar pelo servidor") }
+                    ) { Text("Envio em integração") }
                     OutlinedButton(
                         onClick = { vm.enviarPeloApp(context) },
                         modifier = Modifier.weight(1f),

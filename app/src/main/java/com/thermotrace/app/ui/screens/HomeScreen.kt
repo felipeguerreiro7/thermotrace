@@ -99,6 +99,7 @@ fun HomeScreen(
     aoAbrirTutorial: () -> Unit,
     aoAbrirLaudo: (String) -> Unit,
     aoAbrirConta: () -> Unit,
+    contaVinculada: Boolean = false,
 ) {
     val remessas by vm.remessas.collectAsStateWithLifecycle()
     val visiveis by vm.remessasVisiveis.collectAsStateWithLifecycle()
@@ -262,6 +263,10 @@ fun HomeScreen(
         },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
+            TextButton(onClick = aoAbrirConta, modifier = Modifier.fillMaxWidth()) {
+                Text(if (contaVinculada) "Histórico desta conta · envio online em integração"
+                    else "Modo local · registros sem vínculo com empresa")
+            }
 
             if (pendentes > 0) {
                 // O app funciona sem rede de propósito. Mas o operador precisa
@@ -272,8 +277,8 @@ fun HomeScreen(
                     shape = RoundedCornerShape(10.dp),
                 ) {
                     Text(
-                        "$pendentes registro(s) ainda não enviados ao servidor. " +
-                            "Ficam guardados aqui até haver conexão.",
+                        "$pendentes registro(s) preservados neste aparelho. " +
+                            "O envio à conta online ainda está em integração; conexão sozinha não envia esta fila.",
                         Modifier.padding(12.dp),
                         style = MaterialTheme.typography.bodyMedium,
                         color = AmbarAlerta,

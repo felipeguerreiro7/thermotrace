@@ -41,7 +41,6 @@ abstract class ThermoTraceDb : RoomDatabase() {
     abstract fun destinatarioAlertaDao(): DestinatarioAlertaDao
 
     companion object {
-        @Volatile private var instancia: ThermoTraceDb? = null
 
         /**
          * v1 → v2: identidade pelo documento fiscal, verificação de etiqueta
@@ -137,16 +136,13 @@ abstract class ThermoTraceDb : RoomDatabase() {
             }
         }
 
-        fun obter(context: Context): ThermoTraceDb =
-            instancia ?: synchronized(this) {
-                instancia ?: Room.databaseBuilder(
+        fun abrir(context: Context, escopo: com.thermotrace.app.data.conta.EscopoLocal): ThermoTraceDb =
+                Room.databaseBuilder(
                     context.applicationContext,
                     ThermoTraceDb::class.java,
-                    "thermotrace.db",
+                    escopo.banco,
                 )
                     .addMigrations(MIGRATION_1_2)
                     .build()
-                    .also { instancia = it }
-            }
     }
 }

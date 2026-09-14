@@ -286,33 +286,12 @@ fun AjustesScreen(
                 }
             }
 
-            // ---- servidor ----------------------------------------------------
             item {
-                Secao("Servidor de envio") {
-                    Text(
-                        "O e-mail de alerta sai do servidor, não do celular: credencial de " +
-                            "SMTP dentro de um APK entrega a caixa da empresa para quem " +
-                            "descompactar o arquivo.",
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                    Spacer(Modifier.height(10.dp))
-                    OutlinedTextField(
-                        value = url,
-                        onValueChange = vm::alterarUrl,
-                        label = { Text("URL base (https://)") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    Button(onClick = vm::salvarUrl, modifier = Modifier.fillMaxWidth()) {
-                        Text("Salvar servidor")
-                    }
-                    mensagem?.let {
-                        Spacer(Modifier.height(8.dp))
-                        Text(it, style = MaterialTheme.typography.bodyMedium)
-                    }
-                    Spacer(Modifier.height(6.dp))
-                    LinhaInfo("Em uso", a.urlServidor ?: "nenhum (fila local)")
+                Secao("Envio online") {
+                    Text("A sincronização autenticada está em integração. As coletas e os alertas continuam preservados no aparelho; configurar uma URL não envia esta fila.",
+                        style = MaterialTheme.typography.bodyMedium)
+                    Text("Use Conta e cargas para consultar os dados já recebidos no servidor.",
+                        style = MaterialTheme.typography.labelSmall)
                 }
             }
 

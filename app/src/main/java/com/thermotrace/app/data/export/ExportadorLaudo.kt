@@ -53,10 +53,9 @@ class ExportadorLaudo(private val context: Context) {
         EvidenciaBrutaXlsx.adicionar(escritor, entrada.sessoes.flatMap { it.leituras })
 
         val pasta = File(context.cacheDir, "laudos").apply { mkdirs() }
-        val nome = "laudo_${entrada.remessa.remessa.codigo}_" +
-            DateTimeFormatter.ofPattern("yyyyMMdd_HHmm").withZone(zona).format(Instant.now()) +
-            ".xlsx"
-        val arquivo = File(pasta, nome)
+        // Nunca sobrescrever um arquivo já compartilhado, inclusive para códigos iguais entre contas.
+        val codigoSeguro = entrada.remessa.remessa.codigo.replace(Regex("[^A-Za-z0-9_-]"), "_").take(64)
+        val arquivo = File.createTempFile("laudo_${codigoSeguro}_", ".xlsx", pasta)
         arquivo.outputStream().use { escritor.escrever(it) }
         return arquivo
     }

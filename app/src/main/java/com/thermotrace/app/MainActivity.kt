@@ -12,6 +12,19 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -53,7 +66,23 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         val app = application as ThermoTraceApp
         setContent {
-            TemaThermoTrace { TechBackdrop { Navegacao(app) } }
+            val escopo by app.conta.escopo.collectAsStateWithLifecycle()
+            key(escopo.chave) {
+                val dados = remember { app.abrirDados(escopo) }
+                val owner = remember { object : ViewModelStoreOwner {
+                    override val viewModelStore = ViewModelStore()
+                } }
+                DisposableEffect(dados) {
+                    onDispose {
+                        owner.viewModelStore.clear()
+                        // Fecha somente o banco antigo; não bloqueia a UI esperando operações de disco.
+                        CoroutineScope(Dispatchers.IO).launch { dados.db.close() }
+                    }
+                }
+                CompositionLocalProvider(LocalViewModelStoreOwner provides owner, LocalDadosLocais provides dados) {
+                    TemaThermoTrace { TechBackdrop { Navegacao(app, dados) } }
+                }
+            }
         }
     }
 }
@@ -65,28 +94,30 @@ class MainActivity : ComponentActivity() {
  * menos para configurar, e o build fica mais rápido no ciclo de campo, que
  * é onde este app é testado de verdade.
  */
-private class Fabrica(private val app: ThermoTraceApp) : ViewModelProvider.Factory {
-    private val repo: Repositorio get() = app.repositorio
-    private val alertas: RepositorioAlertas get() = app.alertas
+val LocalDadosLocais = staticCompositionLocalOf<DadosLocais?> { null }
+
+private class Fabrica(private val app: ThermoTraceApp, private val dados: DadosLocais) : ViewModelProvider.Factory {
+    private val repo: Repositorio get() = dados.repositorio
+    private val alertas: RepositorioAlertas get() = dados.alertas
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T = when {
         modelClass.isAssignableFrom(ContaViewModel::class.java) -> ContaViewModel(app.conta)
         modelClass.isAssignableFrom(HomeViewModel::class.java) ->
-            HomeViewModel(repo, alertas, app.preferencias, app.fluxo)
+            HomeViewModel(repo, alertas, dados.preferencias, dados.fluxo)
         modelClass.isAssignableFrom(NovaRemessaViewModel::class.java) -> NovaRemessaViewModel(repo)
         modelClass.isAssignableFrom(RemessaViewModel::class.java) -> RemessaViewModel(repo, alertas)
         modelClass.isAssignableFrom(LeituraViewModel::class.java) ->
-            LeituraViewModel(repo, alertas, app.preferencias, app.fluxo)
+            LeituraViewModel(repo, alertas, dados.preferencias, dados.fluxo)
         modelClass.isAssignableFrom(RelatorioViewModel::class.java) -> RelatorioViewModel(repo)
         modelClass.isAssignableFrom(EtiquetasViewModel::class.java) -> EtiquetasViewModel(repo)
         modelClass.isAssignableFrom(OcorrenciaViewModel::class.java) ->
-            OcorrenciaViewModel(alertas, app.urlServidor() != null)
+            OcorrenciaViewModel(alertas, false)
         modelClass.isAssignableFrom(OcorrenciasViewModel::class.java) ->
-            OcorrenciasViewModel(alertas, app.urlServidor()) { url -> app.definirUrlServidor(url) }
+            OcorrenciasViewModel(alertas, null) { url -> dados.preferencias.definirUrlServidor(url) }
         modelClass.isAssignableFrom(DiagnosticoViewModel::class.java) -> DiagnosticoViewModel()
         modelClass.isAssignableFrom(AjustesViewModel::class.java) ->
-            AjustesViewModel(app.preferencias, app.installId, app.versaoLegivel())
+            AjustesViewModel(dados.preferencias, app.installId, app.versaoLegivel())
         else -> error("ViewModel desconhecido: ${modelClass.name}")
     } as T
 }
@@ -112,9 +143,9 @@ object Rotas {
 }
 
 @Composable
-fun Navegacao(app: ThermoTraceApp) {
+fun Navegacao(app: ThermoTraceApp, dados: DadosLocais) {
     val nav = rememberNavController()
-    val fabrica = Fabrica(app)
+    val fabrica = Fabrica(app, dados)
 
     // Deslizar para a esquerda ao entrar, para a direita ao voltar: dá
     // direção ao fluxo. Num app operado com uma mão só, de luva, saber se
@@ -123,7 +154,7 @@ fun Navegacao(app: ThermoTraceApp) {
 
     NavHost(
         navController = nav,
-        startDestination = if (app.preferencias.atual.tutorialConcluido)
+        startDestination = if (dados.preferencias.atual.tutorialConcluido || dados.escopo.vinculado)
             Rotas.HOME else Rotas.TUTORIAL,
         enterTransition = {
             slideIntoContainer(
@@ -162,6 +193,7 @@ fun Navegacao(app: ThermoTraceApp) {
                 aoAbrirTutorial = { nav.navigate(Rotas.TUTORIAL) },
                 aoAbrirLaudo = { nav.navigate(Rotas.relatorio(it)) },
                 aoAbrirConta = { nav.navigate(Rotas.CONTA) },
+                contaVinculada = dados.escopo.vinculado,
             )
         }
 
@@ -175,12 +207,12 @@ fun Navegacao(app: ThermoTraceApp) {
         }
 
         composable(Rotas.TUTORIAL) {
-            val primeiroAcesso = !app.preferencias.atual.tutorialConcluido
+            val primeiroAcesso = !dados.preferencias.atual.tutorialConcluido
             TutorialScreen(
                 primeiroAcesso = primeiroAcesso,
                 aoVoltar = { nav.popBackStack() },
                 aoConcluir = {
-                    app.preferencias.concluirTutorial()
+                    dados.preferencias.concluirTutorial()
                     if (primeiroAcesso) {
                         nav.navigate(Rotas.HOME) {
                             popUpTo(Rotas.TUTORIAL) { inclusive = true }

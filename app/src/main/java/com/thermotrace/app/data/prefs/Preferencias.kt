@@ -38,9 +38,9 @@ data class Ajustes(
     }
 }
 
-class Preferencias(context: Context) {
+class Preferencias(context: Context, arquivo: String = ARQUIVO) {
 
-    private val prefs = context.getSharedPreferences(ARQUIVO, Context.MODE_PRIVATE)
+    private val prefs = context.getSharedPreferences(arquivo, Context.MODE_PRIVATE)
 
     private val _ajustes = MutableStateFlow(ler())
     val ajustes: StateFlow<Ajustes> = _ajustes.asStateFlow()

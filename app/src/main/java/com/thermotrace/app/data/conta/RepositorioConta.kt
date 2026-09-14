@@ -4,12 +4,28 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import org.json.JSONObject
 import java.net.URLEncoder
 import java.util.UUID
 
-class RepositorioConta(private val cofre: CofreConta, private val transporte: TransporteConta) {
+class RepositorioConta(cofreOriginal: CofreConta, private val transporte: TransporteConta) {
     private val mutex = Mutex()
+    private val _escopo = MutableStateFlow(runCatching { EscopoLocal.de(cofreOriginal.ler()) }.getOrDefault(EscopoLocal.LEGADO))
+    val escopo = _escopo.asStateFlow()
+    private val cofre = object : CofreConta {
+        override fun ler() = cofreOriginal.ler()
+        override fun gravar(sessao: SessaoConta) {
+            val proximo = EscopoLocal.de(sessao)
+            cofreOriginal.gravar(sessao)
+            _escopo.value = proximo // Somente depois da confirmação da gravação segura.
+        }
+        override fun limpar() {
+            try { cofreOriginal.limpar() }
+            finally { _escopo.value = EscopoLocal.LEGADO }
+        }
+    }
 
     private fun chamar(s: SessaoConta, caminho: String, metodo: String = "GET", corpo: String? = null): String =
         resposta(transporte.enviar(s.endereco, caminho, metodo, s.acesso, corpo))

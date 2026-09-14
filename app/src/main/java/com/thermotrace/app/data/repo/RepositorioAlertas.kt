@@ -395,20 +395,6 @@ class RepositorioAlertas(
     // -----------------------------------------------------------------
 
     suspend fun pendentesDeEnvio(): List<OutboxEntity> = outboxDao.pendentes()
-    /**
-     * Confirma o envio: tira da fila E marca a evidencia como sincronizada.
-     *
-     * Antes so removia da fila. A coluna `sincronizada` da leitura ficava
-     * em 0 para sempre, e a aba Auditoria do Excel imprimia "Pendente" para
-     * tudo, inclusive o que ja tinha subido. Era o defeito P2 do diagnostico.
-     */
-    suspend fun confirmarEnvio(item: OutboxEntity) {
-        // A chave do outbox de leitura E a chave de idempotencia da leitura.
-        if (item.endpoint == "leituras") {
-            leituraDao.marcarSincronizadaPorChave(item.chaveIdempotencia)
-        }
-        outboxDao.remover(item.id)
-    }
     suspend fun registrarFalhaEnvio(item: OutboxEntity, erro: String) =
         outboxDao.registrarFalha(item.id, erro)
 }

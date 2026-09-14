@@ -11,6 +11,12 @@ import java.util.UUID
 import com.thermotrace.app.data.conta.CofreAndroidConta
 import com.thermotrace.app.data.conta.RepositorioConta
 import com.thermotrace.app.data.conta.TransporteHttpsConta
+import com.thermotrace.app.data.conta.EscopoLocal
+
+class DadosLocais(
+    val escopo: EscopoLocal, val db: ThermoTraceDb, val repositorio: Repositorio,
+    val alertas: RepositorioAlertas, val fluxo: FluxoRapido, val preferencias: Preferencias,
+)
 
 /**
  * Container mínimo de dependências.
@@ -21,22 +27,6 @@ import com.thermotrace.app.data.conta.TransporteHttpsConta
  */
 class ThermoTraceApp : Application() {
     val conta by lazy { RepositorioConta(CofreAndroidConta(this), TransporteHttpsConta()) }
-
-    lateinit var repositorio: Repositorio
-        private set
-
-    lateinit var alertas: RepositorioAlertas
-        private set
-
-    /**
-     * A sequencia "etiqueta respondeu -> gravado e alertado".
-     *
-     * Compartilhada entre o bipe rapido da tela inicial e a tela de Leitura:
-     * sao dois caminhos gravando evidencia de auditoria, e eles nao podem
-     * divergir. Ver [FluxoRapido].
-     */
-    lateinit var fluxo: FluxoRapido
-        private set
 
     /** Ajustes do aparelho. Ver [Preferencias]. */
     lateinit var preferencias: Preferencias
@@ -54,9 +44,12 @@ class ThermoTraceApp : Application() {
             .also { prefs.edit().putString(CHAVE_INSTALL_ID, it).apply() }
 
         preferencias = Preferencias(this)
+    }
 
-        val db = ThermoTraceDb.obter(this)
-        repositorio = Repositorio(
+    /** Um grafo fixo por contexto: nenhuma referência troca de empresa em uma operação em andamento. */
+    fun abrirDados(escopo: EscopoLocal): DadosLocais {
+        val db = ThermoTraceDb.abrir(this, escopo)
+        val repositorio = Repositorio(
             remessaDao = db.remessaDao(),
             documentoDao = db.documentoDao(),
             volumeDao = db.volumeDao(),
@@ -67,7 +60,7 @@ class ThermoTraceApp : Application() {
             outboxDao = db.outboxDao(),
             installId = installId,
         )
-        alertas = RepositorioAlertas(
+        val alertas = RepositorioAlertas(
             ocorrenciaDao = db.ocorrenciaDao(),
             acaoDao = db.acaoCorretivaDao(),
             destinatarioDao = db.destinatarioAlertaDao(),
@@ -79,7 +72,8 @@ class ThermoTraceApp : Application() {
             etiquetaDao = db.etiquetaDao(),
             leituraDao = db.leituraDao(),
         )
-        fluxo = FluxoRapido(repositorio, alertas, db)
+        return DadosLocais(escopo, db, repositorio, alertas,
+            FluxoRapido(repositorio, alertas, db), Preferencias(this, escopo.preferencias))
     }
 
     /**

@@ -1,6 +1,7 @@
 package com.thermotrace.app.ui.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
@@ -100,13 +101,15 @@ private fun rotuloStatus(status: String) = when (status) {
 @Composable
 fun ContaScreen(vm: ContaViewModel, aoVoltar: () -> Unit) {
     val estado by vm.estado.collectAsStateWithLifecycle()
+    // Não iniciar uma coleta enquanto um login/logout ainda pode trocar o histórico ativo.
+    BackHandler(enabled = estado.carregando) { }
     var endereco by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var senha by remember { mutableStateOf("") } // Nunca rememberSaveable nem estado persistido.
     val scanner = rememberScannerDocumento { doc -> vm.escaneado(doc.chaveAcesso ?: doc.numero) }
     Scaffold(topBar = {
         TopAppBar(title = { Text(if (estado.detalhe == null) "Conta e cargas" else "Detalhe da carga") },
-            navigationIcon = { IconButton(onClick = { if (estado.detalhe != null) vm.fecharDetalhe() else aoVoltar() }) {
+            navigationIcon = { IconButton(enabled = !estado.carregando, onClick = { if (estado.detalhe != null) vm.fecharDetalhe() else aoVoltar() }) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, "Voltar")
             } })
     }) { padding ->
@@ -118,6 +121,7 @@ fun ContaScreen(vm: ContaViewModel, aoVoltar: () -> Unit) {
             if (eu == null && !estado.reconectar) {
                 item { Text("Acesse as cargas da sua empresa", style = MaterialTheme.typography.titleLarge) }
                 item { Text("Use o endereço e a conta fornecidos pela ThermoTrace.") }
+                item { Text("Cada conta abre seu próprio histórico local. Os registros anteriores sem conta ficam preservados no modo local e não são transferidos para sua empresa.") }
                 item { OutlinedTextField(endereco, { endereco = it }, label = { Text("Endereço de acesso") },
                     placeholder = { Text("https://…") }, singleLine = true, enabled = !estado.carregando,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri), modifier = Modifier.fillMaxWidth()) }
