@@ -10,6 +10,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [
+        VinculoEnvio::class, PedidoEnvio::class, AparelhoEnvio::class,
         RemessaEntity::class,
         DocumentoEntity::class,
         VolumeEntity::class,
@@ -22,12 +23,13 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         AcaoCorretivaEntity::class,
         DestinatarioAlertaEntity::class,
     ],
-    version = 6,
+    version = 7,
     exportSchema = true,
 )
 @TypeConverters(Conversores::class, ConversoresAlerta::class)
 abstract class ThermoTraceDb : RoomDatabase() {
 
+    abstract fun envioDao(): EnvioDao
     abstract fun remessaDao(): RemessaDao
     abstract fun documentoDao(): DocumentoDao
     abstract fun volumeDao(): VolumeDao
@@ -63,6 +65,16 @@ abstract class ThermoTraceDb : RoomDatabase() {
         /** Confirmacao do STOP fisico (TT-055). Sem valor retroativo: sessao
          *  antiga nao tem como saber se a etiqueta chegou a parar, e supor que
          *  parou seria exatamente o engano que esta coluna existe para evitar. */
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS vinculo_envio (sessaoId TEXT NOT NULL PRIMARY KEY, escopo TEXT NOT NULL, empresaId TEXT NOT NULL, usuarioId TEXT NOT NULL, remessaOnline TEXT NOT NULL, volumeOnline TEXT NOT NULL, codigoCarga TEXT NOT NULL, sequenciaVolume INTEGER NOT NULL, etiquetaOnline TEXT NOT NULL, uid TEXT NOT NULL, dispositivoId TEXT NOT NULL, vinculadoEm INTEGER NOT NULL, FOREIGN KEY(sessaoId) REFERENCES sessao(id) ON UPDATE NO ACTION ON DELETE RESTRICT)")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_vinculo_envio_volumeOnline ON vinculo_envio(volumeOnline)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS pedido_envio (eventoId TEXT NOT NULL PRIMARY KEY, sessaoId TEXT NOT NULL, chaveLocal TEXT NOT NULL, tipo TEXT NOT NULL, caminho TEXT NOT NULL, corpo TEXT NOT NULL, sha256 TEXT NOT NULL, chave TEXT NOT NULL, ordem INTEGER NOT NULL, recibo TEXT, tentativas INTEGER NOT NULL, erro TEXT, FOREIGN KEY(sessaoId) REFERENCES vinculo_envio(sessaoId) ON UPDATE NO ACTION ON DELETE RESTRICT)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_pedido_envio_sessaoId ON pedido_envio(sessaoId)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS aparelho_envio (id INTEGER NOT NULL PRIMARY KEY, installId TEXT NOT NULL, corpo TEXT NOT NULL, chave TEXT NOT NULL, dispositivoId TEXT)")
+            }
+        }
+
         val MIGRATION_5_6 = object : Migration(5, 6) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 // Não confiar retroativamente no marcador antigo, que era apenas cache.
@@ -184,7 +196,7 @@ abstract class ThermoTraceDb : RoomDatabase() {
                     ThermoTraceDb::class.java,
                     escopo.banco,
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
                     .build()
     }
 }

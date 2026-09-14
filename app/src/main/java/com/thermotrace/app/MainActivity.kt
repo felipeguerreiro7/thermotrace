@@ -102,6 +102,7 @@ private class Fabrica(private val app: ThermoTraceApp, private val dados: DadosL
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T = when {
+        modelClass.isAssignableFrom(com.thermotrace.app.ui.screens.EnvioViewModel::class.java) -> com.thermotrace.app.ui.screens.EnvioViewModel(dados.envio,dados.db)
         modelClass.isAssignableFrom(ContaViewModel::class.java) -> ContaViewModel(app.conta)
         modelClass.isAssignableFrom(HomeViewModel::class.java) ->
             HomeViewModel(repo, alertas, dados.preferencias, dados.fluxo)
@@ -178,6 +179,10 @@ fun Navegacao(app: ThermoTraceApp, dados: DadosLocais) {
             ) + fadeOut(tween(duracao))
         },
     ) {
+        composable("envio/{sessaoId}", arguments=listOf(navArgument("sessaoId") { type=NavType.StringType })) { entrada ->
+            com.thermotrace.app.ui.screens.EnvioScreen(entrada.arguments?.getString("sessaoId").orEmpty(),
+                viewModel(factory=fabrica), aoVoltar={ nav.popBackStack() })
+        }
         composable(Rotas.CONTA) {
             ContaScreen(vm = viewModel(factory = fabrica), aoVoltar = { nav.popBackStack() })
         }
@@ -263,6 +268,7 @@ fun Navegacao(app: ThermoTraceApp, dados: DadosLocais) {
                 aoLer = { volumeId, tipo -> nav.navigate(Rotas.leitura(volumeId, tipo)) },
                 aoAbrirRelatorio = { nav.navigate(Rotas.relatorio(id)) },
                 aoAbrirOcorrencia = { oc -> nav.navigate(Rotas.ocorrencia(oc)) },
+                aoEnviar = if(dados.escopo.vinculado) ({ sessao -> nav.navigate("envio/$sessao") }) else null,
             )
         }
 

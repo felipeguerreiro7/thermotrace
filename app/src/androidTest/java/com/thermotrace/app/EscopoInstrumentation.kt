@@ -43,7 +43,8 @@ class EscopoInstrumentation : Instrumentation() {
                 check(Preferencias(targetContext,escopos[0].preferencias).atual.urlServidor=="https://synthetic.example.test")
             }
             MigracoesInstrumentadas.executar(targetContext, context)
-            resultado.putString("stream", "PASS: migrações 2/3/4/5 para 6; STOP atômico; isolamento por empresa, operador e servidor; fila e ajustes preservados após reabrir.\n")
+            EnvioInstrumentado.executar(targetContext)
+            resultado.putString("stream", "PASS: envio com perda de resposta, conflito, recibo errado, falha SQLite e reabertura; migrações 2/3/4/5/6 para 7; STOP atômico; isolamento por empresa, operador e servidor; fila e ajustes preservados após reabrir.\n")
         } catch(e:Throwable) {
             resultado.putString("stream", "FAIL: ${e.javaClass.simpleName}: ${e.message}\n")
             codigo = Activity.RESULT_CANCELED

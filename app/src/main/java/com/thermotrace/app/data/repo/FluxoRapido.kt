@@ -44,6 +44,8 @@ class FluxoRapido(
     private val db: RoomDatabase,
 ) {
 
+    suspend fun <T> emTransacao(bloco: suspend () -> T): T = db.withTransaction { bloco() }
+
     /** Leitura já interpretada, ainda não gravada. */
     data class Previa(
         val sessao: SessaoComLeituras,

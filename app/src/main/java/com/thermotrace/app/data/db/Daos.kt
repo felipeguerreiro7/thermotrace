@@ -239,6 +239,11 @@ interface CustodiaDao {
 
 @Dao
 interface OutboxDao {
+    @Query("SELECT * FROM outbox WHERE chaveIdempotencia = :chave")
+    suspend fun porChave(chave: String): OutboxEntity?
+    @Query("DELETE FROM outbox WHERE chaveIdempotencia = :chave")
+    suspend fun removerPorChave(chave: String)
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun enfileirar(item: OutboxEntity)
 

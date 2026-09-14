@@ -17,12 +17,21 @@ class FalhaHttpConta(val status: Int) : IOException(when (status) {
 
 fun interface TransporteConta {
     fun enviar(endereco: String, caminho: String, metodo: String, token: String?, corpo: String?): RespostaConta
+    fun enviarIdempotente(endereco: String, caminho: String, token: String, corpo: String, chave: String): RespostaConta =
+        throw UnsupportedOperationException("Transporte não suporta envio idempotente.")
 }
 
 class TransporteHttpsConta : TransporteConta {
     override fun enviar(endereco: String, caminho: String, metodo: String, token: String?, corpo: String?): RespostaConta {
+        return executar(endereco, caminho, metodo, token, corpo, null)
+    }
+    override fun enviarIdempotente(endereco: String, caminho: String, token: String, corpo: String, chave: String): RespostaConta =
+        executar(endereco, caminho, "POST", token, corpo, chave)
+
+    private fun executar(endereco: String, caminho: String, metodo: String, token: String?, corpo: String?, chave: String?): RespostaConta {
         val base = EnderecoConta.normalizar(endereco)
-        require(caminho.startsWith("/auth/") || caminho.startsWith("/remessas"))
+        require(caminho.matches(Regex("/(auth/[a-z]+|remessas[^#]*|dispositivos|etiquetas/localizar\\?uid=[0-9A-F]+|volumes/[0-9a-f-]{36}/sessoes|sessoes/[0-9a-f-]{36}/leituras)")))
+        chave?.let { require(it.matches(Regex("[A-Za-z0-9:_-]{1,128}"))) }
         val conexao = URL("$base/api/v1$caminho").openConnection() as HttpURLConnection
         try {
             conexao.instanceFollowRedirects = false // Nunca encaminhar credenciais a outro destino.
@@ -30,12 +39,13 @@ class TransporteHttpsConta : TransporteConta {
             conexao.connectTimeout = 10_000; conexao.readTimeout = 15_000
             conexao.useCaches = false
             conexao.setRequestProperty("Accept", "application/json")
+            chave?.let { conexao.setRequestProperty("Idempotency-Key", it) }
             token?.let {
                 require(it.matches(Regex("[A-Za-z0-9_.-]{1,8192}")))
                 conexao.setRequestProperty("Authorization", "Bearer $it")
             }
             corpo?.let {
-                val bytes = it.toByteArray(Charsets.UTF_8); require(bytes.size <= 16_384)
+                val bytes = it.toByteArray(Charsets.UTF_8); require(bytes.size <= if (chave != null) 1_048_576 else 16_384)
                 conexao.doOutput = true
                 conexao.setRequestProperty("Content-Type", "application/json; charset=utf-8")
                 conexao.setFixedLengthStreamingMode(bytes.size)

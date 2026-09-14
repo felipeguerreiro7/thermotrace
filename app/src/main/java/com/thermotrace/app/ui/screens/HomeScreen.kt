@@ -273,7 +273,7 @@ fun HomeScreen(
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
             TextButton(onClick = aoAbrirConta, modifier = Modifier.fillMaxWidth()) {
-                Text(if (contaVinculada) "Histórico desta conta · envio online em integração"
+                Text(if (contaVinculada) "Histórico desta conta · envie pelo detalhe da remessa"
                     else "Modo local · registros sem vínculo com empresa")
             }
 
@@ -308,7 +308,8 @@ fun HomeScreen(
                 ) {
                     Text(
                         "$pendentes registro(s) preservados neste aparelho. " +
-                            "O envio à conta online ainda está em integração; conexão sozinha não envia esta fila.",
+                            (if (contaVinculada) "Abra a remessa e use Enviar coletas. Itens antigos sem evidência de início e alertas continuam locais."
+                            else "Entre na conta antes de novas operações online. Este histórico local não será atribuído automaticamente a uma empresa."),
                         Modifier.padding(12.dp),
                         style = MaterialTheme.typography.bodyMedium,
                         color = AmbarAlerta,
@@ -485,7 +486,7 @@ fun HomeScreen(
                             CartaoRemessa(
                                 remessa = remessa,
                                 aoClicar = { aoAbrirRemessa(remessa.id) },
-                                aoSegurar = { vm.pedirParaApagar(remessa) },
+                                aoSegurar = { if (!contaVinculada) vm.pedirParaApagar(remessa) },
                             )
                         }
                         item { Spacer(Modifier.height(72.dp)) }

@@ -335,7 +335,7 @@ class HomeViewModel(
             // Persistimos AGORA, não depois de um formulário. A etiqueta já
             // está gravando de verdade; se o app morrer antes de salvar, ela
             // ficaria rodando sem nada apontando para ela.
-            val remessaId = repo.abrirRemessaComEtiqueta(
+            val remessaId = fluxo.emTransacao { repo.abrirRemessaComEtiqueta(
                 etiqueta = etiqueta,
                 perfil = e.perfil,
                 horasPrevistas = horas,
@@ -347,7 +347,8 @@ class HomeViewModel(
                 modoArmazenamento = resultado.plan.storageMode.sdkMode,
                 confirmada = resultado.verified,
                 tensaoV = resultado.voltageAtStartV,
-            )
+                respostaStart = resultado.respostaStart,
+            ) }
             val remessa = repo.buscarRemessa(remessaId)?.remessa
 
             // Nao navegamos para lugar nenhum. O passo seguinte — bipar a nota

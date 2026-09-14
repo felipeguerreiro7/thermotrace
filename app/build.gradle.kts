@@ -13,8 +13,8 @@ android {
         // 26 por causa de java.time. Abaixo disso exigiria desugaring.
         minSdk = 26
         targetSdk = 37
-        versionCode = 17
-        versionName = "0.8.5"
+        versionCode = 18
+        versionName = "0.8.6"
         testInstrumentationRunner = "com.thermotrace.app.EscopoInstrumentation"
     }
 
@@ -40,6 +40,10 @@ android {
         resources.excludes += setOf("/META-INF/{AL2.0,LGPL2.1}")
     }
 
+    sourceSets {
+        getByName("test").kotlin.directories.add("src/testShared/java")
+        getByName("androidTest").kotlin.directories.add("src/testShared/java")
+    }
     lint { abortOnError = false }
 }
 
@@ -47,6 +51,10 @@ kotlin {
     compilerOptions {
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
+}
+
+tasks.withType<Test>().configureEach {
+    systemProperty("tt.gerarContrato", providers.gradleProperty("tt.gerarContrato").getOrElse("false"))
 }
 
 ksp { arg("room.schemaLocation", "$projectDir/schemas") }

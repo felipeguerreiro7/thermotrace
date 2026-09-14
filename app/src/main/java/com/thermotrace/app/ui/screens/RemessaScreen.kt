@@ -147,6 +147,7 @@ fun RemessaScreen(
     aoLer: (volumeId: String, tipo: TipoLeitura) -> Unit,
     aoAbrirRelatorio: () -> Unit,
     aoAbrirOcorrencia: (String) -> Unit,
+    aoEnviar: ((String) -> Unit)? = null,
 ) {
     val e by vm.estado.collectAsStateWithLifecycle()
     LifecycleResumeEffect(remessaId) {
@@ -230,6 +231,9 @@ fun RemessaScreen(
                     estado = sessao?.let { e.estados[it.sessao.id] } ?: EstadoEtiqueta.NAO_ATIVADA,
                     aoLer = { tipo -> aoLer(volume.id, tipo) },
                 )
+                if(sessao != null && aoEnviar != null) OutlinedButton(onClick={aoEnviar(sessao.sessao.id)},modifier=Modifier.fillMaxWidth()) {
+                    Text("Enviar coletas do volume ${volume.sequencia}")
+                }
             }
 
             if (e.ocorrencias.isNotEmpty()) {

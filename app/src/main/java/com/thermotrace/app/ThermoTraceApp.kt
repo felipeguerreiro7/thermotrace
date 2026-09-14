@@ -16,6 +16,7 @@ import com.thermotrace.app.data.conta.EscopoLocal
 class DadosLocais(
     val escopo: EscopoLocal, val db: ThermoTraceDb, val repositorio: Repositorio,
     val alertas: RepositorioAlertas, val fluxo: FluxoRapido, val preferencias: Preferencias,
+    val envio: com.thermotrace.app.data.conta.EnvioColetas,
 )
 
 /**
@@ -35,6 +36,7 @@ class ThermoTraceApp : Application() {
     /** Identidade da instalação. Não é IMEI nem nada ligado à pessoa (LGPD). */
     lateinit var installId: String
         private set
+    private lateinit var metadadosEnvio: org.json.JSONObject
 
     override fun onCreate() {
         super.onCreate()
@@ -43,6 +45,15 @@ class ThermoTraceApp : Application() {
         installId = prefs.getString(CHAVE_INSTALL_ID, null) ?: UUID.randomUUID().toString()
             .also { prefs.edit().putString(CHAVE_INSTALL_ID, it).apply() }
 
+        // A mesma instalação deve ter o mesmo cadastro ao trocar de operador ou atualizar o app.
+        val original = prefs.getString("metadados_instalacao_envio_v1", null)
+        metadadosEnvio = if(original != null) org.json.JSONObject(original) else org.json.JSONObject()
+            .put("modelo", android.os.Build.MODEL).put("so", android.os.Build.VERSION.RELEASE)
+            .put("versao", versaoLegivel()).also {
+                check(prefs.edit().putString("metadados_instalacao_envio_v1",it.toString()).commit()) {
+                    "Não foi possível preservar a identidade da instalação."
+                }
+            }
         preferencias = Preferencias(this)
     }
 
@@ -73,7 +84,9 @@ class ThermoTraceApp : Application() {
             leituraDao = db.leituraDao(),
         )
         return DadosLocais(escopo, db, repositorio, alertas,
-            FluxoRapido(repositorio, alertas, db), Preferencias(this, escopo.preferencias))
+            FluxoRapido(repositorio, alertas, db), Preferencias(this, escopo.preferencias),
+            com.thermotrace.app.data.conta.EnvioColetas(db, conta, escopo, installId,
+                metadadosEnvio.getString("modelo"), metadadosEnvio.getString("so"), metadadosEnvio.getString("versao")))
     }
 
     /**

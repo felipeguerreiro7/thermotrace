@@ -226,6 +226,7 @@ class Repositorio(
         modoArmazenamento: Int,
         confirmada: Boolean,
         tensaoV: Double?,
+        respostaStart: List<String> = emptyList(),
     ): String {
         val remessaId = criarRemessa(
             codigo = proximoCodigo(),
@@ -264,6 +265,7 @@ class Repositorio(
             modoArmazenamento = modoArmazenamento,
             confirmada = confirmada,
             tensaoV = tensaoV,
+            respostaStart = respostaStart,
         )
 
         registrarCustodia(
@@ -445,6 +447,7 @@ class Repositorio(
         modoArmazenamento: Int,
         confirmada: Boolean,
         tensaoV: Double?,
+        respostaStart: List<String> = emptyList(),
     ): String {
         // Chave natural (etiqueta + epoch): reativar por engano não cria
         // sessão duplicada.
@@ -492,6 +495,8 @@ class Repositorio(
                 chaveIdempotencia = "sessao:$id",
                 endpoint = "sessoes",
                 corpoJson = JSONObject().apply {
+                    put("resposta_start", org.json.JSONArray(respostaStart))
+                    put("versao_sdk", com.thermotrace.app.nfc.versaoSdkFmsh())
                     put("sessao_id", id)
                     put("remessa_id", remessaId)
                     put("volume_id", volumeId)

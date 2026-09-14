@@ -5,3 +5,5 @@ Somente estruturas e dados sintéticos. `v5.json` deriva do schema 5 exportado p
 O ensaio cria bancos isolados aleatórios, insere uma linha por tabela, abre usando o Room atual e verifica a estrutura e a preservação de todas as colunas antigas. Também verifica que a confirmação de cópia não é inventada e que um segundo STOP não sobrescreve o primeiro. Nenhum dado do usuário é apagado.
 
 Schemas 5 e 6 exportados pelo compilador ficam em `app/schemas`. O caminho 1→2 e atualização de um banco físico real continuam pendentes; não declarar toda a história de migração homologada com estas fixtures.
+
+Atualização 0.8.6: acrescentada fixture V6 derivada do schema exportado. O ensaio agora cobre 2/3/4/5/6→7, incluindo as novas tabelas sem migração destrutiva. Schema 7 também versionado. As ressalvas sobre reconstruções V2–V4, caminho 1→2 e aparelhos reais continuam válidas.

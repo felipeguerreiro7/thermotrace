@@ -222,6 +222,7 @@ class NfcOperator(
         val plan: ActivationPlan,
         val verified: Boolean,
         val voltageAtStartV: Double?,
+        val respostaStart: List<String> = emptyList(),
     )
 
     /** Resposta crua do SDK. Nunca descartar: é a evidência (princípio P2 do banco). */
@@ -492,6 +493,7 @@ class NfcOperator(
                     // dos registradores antes de devolver sucesso.
                     verified = true,
                     voltageAtStartV = null,
+                    respostaStart = started.raw,
                 )
             )
         )
@@ -735,7 +737,7 @@ class NfcOperator(
 // ---------------------------------------------------------------------
 
 
-internal data class StartOutcome(val ok: Boolean, val detail: String?) {
+internal data class StartOutcome(val ok: Boolean, val detail: String?, val raw: List<String> = emptyList()) {
     /**
      * O SDK devolve `onResult(false, "0")` quando a contagem excede a capacidade
      * do modo de armazenamento. A v0.1 mostrava só "a etiqueta recusou o início",
@@ -789,7 +791,7 @@ internal fun GeneralNFC.startLoggingBlocking(plan: ActivationPlan): StartOutcome
                 cb,
             )
         },
-        { ok, r -> StartOutcome(ok, r.firstOrNull()) },
+        { ok, r -> StartOutcome(ok, r.firstOrNull(), r.toList()) },
     ) ?: StartOutcome(false, null)
 
 internal fun GeneralNFC.statusBlocking(): TagRtcStatus =

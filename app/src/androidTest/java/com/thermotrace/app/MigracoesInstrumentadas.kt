@@ -11,7 +11,7 @@ import java.util.UUID
 
 object MigracoesInstrumentadas {
     fun executar(aplicativo: Context, testes: Context) = runBlocking {
-        for (versao in 2..5) {
+        for (versao in 2..6) {
             val fixture=JSONObject(testes.assets.open("migracoes/v$versao.json").bufferedReader().use { it.readText() })
             val tabelas=fixture.getJSONArray("tables")
             val escopo=EscopoLocal.de(SessaoConta("https://migration.example.test","sintetico","sintetico",
@@ -47,7 +47,7 @@ object MigracoesInstrumentadas {
                 try {
                     // A abertura aciona a sequência de migrações e a validação estrutural do Room.
                     val banco=atualizado.openHelper.writableDatabase
-                    check(banco.version==6)
+                    check(banco.version==7)
                     for(i in 0 until tabelas.length()) {
                         val t=tabelas.getJSONObject(i);val campos=t.getJSONArray("fields")
                         val nomes=(0 until campos.length()).map { campos.getJSONObject(it).getString("columnName") }
@@ -55,7 +55,7 @@ object MigracoesInstrumentadas {
                             check(c.moveToFirst());check(nomes.indices.map { c.getString(it) }==esperado[t.getString("name")]) { "Dados alterados na migração $versao" }
                         }
                     }
-                    banco.query("SELECT copiaConfirmadaEmMillis FROM leitura").use { c -> check(c.moveToFirst() && c.isNull(0)) }
+                    if(versao<6) banco.query("SELECT copiaConfirmadaEmMillis FROM leitura").use { c -> check(c.moveToFirst() && c.isNull(0)) }
                     check(atualizado.outboxDao().pendentes().size==1)
                     if(versao<5) {
                         check(atualizado.sessaoDao().confirmarPrimeiroStop("sintetico",1000)==1)

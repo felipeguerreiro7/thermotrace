@@ -528,7 +528,7 @@ class LeituraViewModel(
                 val etiquetaId = e.etiquetaId ?: return false
                 val perfil = e.perfil ?: return false
 
-                repo.registrarAtivacao(
+                fluxo.emTransacao { repo.registrarAtivacao(
                     remessaId = e.remessaId,
                     volumeId = e.volumeId,
                     etiquetaId = etiquetaId,
@@ -543,7 +543,8 @@ class LeituraViewModel(
                     modoArmazenamento = plano.storageMode.sdkMode,
                     confirmada = resultado.verified,
                     tensaoV = resultado.voltageAtStartV,
-                )
+                    respostaStart = resultado.respostaStart,
+                ) }
                 repo.registrarCustodia(
                     remessaId = e.remessaId,
                     de = null, para = "embarcador",

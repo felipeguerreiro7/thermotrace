@@ -81,6 +81,21 @@ class RepositorioConta(cofreOriginal: CofreConta, private val transporte: Transp
         }
     }
 
+    suspend fun consultarEnvio(esperado: EscopoLocal, caminho: String): String = autenticado { s ->
+        check(esperado.vinculado && EscopoLocal.de(s) == esperado) { "Entre na conta original desta coleta." }
+        chamar(s, caminho)
+    }
+
+    suspend fun enviarPreservado(esperado: EscopoLocal, caminho: String, corpo: String, chave: String): String = autenticado { s ->
+        check(esperado.vinculado && EscopoLocal.de(s) == esperado) { "Entre na conta original desta coleta." }
+        resposta(transporte.enviarIdempotente(s.endereco, caminho, s.acesso, corpo, chave))
+    }
+
+    suspend fun autorEnvio(esperado: EscopoLocal): IdentidadeConta = autenticado { s ->
+        check(esperado.vinculado && EscopoLocal.de(s) == esperado) { "Entre na conta original desta coleta." }
+        JsonConta.identidade(chamar(s, "/auth/me")).also { conferir(s, it); check(it.papel != "admin") }
+    }
+
     suspend fun restaurar(): IdentidadeConta? = withContext(Dispatchers.IO) {
         // A ausência é normal na primeira abertura; corrupção vai pelo fluxo de reautenticação.
         val existe = mutex.withLock { runCatching { cofre.ler() != null }.getOrDefault(true) }

@@ -1,0 +1,62 @@
+{
+  "checkpoint": {
+    "lida_em": "2026-09-12T17:00:00Z",
+    "versao_sdk": "sintetico-sem-hardware-1",
+    "tipo": "checkpoint",
+    "intervalo_relatado_s": 600,
+    "dispositivo_id": "00000023-1111-4111-8111-111111111111",
+    "resposta_bruta": [
+      "  original\n",
+      "separador\u001fpreservado",
+      "áçã🌡"
+    ],
+    "origem": "declaracao_android",
+    "epoch_inicio_etiqueta": 1789214400,
+    "versao_decodificador": "teste-1",
+    "uid_canonico": "0102030405060708",
+    "evento_id": "00000030-1111-4111-8111-111111111111"
+  },
+  "final": {
+    "lida_em": "2026-09-12T17:10:00Z",
+    "versao_sdk": "sintetico-sem-hardware-1",
+    "tipo": "final",
+    "intervalo_relatado_s": 600,
+    "dispositivo_id": "00000023-1111-4111-8111-111111111111",
+    "resposta_bruta": [
+      "  original\n",
+      "separador\u001fpreservado",
+      "áçã🌡"
+    ],
+    "origem": "declaracao_android",
+    "epoch_inicio_etiqueta": 1789214400,
+    "versao_decodificador": "teste-1",
+    "uid_canonico": "0102030405060708",
+    "evento_id": "00000031-1111-4111-8111-111111111111"
+  },
+  "inicio": {
+    "sessao_id": "00000001-1111-4111-8111-111111111111",
+    "quantidade_planejada": 648,
+    "evidencia": {
+      "lida_em": "2026-09-12T12:00:00Z",
+      "versao_sdk": "sintetico-sem-hardware-1",
+      "dispositivo_id": "00000023-1111-4111-8111-111111111111",
+      "resposta_bruta": [
+        "  original\n",
+        "separador\u001fpreservado",
+        "áçã🌡"
+      ],
+      "origem": "declaracao_android",
+      "versao_decodificador": "start-sem-decodificacao-1",
+      "uid_canonico": "0102030405060708",
+      "evento_id": "7b4ed420-cb3d-32ed-bbf1-ddd98ae41770"
+    },
+    "ativacao_confirmada": true,
+    "epoch_inicio_etiqueta": 1789214400,
+    "max_configurado_c": "8.0",
+    "etiqueta_id": "00000022-1111-4111-8111-111111111111",
+    "delay_minutos": 0,
+    "min_configurado_c": "2.0",
+    "intervalo_segundos": 600
+  },
+  "aviso": "Contrato Android gerado com dados sintéticos; nunca usar em produção."
+}
