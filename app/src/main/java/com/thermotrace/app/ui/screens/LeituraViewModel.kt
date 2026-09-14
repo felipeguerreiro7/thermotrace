@@ -367,7 +367,16 @@ class LeituraViewModel(
 
             is NfcOperator.NfcEvent.Downloaded -> processarDownload(evento.read)
 
-            is NfcOperator.NfcEvent.LoggingParado -> _estado.update {
+            is NfcOperator.NfcEvent.LoggingParado -> {
+                // Persistido, nao so exibido: sem isto a unica prova de que o
+                // chip parou era a frase na tela, que some quando o operador
+                // sai. Marca so o sucesso; recusa nao vira registro nenhum.
+                if (evento.ok) {
+                    _estado.value.sessaoId?.let { id ->
+                        viewModelScope.launch { repo.marcarLoggerParado(id) }
+                    }
+                }
+                _estado.update {
                 it.copy(
                     aguardandoTag = false, processando = false, operacaoPendente = null,
                     etiquetaLiberada = evento.ok,
@@ -377,6 +386,7 @@ class LeituraViewModel(
                         "A etiqueta recusou o STOP. O histórico já está salvo; " +
                             "encoste de novo para tentar parar.",
                 )
+                }
             }
 
             is NfcOperator.NfcEvent.Failed -> _estado.update {

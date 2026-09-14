@@ -293,6 +293,11 @@ class ExportadorLaudo(private val context: Context) {
             // idade vão junto: sem elas a coordenada sugere uma exatidão que o
             // dado não tem.
             "Latitude", "Longitude", "Precisão (m)", "Provedor do fix", "Fix obtido em",
+            // Duas colunas, não uma: "encerrada" é o que o celular gravou,
+            // "STOP confirmado" é o que a etiqueta respondeu. Um laudo que
+            // mostrasse só a primeira afirmaria um fechamento que ninguém
+            // verificou no hardware.
+            "Sessão encerrada em", "STOP confirmado pela etiqueta em",
         )
         val linhas = mutableListOf<List<EscritorXlsx.Celula>>()
         dados.sessoes.forEach { sessao ->
@@ -333,6 +338,15 @@ class ExportadorLaudo(private val context: Context) {
                     numero(l.precisaoMetros),
                     texto(l.provedorLocal),
                     instante(l.localizadoEmMillis),
+                    instante(sessao.sessao.encerradaEmMillis),
+                    sessao.sessao.loggerParadoEmMillis?.let { instante(it) }
+                        ?: texto(
+                            if (com.thermotrace.app.domain.FechamentoDoCiclo.de(
+                                    sessao.sessao.encerradaEmMillis,
+                                    sessao.sessao.loggerParadoEmMillis,
+                                ).pendente
+                            ) "NÃO CONFIRMADO" else "-"
+                        ),
                 )
             }
         }

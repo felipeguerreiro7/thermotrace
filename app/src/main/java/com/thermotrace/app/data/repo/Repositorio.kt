@@ -89,6 +89,20 @@ class Repositorio(
     suspend fun etiquetaPorUid(uid: String) = etiquetaDao.porUid(TagIdentity.canonical(uid))
     suspend fun sessaoDoVolume(volumeId: String) = sessaoDao.ultimaComLeituras(volumeId)
 
+    /**
+     * Registra que a etiqueta confirmou o STOP.
+     *
+     * Escreve uma vez so. O STOP pode ser repetido - `pararRegistro` existe
+     * justamente para isso -, mas o instante que vale e o da primeira
+     * confirmacao; reescrever a cada tentativa apagaria quando o chip de fato
+     * parou. Evidencia nao se sobrescreve.
+     */
+    suspend fun marcarLoggerParado(sessaoId: String, emMillis: Long = System.currentTimeMillis()) {
+        val sessao = sessaoDao.buscar(sessaoId) ?: return
+        if (sessao.loggerParadoEmMillis != null) return
+        sessaoDao.atualizar(sessao.copy(loggerParadoEmMillis = emMillis))
+    }
+
     // -----------------------------------------------------------------
     // Criação de remessa
     // -----------------------------------------------------------------

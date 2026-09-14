@@ -226,7 +226,15 @@ class HomeViewModel(
 
             is NfcOperator.NfcEvent.Downloaded -> encerrarComLeitura(evento.read)
 
-            is NfcOperator.NfcEvent.LoggingParado -> _estado.update {
+            is NfcOperator.NfcEvent.LoggingParado -> {
+                // Mesma razao da tela de coleta: a confirmacao do STOP e
+                // evidencia da sessao, nao recado de tela.
+                if (evento.ok) volumeParaFinalizar?.let { volumeId ->
+                    viewModelScope.launch {
+                        repo.sessaoDoVolume(volumeId)?.sessao?.id?.let { repo.marcarLoggerParado(it) }
+                    }
+                }
+                _estado.update {
                 it.copy(
                     bipada = it.bipada?.copy(
                         ocupada = false,
@@ -238,6 +246,7 @@ class HomeViewModel(
                                 "ter senha diferente da padrão de fábrica.",
                     )
                 )
+                }
             }
 
             is NfcOperator.NfcEvent.WrongTag -> _estado.update {
@@ -411,6 +420,9 @@ class HomeViewModel(
 
         fluxo.registrar(volumeId, TipoLeitura.FINAL, leitura)
             .onSuccess { r ->
+                // No fluxo `Encerrar` o STOP volta junto com o download, na
+                // mesma aproximacao; e a unica chance de registra-lo.
+                if (leitura.loggerParado == true) repo.marcarLoggerParado(r.previa.sessao.sessao.id)
                 _estado.update {
                     it.copy(
                         bipada = null,

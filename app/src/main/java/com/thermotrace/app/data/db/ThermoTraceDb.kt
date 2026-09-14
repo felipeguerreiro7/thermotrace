@@ -22,7 +22,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         AcaoCorretivaEntity::class,
         DestinatarioAlertaEntity::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = false,
 )
 @TypeConverters(Conversores::class, ConversoresAlerta::class)
@@ -60,6 +60,15 @@ abstract class ThermoTraceDb : RoomDatabase() {
         /** Marca de exportacao por leitura (TT-054b). Sem valor retroativo: leitura
          *  antiga nao tem como saber se ja saiu do aparelho, e supor que saiu seria
          *  exatamente o engano que este campo existe para evitar. */
+        /** Confirmacao do STOP fisico (TT-055). Sem valor retroativo: sessao
+         *  antiga nao tem como saber se a etiqueta chegou a parar, e supor que
+         *  parou seria exatamente o engano que esta coluna existe para evitar. */
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE sessao ADD COLUMN loggerParadoEmMillis INTEGER")
+            }
+        }
+
         val MIGRATION_3_4 = object : Migration(3, 4) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE leitura ADD COLUMN exportadaEmMillis INTEGER")
@@ -168,7 +177,7 @@ abstract class ThermoTraceDb : RoomDatabase() {
                     ThermoTraceDb::class.java,
                     escopo.banco,
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                     .build()
     }
 }

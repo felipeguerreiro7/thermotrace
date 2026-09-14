@@ -369,6 +369,27 @@ private fun CartaoVolume(
         if (coletasAConferir > 0) Text("$coletasAConferir coleta(s) precisam de conferência. Consulte o histórico abaixo.",
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
 
+        // "Encerrado" aqui significava apenas que a leitura final foi gravada
+        // NO CELULAR. Se o STOP falhou, a etiqueta seguia gravando e nada na
+        // tela dizia isso depois que o operador saía da tela de coleta — o
+        // volume aparecia encerrado, e a palavra encerrado não tinha quem a
+        // contestasse. Enquanto a etiqueta não confirmar o STOP, o cartão diz
+        // que o ciclo não está fechado.
+        val fechamento = com.thermotrace.app.domain.FechamentoDoCiclo.de(
+            encerradaEmMillis = sessao?.sessao?.encerradaEmMillis,
+            loggerParadoEmMillis = sessao?.sessao?.loggerParadoEmMillis,
+        )
+        if (fechamento.pendente) {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                "Leitura final registrada, mas a etiqueta não confirmou o STOP. " +
+                    "Ela pode continuar gravando, e o ciclo não está fechado. " +
+                    "Encoste a etiqueta e use \"Parar registro\".",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+            )
+        }
+
         if (estado.situacao != com.thermotrace.app.domain.SituacaoEtiqueta.NUNCA_ATIVADA) {
             Spacer(Modifier.height(12.dp))
             // "A etiqueta está ativa?" — o cartão diz o estado E o quanto ele

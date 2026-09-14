@@ -157,6 +157,24 @@ data class SessaoEntity(
     val ativacaoConfirmada: Boolean,
     val tensaoNoStartV: Double?,
     val encerradaEmMillis: Long?,
+
+    /**
+     * Instante em que a ETIQUETA confirmou o STOP fisico.
+     *
+     * Nao e o mesmo que [encerradaEmMillis], e a diferenca importa: aquilo
+     * marca que a leitura final foi gravada aqui no celular; isto marca que o
+     * chip parou de registrar. STOP falho e resultado possivel - a leitura
+     * final pode estar salva enquanto a etiqueta continua gravando -, e sem
+     * uma coluna propria o app so sabia disso enquanto a tela de coleta
+     * estivesse aberta. Depois disso o volume aparecia como ENCERRADO e nada
+     * contradizia essa palavra.
+     *
+     * `null` significa "nao confirmado", nunca "nao parou": pode ser STOP que
+     * falhou, ou sessao anterior a este campo. As duas situacoes pedem a mesma
+     * conduta - encostar a etiqueta e conferir - e por isso compartilham o
+     * mesmo valor. Preenchido uma unica vez, nunca sobrescrito.
+     */
+    val loggerParadoEmMillis: Long? = null,
 )
 
 @Entity(
