@@ -25,7 +25,7 @@ class Config(BaseSettings):
 
     # ---- aplicação -------------------------------------------------
     NOME_APP: str = "ThermoTrace API"
-    VERSAO: str = "0.6.0"
+    VERSAO: str = "0.7.0"
     AMBIENTE: Literal["local", "homologacao", "producao"] = "local"
     DEBUG: bool = False
 

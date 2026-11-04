@@ -3,8 +3,8 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import Acesso, autenticado
 from app.db.session import obter_sessao
-from app.schemas.acesso import Login, Renovacao
-from app.services import autenticacao as service
+from app.schemas.acesso import AtivarAcesso, Login, Renovacao
+from app.services import autenticacao as service, codigo_acesso
 from app.services.auditoria import auditar
 
 router = APIRouter(prefix="/auth", tags=["Acesso"])
@@ -22,6 +22,14 @@ def login(body: Login, request: Request, response: Response, db: Session = Depen
 def refresh(body: Renovacao, response: Response, db: Session = Depends(obter_sessao)):
     response.headers["Cache-Control"] = "no-store"
     return service.renovar(db, body.refresh_token.get_secret_value())
+
+
+@router.post("/ativar", status_code=204)
+def ativar(body: AtivarAcesso, request: Request, response: Response, db: Session = Depends(obter_sessao)):
+    """Primeiro acesso ou redefinição: e-mail + código de uso único + nova senha (WEB-11)."""
+    response.headers["Cache-Control"] = "no-store"
+    codigo_acesso.ativar(db, body.email, body.codigo.get_secret_value(), body.nova_senha.get_secret_value(),
+                         request.client.host if request.client else "desconhecido")
 
 
 @router.post("/logout", status_code=204)

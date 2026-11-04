@@ -35,7 +35,7 @@ function login(message = '') {
   email.maxLength = 254; password.maxLength = 256;
   const error = el('p', message, 'error'); error.setAttribute('role','alert');
   const submit = el('button','Entrar','primary wide'); submit.type='submit';
-  form.append(emailLabel,passwordLabel,error,submit);
+  form.append(emailLabel,passwordLabel,error,submit,button('Tenho um código de acesso',()=>activation(email.value.trim()),'link-button'));
   form.addEventListener('submit', async e => {
     e.preventDefault(); error.textContent=''; submit.disabled=true; submit.textContent='Entrando…';
     try {
@@ -48,6 +48,83 @@ function login(message = '') {
     finally { submit.disabled=false; submit.textContent='Entrar'; }
   });
 }
+
+function activation(prefill='') {
+  // Primeiro acesso ou redefinição. O código é digitado; nunca vem por link.
+  const card=document.querySelector('.login-card'); card.replaceChildren();
+  const form=el('form'), [emailLabel,email]=field('E-mail','email','email','username');
+  const [codeLabel,code]=field('Código de acesso','text','codigo','one-time-code'); code.maxLength=32; code.placeholder='XXXX-XXXX-XXXX'; code.autocapitalize='characters'; code.spellcheck=false;
+  const [passLabel,pass]=field('Nova senha (mínimo 12 caracteres)','password','nova_senha','new-password'); pass.minLength=12; pass.maxLength=256;
+  const [confLabel,conf]=field('Repita a nova senha','password','confirmacao','new-password'); conf.minLength=12; conf.maxLength=256;
+  email.value=prefill; email.maxLength=254;
+  const error=el('p','','error'); error.setAttribute('role','alert');
+  const ok=el('button','Criar senha','primary wide'); ok.type='submit';
+  form.append(emailLabel,codeLabel,passLabel,confLabel,error,ok,button('Voltar para entrar',()=>login(),'link-button'));
+  card.append(el('p','Primeiro acesso ou nova senha','eyebrow'),el('h2','Use seu código de acesso'),
+    el('p','Quem cadastrou seu acesso (o gestor da sua empresa ou a equipe ThermoTrace) entrega o código. Ele vale uma única vez.','muted'),form);
+  form.addEventListener('submit',async e=>{
+    e.preventDefault(); error.textContent='';
+    if(pass.value!==conf.value){ error.textContent='As duas senhas não são iguais.'; return; }
+    ok.disabled=true; ok.textContent='Criando…';
+    try { await api.ativar(email.value.trim(),code.value.trim(),pass.value); pass.value=conf.value=code.value=''; login('Senha criada. Entre com o e-mail e a nova senha.'); }
+    catch(err){ pass.value=conf.value=''; error.textContent=err.message; }
+    finally{ ok.disabled=false; ok.textContent='Criar senha'; }
+  });
+  email.value ? code.focus() : email.focus();
+}
+
+function codeCard(nome, acesso) {
+  // Mostrado uma única vez; o servidor guarda só o hash.
+  const box=el('section',undefined,'card'); box.setAttribute('role','status');
+  const code=el('p',acesso.codigo_acesso,'access-code');
+  box.append(el('h2',`Código de acesso de ${nome}`),code,
+    el('p',`Vale uma única vez, até ${date(acesso.expira_em)}. A pessoa abre o portal, escolhe "Tenho um código de acesso" e cria a própria senha.`,'muted'),
+    notice('Anote agora: o código não será mostrado de novo. Entregue pessoalmente ou por telefone, não junto do e-mail. Se perder, gere outro; o anterior deixa de valer.'),
+    button('Já entreguei, ocultar',()=>box.remove()));
+  return box;
+}
+
+function inviteForm(target, onDone) {
+  const form=el('form',undefined,'search'), [nl,nome]=field('Nome','text','nome','off'), [el2,email]=field('E-mail','email','email','off');
+  const pl=el('label','Permissão','field'), papel=el('select'); papel.name='papel';
+  [['operador','Operador'],['gestor','Gestor']].forEach(([v,t])=>{const o=el('option',t);o.value=v;papel.append(o);}); pl.append(papel);
+  const ok=el('button','Convidar','primary'); ok.type='submit'; const msg=el('div');
+  form.append(nl,el2,pl,ok);
+  form.addEventListener('submit',async e=>{
+    e.preventDefault(); msg.replaceChildren(); ok.disabled=true;
+    try { const r=await api.request('/usuarios/convites',{method:'POST',body:{nome:nome.value.trim(),email:email.value.trim(),papel:papel.value}});
+      target.prepend(codeCard(r.usuario.nome,r.acesso)); nome.value=email.value=''; onDone(); }
+    catch(error){ showError(error,msg); } finally { ok.disabled=false; }
+  });
+  const wrap=el('div'); wrap.append(form,msg); return wrap;
+}
+
+function companyForm(target, onDone) {
+  const form=el('form',undefined,'search'), [rl,razao]=field('Razão social','text','razao','off'), [cl,cnpj]=field('CNPJ','text','cnpj','off');
+  const tl=el('label','Atividade','field'), tipo=el('select'); tipo.name='tipo';
+  [['embarcador','Cliente · dono da carga'],['transportadora','Contratante · transportadora'],['ambos','Cliente e contratante']].forEach(([v,t])=>{const o=el('option',t);o.value=v;tipo.append(o);}); tl.append(tipo);
+  const [gl,gnome]=field('Nome do gestor','text','gestor_nome','off'), [ml,gemail]=field('E-mail do gestor','email','gestor_email','off');
+  cnpj.maxLength=18; const ok=el('button','Cadastrar empresa','primary'); ok.type='submit'; const msg=el('div');
+  form.append(rl,cl,tl,gl,ml,ok);
+  form.addEventListener('submit',async e=>{
+    e.preventDefault(); msg.replaceChildren(); ok.disabled=true;
+    try { const r=await api.request('/plataforma/clientes',{method:'POST',body:{razao_social:razao.value.trim(),cnpj:cnpj.value.trim(),tipo:tipo.value,gestor:{nome:gnome.value.trim(),email:gemail.value.trim()}}});
+      target.prepend(codeCard(`${r.gestor.nome} (${r.razao_social})`,r.acesso)); [razao,cnpj,gnome,gemail].forEach(i=>i.value=''); onDone(); }
+    catch(error){ showError(error,msg); } finally { ok.disabled=false; }
+  });
+  const wrap=el('div'); wrap.append(form,msg); return wrap;
+}
+
+function rowAction(label, path, codes, done, nome, confirmText) {
+  return button(label, async e=>{
+    if(confirmText && !globalThis.confirm(confirmText)) return;
+    const b=e.currentTarget; b.disabled=true;
+    try { const r=await api.request(path,{method:'POST'}); if(r?.codigo_acesso) codes.prepend(codeCard(nome,r)); done(); }
+    catch(error){ b.disabled=false; showError(error,codes); }
+  },'link-button');
+}
+
+const accessLabel={ativo:'Ativo',aguardando_primeiro_acesso:'Aguardando primeiro acesso',desativado:'Desativado'};
 
 function shell() {
   root.innerHTML = `<div class="shell"><aside class="sidebar"><div><span class="brand">Thermo<span>Trace</span></span><div class="tagline">COLD CHAIN INTELLIGENCE</div></div><nav aria-label="Navegação principal"></nav><div class="sidebar-bottom">Homologação<br>Histórico com origem e autoria.<br>Acesso limitado à sua permissão.</div></aside><div class="main"><header class="topbar"><span id="area" class="eyebrow"></span><div class="top-actions"><div class="identity" id="identity"></div><div id="exit"></div></div></header><main id="content" class="content" tabindex="-1" aria-live="polite"></main></div></div>`;
@@ -81,12 +158,15 @@ async function navigate(key, offset=0, query='') {
     const search=el('button','Buscar','primary'); search.type='submit';
     form.append(l,search,button('Limpar',()=>navigate(key))); form.addEventListener('submit',e=>{e.preventDefault(); navigate(key,0,input.value.trim());}); content.append(form);
   }
-  if (key==='empresas') content.append(notice('O acesso de suporte ao conteúdo das cargas exigirá autorização e registro de auditoria. Esta área mostra os cadastros das empresas.'));
+  // Atualiza só a lista: o cartão com o código recém-gerado precisa continuar na tela.
+  const codes=el('div',undefined,'stack'); let reload=()=>{};
+  if (key==='empresas') { content.append(notice('O acesso de suporte ao conteúdo das cargas exigirá autorização e registro de auditoria. Esta área mostra os cadastros das empresas e permite entregar o acesso do gestor.'),codes); const d=el('details'); d.append(el('summary','Cadastrar empresa'),companyForm(codes,()=>reload())); content.append(d); }
+  if (key==='equipe') { content.append(codes); const d=el('details'); d.append(el('summary','Convidar pessoa'),inviteForm(codes,()=>reload())); content.append(d); }
   if (key==='recebidas') content.append(notice(user.papel==='gestor'
     ? 'Aceite apenas convites que você reconhece. Depois do aceite, a equipe da sua empresa consulta somente esta carga; o dono pode encerrar o acesso a qualquer momento e vê cada consulta.'
     : 'Somente cargas com compartilhamento aceito pelo gestor da sua empresa aparecem aqui.'));
   const results=el('section'); results.setAttribute('aria-label','Resultados'); results.append(el('p','Carregando…','loading')); content.append(results);
-  try {
+  reload=async()=>{ try {
     const path= key==='recebidas'?`/compartilhamentos/recebidos?situacao=pendente&situacao=ativo&limite=20&offset=${offset}`:key==='empresas'?`/plataforma/clientes?limite=20&offset=${offset}`:key==='equipe'?`/usuarios?limite=20&offset=${offset}`:key==='auditoria'?`/auditoria?limite=20&depois_id=${offset}`:query?`/remessas/localizar?valor=${encodeURIComponent(query)}&limite=20&offset=${offset}`:`/remessas?limite=20&offset=${offset}`;
     const data=await api.request(path); if (ticket!==view) return;
     const rows=query&&key==='cargas'?data.candidatas:data; results.replaceChildren();
@@ -96,8 +176,21 @@ async function navigate(key, offset=0, query='') {
       c.empresa_dona,badge(shareStatus[c.situacao]||c.situacao),c.pode_exportar?'Consultar e exportar':'Somente consultar',
       c.expira_em?date(c.expira_em):'Até ser encerrado',shareActions(c,()=>navigate('recebidas'))])));
     else if (key==='cargas') results.append(table(['Carga','Situação','Destinatário','Criada em'],rows.map(r=>[button(r.codigo,()=>detail(r.id),'link-button'),badge(statuses[r.status]||r.status),r.destinatario_nome,date(r.criado_em)])));
-    else if (key==='empresas') results.append(table(['Empresa','CNPJ','Cadastro'],rows.map(r=>[r.razao_social,r.cnpj,badge(r.ativa?'Ativo':'Inativo')])));
-    else if (key==='equipe') results.append(table(['Pessoa','E-mail','Permissão','Cadastro'],rows.map(r=>[r.nome,r.email,r.papel==='gestor'?'Gestor':'Operador',badge(r.ativo?'Ativo':'Inativo')])));
+    else if (key==='empresas') results.append(table(['Empresa','CNPJ','Atividade','Cadastro','Gestores'],rows.map(r=>{
+      const gs=el('div',undefined,'stack');
+      (r.gestores||[]).forEach(g=>{ const line=el('div'); line.append(el('span',`${g.nome} · ${accessLabel[g.acesso]||g.acesso} `),
+        ...(g.ativo?[rowAction(g.acesso==='ativo'?'Novo código (senha esquecida)':'Gerar novo convite',`/plataforma/clientes/${r.id}/gestores/${g.id}/codigo-acesso`,codes,()=>reload(),`${g.nome} (${r.razao_social})`,
+          g.acesso==='ativo'?`Gerar um código para ${g.nome} criar nova senha? A ação aparece na auditoria da empresa.`:null)]:[])); gs.append(line); });
+      return [r.razao_social,r.cnpj,labels[{embarcador:'cliente',transportadora:'contratante',ambos:'ambos'}[r.tipo]]||r.tipo,badge(r.ativa?'Ativo':'Inativo'),gs];
+    })));
+    else if (key==='equipe') results.append(table(['Pessoa','E-mail','Permissão','Acesso','Ações'],rows.map(r=>{
+      const acts=el('div',undefined,'controls'), propria=r.id===user.id;
+      if(r.ativo && !propria && (r.papel==='operador' || r.acesso==='aguardando_primeiro_acesso'))
+        acts.append(rowAction(r.acesso==='ativo'?'Novo código (senha esquecida)':'Gerar novo convite',`/usuarios/${r.id}/codigo-acesso`,codes,()=>reload(),r.nome));
+      if(r.ativo && !propria && r.papel==='operador')
+        acts.append(rowAction('Desativar',`/usuarios/${r.id}/desativar`,codes,()=>reload(),r.nome,`Desativar ${r.nome}? As sessões abertas são encerradas na hora.`));
+      return [r.nome,r.email,r.papel==='gestor'?'Gestor':'Operador',badge(accessLabel[r.acesso]||(r.ativo?'Ativo':'Desativado')),acts];
+    })));
     else results.append(table(['Registro','Data e hora','Ação','Entidade','Responsável'],rows.map(r=>[String(r.id),date(r.em),r.acao,r.entidade,r.usuario_id||'Sistema'])));
     const pager=el('div',undefined,'pager'), controls=el('div',undefined,'controls');
     pager.append(el('span',`${rows.length} registro(s) nesta página`));
@@ -105,7 +198,8 @@ async function navigate(key, offset=0, query='') {
     const more=query&&key==='cargas'?data.ha_mais:rows.length===20;
     if(more) controls.append(button('Próxima',()=>navigate(key,key==='auditoria'?rows.at(-1).id:offset+20,query)));
     pager.append(controls); results.append(pager);
-  } catch(error) { if(ticket===view) { results.replaceChildren(); showError(error,results); } }
+  } catch(error) { if(ticket===view) { results.replaceChildren(); showError(error,results); } } };
+  await reload();
 }
 
 function shareActions(c, done) {

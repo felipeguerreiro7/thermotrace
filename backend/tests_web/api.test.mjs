@@ -100,6 +100,16 @@ test('ação de escrita envia corpo e reaproveita a mesma chave após renovar o 
   const outra=base(()=>reply([]));await outra.login('b@example.org','sintética');
 });
 
+test('ativação envia código no corpo, sem token, e não abre sessão',async()=>{
+  let pedido;
+  const api=createApi(async(url,opts)=>{pedido={url,opts};return reply(null,204);});
+  await api.ativar('a@example.org','ABCD-EFGH-JKMN','Senha-nova-sintetica-123');
+  assert.equal(pedido.url,'/api/v1/auth/ativar');assert.equal(pedido.opts.method,'POST');
+  assert.equal(pedido.opts.headers.Authorization,undefined);
+  assert.deepEqual(JSON.parse(pedido.opts.body),{email:'a@example.org',codigo:'ABCD-EFGH-JKMN',nova_senha:'Senha-nova-sintetica-123'});
+  await assert.rejects(api.request('/auth/me'),e=>e.status===401);
+});
+
 test('consulta não envia chave de idempotência',async()=>{
   const api=base((url,opts)=>{assert.equal(opts.headers['Idempotency-Key'],undefined);assert.equal(opts.method,'GET');return reply([]);});
   await api.login('a@example.org','sintética');await api.request('/compartilhamentos/recebidos');

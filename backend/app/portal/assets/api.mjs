@@ -92,6 +92,11 @@ export function createApi(fetcher = globalThis.fetch.bind(globalThis)) {
         return await request('/auth/me');
       } catch (error) { if (current === generation) clear(); throw error; }
     },
+    async ativar(email, codigo, novaSenha) {
+      // Primeiro acesso ou redefinição; não abre sessão. A pessoa entra depois com a senha nova.
+      clear();
+      await send('/auth/ativar', {method:'POST', body:{email, codigo, nova_senha:novaSenha}});
+    },
     async logout() {
       // Renova primeiro quando necessário; o servidor revoga toda a família.
       try {

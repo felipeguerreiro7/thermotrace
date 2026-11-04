@@ -11,6 +11,7 @@ from uuid import UUID
 
 from sqlalchemy import (
     Boolean,
+    CheckConstraint,
     DateTime,
     ForeignKey,
     Index,
@@ -160,7 +161,11 @@ class SessaoAuth(Base, IdMixin, CriadoMixin):
 
 
 class TokenRecuperacao(Base, IdMixin, CriadoMixin):
-    """Recuperação de senha. Uso único, 30 minutos."""
+    """Código de acesso de uso único: primeiro acesso (convite) ou redefinição.
+
+    WEB-11: gerado por gestor ou equipe ThermoTrace, mostrado uma vez e entregue
+    por outro canal. Só o hash fica no banco; usar ou gerar outro invalida o anterior.
+    """
 
     __tablename__ = "token_recuperacao"
 
@@ -170,5 +175,9 @@ class TokenRecuperacao(Base, IdMixin, CriadoMixin):
     token_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
     expira_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     usado_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    finalidade: Mapped[str] = mapped_column(String(16), nullable=False, server_default="redefinicao")
+    criado_por: Mapped[UUID | None] = mapped_column(PgUUID(as_uuid=True), ForeignKey("usuario.id"))
+    revogado_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
-    __table_args__ = (Index("ix_token_recuperacao_usuario_id", "usuario_id"),)
+    __table_args__ = (Index("ix_token_recuperacao_usuario_id", "usuario_id"),
+                     CheckConstraint("finalidade IN ('convite','redefinicao')", name="finalidade_conhecida"))

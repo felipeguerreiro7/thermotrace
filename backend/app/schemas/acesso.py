@@ -29,11 +29,32 @@ class NovoUsuario(Entrada):
         return value
 
 
+class ConviteUsuario(Entrada):
+    """Pessoa convidada sem senha: recebe código de acesso de uso único (WEB-11)."""
+    nome: str = Field(min_length=2, max_length=160)
+    email: EmailStr
+    papel: PapelUsuario = PapelUsuario.OPERADOR
+
+    @field_validator("papel")
+    @classmethod
+    def papel_cliente(cls, value):
+        if value == PapelUsuario.ADMIN:
+            raise ValueError("Administrador da plataforma não é um papel de cliente.")
+        return value
+
+
+class AtivarAcesso(Entrada):
+    email: EmailStr
+    codigo: SecretStr = Field(min_length=12, max_length=32)
+    nova_senha: SecretStr = Field(min_length=12, max_length=256)
+
+
 class NovoCliente(Entrada):
     razao_social: str = Field(min_length=2, max_length=240)
     cnpj: str = Field(pattern=r"^[A-Z0-9]{12}[0-9]{2}$")
     tipo: TipoEmpresa = TipoEmpresa.EMBARCADOR
-    gestor: NovoUsuario
+    # Com senha: fluxo antigo. Sem senha: o gestor recebe código de acesso.
+    gestor: NovoUsuario | ConviteUsuario
 
     @field_validator("cnpj", mode="before")
     @classmethod
