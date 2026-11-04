@@ -48,3 +48,14 @@ Motivo: o Android 0.8.6 só envia coletas para cargas que já existem no servido
 - **Minhas cargas → Nova carga (operador e gestor):** produto disponível, código opcional, destinatário, descrição, volumes e documento opcional (NF-e, CT-e, pedido…). O critério do produto fica congelado na carga.
 - **Mensagens de erro:** quando a API recusa por validação, o portal mostra o motivo da regra (por exemplo, "Informe o código da carga ou pelo menos um documento") ou o campo a revisar, em vez de uma mensagem genérica.
 - **Evidências:** API sem mudança (174 testes seguem passando) e 17 testes web. No navegador, com dados fictícios, conferi rascunho a partir do modelo "Vacina refrigerada", aprovação, produto v1 e v2 sem conflito, a lista de produtos disponíveis na nova carga e a mensagem de erro. Criação de carga pelo formulário também conferida: a carga nasceu com 2 volumes, documento de pedido e critério congelado, e o portal abriu a página dela. Corrigido o ponto final duplicado na mensagem de erro.
+
+## Parte 3 — verificação em duas etapas (MFA), API 0.8, 04/11/2026
+
+- **Como funciona:** código de 6 dígitos de app autenticador (TOTP, padrão RFC 6238), implementado com a biblioteca padrão do Python, sem dependência nova.
+- **Quem usa:** **obrigatória para a equipe ThermoTrace**, cuja área fica bloqueada até a ativação; opcional para gestores e operadores, em "Segurança da conta".
+- **Login:** o portal só pede o código depois da senha correta, então quem não sabe a senha não descobre se a conta tem MFA. O mesmo código não vale duas vezes, e o código do período anterior ou do seguinte é aceito, para tolerar celular com relógio adiantado ou atrasado.
+- **Ativação:** encerra as outras sessões abertas da conta. Desativar exige um código atual e não é permitido para a equipe ThermoTrace.
+- **Celular perdido:** quem tem acesso ao servidor roda python -m app.mfa_cli --email ... --motivo .... A ação fica na auditoria do cliente.
+- **Limite registrado:** o segredo TOTP fica no banco sem cifra adicional. Rever antes de dados reais.
+- **Evidências:** 178 testes API (4 novos, incluindo os vetores oficiais da RFC 6238) e 17 web. No navegador, a conta fictícia da equipe caiu direto na ativação, ativou com o código, abriu a área de empresas e no login seguinte teve o código pedido.
+- **Banco de teste:** recriado nesta rodada. Os testes de concorrência já existentes deixam empresas sintéticas gravadas, e após muitas execuções as listagens de até 100 itens falhavam. Fica para o plano de acabamento.

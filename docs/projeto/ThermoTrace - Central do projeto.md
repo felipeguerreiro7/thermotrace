@@ -122,3 +122,7 @@ Retomada em computador novo; base conferida antes da mudança. Estado atual: Por
 Pessoas e empresas passam a ser cadastradas pelo portal, com código de acesso de uso único e senha criada pela própria pessoa. Isso completa o caminho para uma transportadora nova receber uma carga compartilhada sem passar pela API. Pendentes: Render (URL pública ainda não registrada), operação entre empresas, consolidação da viagem e testes físicos.
 
 [[ThermoTrace - Convites e acesso WEB-11]].
+
+## Meta — piloto pronto até 30/11/2026
+
+Pedido do usuário em 04/11/2026. Plano semanal, responsáveis e risco principal (ensaio físico) em [[ThermoTrace - Plano até 30-11-2026]].
