@@ -73,14 +73,14 @@ jobs:
 
       - uses: actions/setup-node@v5
         with:
-          node-version: "22"
+          node-version: "24"
 
       - name: Testes do portal
-        run: node --test tests_web/
+        run: node --test "tests_web/*.test.mjs"
 
       - name: Guardar resultado
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: resultado-api
           path: backend/resultado-api.xml
@@ -93,6 +93,12 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      # Antes do JDK 25: o sdkmanager do runner roda com o Java padrão da imagem.
+      - name: Instalar plataforma Android 37
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "platforms;android-37"
+
       # O daemon do Gradle 9.7.1 exige JDK 25 (gradle/gradle-daemon-jvm.properties).
       - uses: actions/setup-java@v5
         with:
@@ -100,9 +106,6 @@ jobs:
           java-version: "25"
 
       - uses: gradle/actions/setup-gradle@v5
-
-      - name: Instalar plataforma Android 37
-        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37" > /dev/null
 
       # O gradlew fica sem bit de execução no repositório (projeto escrito em Windows).
       - name: Testes JVM
@@ -113,7 +116,7 @@ jobs:
 
       - name: Guardar relatórios
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: relatorios-android
           path: |
