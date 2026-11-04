@@ -130,3 +130,7 @@ Pedido do usuário em 04/11/2026. Plano semanal, responsáveis e risco principal
 ## Atualização — Android 0.8.8, 04/11/2026
 
 Envio automático das coletas de sessões vinculadas, pelo mesmo caminho do botão de envio. [[ThermoTrace - Envio automático Android 0.8.8]]. Ensaio físico: [[ThermoTrace - Roteiro do ensaio físico de novembro]].
+
+## Atualização — viagem consolidada, API 0.9, 04/11/2026
+
+Portal mostra a viagem de cada sessão a partir de todas as coletas, sem somar históricos, com excursões e relatório. [[ThermoTrace - Viagem consolidada WEB-12]].

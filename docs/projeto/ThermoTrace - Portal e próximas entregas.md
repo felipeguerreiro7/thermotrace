@@ -90,3 +90,7 @@ Convite e redefinição de acesso por código de uso único, sem e-mail e sem se
 ## Atualização — WEB-11 parte 2, 04/11/2026
 
 Perfis térmicos, produtos e cargas passam a ser cadastrados pelo portal, sem mudança na API. Com isso, um cliente novo vai do convite à carga pronta para o Android bipar sem usar a API diretamente. Segue aberto no WEB-11: MFA da equipe ThermoTrace.
+
+## Atualização — WEB-12 viagem consolidada, 04/11/2026
+
+Consolidação entre coletas, excursões e relatório da viagem entregues (API 0.9). Junção de sessões com troca de etiqueta fica para depois. [[ThermoTrace - Viagem consolidada WEB-12]].
