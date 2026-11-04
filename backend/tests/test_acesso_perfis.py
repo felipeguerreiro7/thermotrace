@@ -16,6 +16,7 @@ from app.db.session import engine, obter_sessao
 from app.main import app
 from app.models import Empresa, Usuario, SessaoAuth, LogAuditoria
 from app.models.enums import PapelUsuario, TipoEmpresa
+from app.services import mfa
 
 SENHA = "Senha-sintetica-para-teste-42"
 PERFIL = {"codigo": "TESTE-REFRIGERADO", "rotulo": "Produto sintético fechado",
@@ -40,6 +41,9 @@ def ambiente():
             db.add(emp); db.flush()
             u = Usuario(empresa_id=emp.id, nome=nome, email=f"{nome}-{uuid4().hex}@example.org",
                         senha_hash=ph, papel=papel)
+            if tipo == TipoEmpresa.PLATAFORMA:
+                # Equipe ThermoTrace sempre com MFA; segredo sintético só de teste.
+                u.mfa_segredo, u.mfa_ativado_em = mfa.novo_segredo(), agora()
             db.add(u); db.flush()
             dados[nome] = u
         operador = Usuario(empresa_id=dados["a"].empresa_id, nome="Operador",
@@ -57,8 +61,18 @@ def ambiente():
 
         app.dependency_overrides[obter_sessao] = override
         client = TestClient(app)
+        sessoes_mfa = {}
         def entrar(nome="a"):
-            r = client.post("/api/v1/auth/login", json={"email": dados[nome].email.upper(), "senha": SENHA})
+            u = dados[nome]
+            if u.mfa_ativado_em:
+                # O mesmo código não vale duas vezes (antirreuso); reaproveita a sessão já aberta no teste.
+                if nome not in sessoes_mfa:
+                    r = client.post("/api/v1/auth/login", json={"email": u.email.upper(), "senha": SENHA,
+                                                                "codigo_mfa": mfa.codigo_atual(u.mfa_segredo)})
+                    assert r.status_code == 200, r.text
+                    sessoes_mfa[nome] = r.json()
+                return sessoes_mfa[nome]
+            r = client.post("/api/v1/auth/login", json={"email": u.email.upper(), "senha": SENHA})
             assert r.status_code == 200, r.text
             return r.json()
         try:

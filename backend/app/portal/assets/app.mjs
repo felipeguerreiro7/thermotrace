@@ -35,16 +35,22 @@ function login(message = '') {
   email.maxLength = 254; password.maxLength = 256;
   const error = el('p', message, 'error'); error.setAttribute('role','alert');
   const submit = el('button','Entrar','primary wide'); submit.type='submit';
-  form.append(emailLabel,passwordLabel,error,submit,button('Tenho um código de acesso',()=>activation(email.value.trim()),'link-button'));
+  // Campo do app autenticador aparece só quando o servidor pede, depois da senha correta.
+  const [mfaLabel,mfa] = field('Código do app autenticador (6 dígitos)','text','codigo_mfa','one-time-code');
+  mfa.inputMode='numeric'; mfa.maxLength=12; mfa.required=false; mfaLabel.hidden=true;
+  form.append(emailLabel,passwordLabel,mfaLabel,error,submit,button('Tenho um código de acesso',()=>activation(email.value.trim()),'link-button'));
   form.addEventListener('submit', async e => {
     e.preventDefault(); error.textContent=''; submit.disabled=true; submit.textContent='Entrando…';
     try {
-      const signed = await api.login(email.value.trim(), password.value);
-      password.value='';
+      const signed = await api.login(email.value.trim(), password.value, mfaLabel.hidden ? '' : mfa.value.trim());
+      password.value=''; mfa.value='';
       const nextArea = audience(signed);
       if (!nextArea) { await api.logout(); throw new Error('Este cadastro ainda não tem uma área disponível. Fale com o responsável pela ThermoTrace.'); }
       user=signed; area=nextArea; shell();
-    } catch (err) { password.value=''; error.textContent=err.message; }
+    } catch (err) {
+      if (err.codigo==='mfa_necessario' && mfaLabel.hidden) { mfaLabel.hidden=false; mfa.required=true; error.textContent=err.message; mfa.focus(); return; }
+      password.value=''; mfa.value=''; error.textContent=err.message;
+    }
     finally { submit.disabled=false; submit.textContent='Entrar'; }
   });
 }
@@ -259,15 +265,16 @@ function shell() {
   }));
   const nav=document.querySelector('nav');
   const recebe = area==='contratante' || area==='ambos';
-  const items=area==='staff' ? [['empresas','Empresas cadastradas']] : [['cargas','Minhas cargas'], ...(recebe ? [['recebidas','Compartilhadas comigo']] : []), ...(user.papel==='gestor' ? [['catalogo','Produtos e perfis'],['equipe','Equipe da empresa'],['auditoria','Auditoria']] : [])];
+  const items=[...(area==='staff' ? [['empresas','Empresas cadastradas']] : [['cargas','Minhas cargas'], ...(recebe ? [['recebidas','Compartilhadas comigo']] : []), ...(user.papel==='gestor' ? [['catalogo','Produtos e perfis'],['equipe','Equipe da empresa'],['auditoria','Auditoria']] : [])]), ['seguranca','Segurança da conta']];
   items.forEach(([key,label]) => { const b=button(label,()=>navigate(key),'nav-button'); b.dataset.page=key; nav.append(b); });
-  content=document.querySelector('#content'); navigate(items[0][0]);
+  // Equipe ThermoTrace sem MFA cai direto na ativação: o servidor recusa a área dela até lá.
+  content=document.querySelector('#content'); navigate(user.mfa_obrigatorio && !user.mfa_ativo ? 'seguranca' : items[0][0]);
 }
 
 async function navigate(key, offset=0, query='') {
   page=key; const ticket=++view;
   document.querySelectorAll('[data-page]').forEach(n => n.setAttribute('aria-current',n.dataset.page===key?'page':'false'));
-  const titles={cargas:['Minhas cargas',area==='contratante'?'Consulte as cargas cadastradas na sua transportadora.':'Localize a carga e acompanhe os registros recebidos.'],recebidas:['Compartilhadas comigo','Cargas que outras empresas autorizaram sua empresa a consultar.'],catalogo:['Produtos e perfis','Critérios térmicos aprovados pela sua empresa e os produtos que os usam.'],empresas:['Empresas cadastradas','Visão administrativa da equipe ThermoTrace.'],equipe:['Equipe da empresa','Pessoas com acesso ao ambiente da sua empresa.'],auditoria:['Auditoria','Eventos registrados pelo servidor, do mais antigo ao mais recente.']};
+  const titles={cargas:['Minhas cargas',area==='contratante'?'Consulte as cargas cadastradas na sua transportadora.':'Localize a carga e acompanhe os registros recebidos.'],recebidas:['Compartilhadas comigo','Cargas que outras empresas autorizaram sua empresa a consultar.'],catalogo:['Produtos e perfis','Critérios térmicos aprovados pela sua empresa e os produtos que os usam.'],seguranca:['Segurança da conta','Verificação em duas etapas com app autenticador.'],empresas:['Empresas cadastradas','Visão administrativa da equipe ThermoTrace.'],equipe:['Equipe da empresa','Pessoas com acesso ao ambiente da sua empresa.'],auditoria:['Auditoria','Eventos registrados pelo servidor, do mais antigo ao mais recente.']};
   content.replaceChildren(heading(...titles[key]));
   if (key==='cargas') {
     content.append(notice(area==='contratante'
@@ -280,6 +287,7 @@ async function navigate(key, offset=0, query='') {
     if(!query){ const d=el('details'); d.append(el('summary','Nova carga'),newCargoForm(r=>detail(r.id))); content.append(d); }
   }
   if (key==='catalogo') { try { await catalogPage(content,ticket); } catch(error){ if(ticket===view) showError(error,content); } return; }
+  if (key==='seguranca') { securityPage(content); return; }
   // Atualiza só a lista: o cartão com o código recém-gerado precisa continuar na tela.
   const codes=el('div',undefined,'stack'); let reload=()=>{};
   if (key==='empresas') { content.append(notice('O acesso de suporte ao conteúdo das cargas exigirá autorização e registro de auditoria. Esta área mostra os cadastros das empresas e permite entregar o acesso do gestor.'),codes); const d=el('details'); d.append(el('summary','Cadastrar empresa'),companyForm(codes,()=>reload())); content.append(d); }
@@ -322,6 +330,41 @@ async function navigate(key, offset=0, query='') {
     pager.append(controls); results.append(pager);
   } catch(error) { if(ticket===view) { results.replaceChildren(); showError(error,results); } } };
   await reload();
+}
+
+function securityPage(target) {
+  const card=el('section',undefined,'card result'), msg=el('div');
+  target.append(card);
+  const render=()=>{
+    card.replaceChildren(el('h2','Verificação em duas etapas'));
+    if(user.mfa_ativo){
+      card.append(el('p','Ativa. Ao entrar, além da senha, o portal pede o código de 6 dígitos do seu app autenticador.','muted'));
+      if(!user.mfa_obrigatorio){
+        const f=el('form',undefined,'search'), [l,c]=input('Código atual do app para desativar','codigo',{max:12}); c.inputMode='numeric';
+        const b=el('button','Desativar','secondary'); b.type='submit'; f.append(l,b); card.append(f,msg);
+        submitForm(f,b,msg,async()=>{ await api.request('/auth/mfa/desativar',{method:'POST',body:{codigo:c.value.trim()}}); user.mfa_ativo=false; render(); });
+      } else card.append(el('p','Obrigatória para a equipe ThermoTrace. Se perder o celular, peça a redefinição a outra pessoa da equipe com acesso ao servidor.','muted'));
+      return;
+    }
+    if(user.mfa_obrigatorio) card.append(notice('A equipe ThermoTrace precisa ativar a verificação em duas etapas antes de acessar a área de empresas.'));
+    card.append(el('p','Instale um app autenticador no celular (Google Authenticator, Microsoft Authenticator ou similar). Depois de ativar, cada entrada pede a senha e um código de 6 dígitos que muda a cada 30 segundos.','muted'));
+    const start=button('Ativar verificação em duas etapas',async e=>{
+      e.currentTarget.disabled=true; msg.replaceChildren();
+      try {
+        const r=await api.request('/auth/mfa/iniciar',{method:'POST'});
+        const passo=el('div',undefined,'stack'), link=el('a','Abrir no app autenticador (no celular)','link-button'); link.href=r.uri;
+        const f=el('form',undefined,'search'), [l,c]=input('Código de 6 dígitos mostrado no app','codigo',{max:12}); c.inputMode='numeric'; c.autocomplete='one-time-code';
+        const b=el('button','Confirmar e ativar','primary'); b.type='submit'; f.append(l,b);
+        passo.append(el('p','1. No app, escolha adicionar conta e digite esta chave (tipo: baseada em tempo):'),el('p',r.chave,'access-code'),link,
+          el('p','2. Digite abaixo o código que o app mostrar.'),f);
+        start.replaceWith(passo);
+        submitForm(f,b,msg,async()=>{ await api.request('/auth/mfa/confirmar',{method:'POST',body:{codigo:c.value.trim()}});
+          user.mfa_ativo=true; msg.replaceChildren(); render(); card.append(notice('Verificação ativada. Outras sessões abertas desta conta foram encerradas.')); });
+      } catch(error){ e.currentTarget.disabled=false; showError(error,msg); }
+    },'primary');
+    card.append(start,msg);
+  };
+  render();
 }
 
 function shareActions(c, done) {

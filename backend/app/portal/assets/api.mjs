@@ -1,6 +1,6 @@
 /** Sessão apenas em memória. Não persiste credenciais no navegador. */
 export class ApiError extends Error {
-  constructor(message, status = 0) { super(message); this.status = status; }
+  constructor(message, status = 0, codigo = '') { super(message); this.status = status; this.codigo = codigo; }
 }
 
 export function audience(user) {
@@ -38,7 +38,8 @@ export function createApi(fetcher = globalThis.fetch.bind(globalThis)) {
       const motivos = [...new Set(campos.map(c => String(c.problema || '').startsWith('Value error, ')
         ? String(c.problema).slice(13).replace(/[.\s]+$/, '') : `revise o campo "${String(c.campo || 'corpo').split('.').at(-1)}"`))].slice(0, 4);
       if (motivos.length) mensagem = `${mensagem} ${motivos.join('; ')}.`;
-      throw new ApiError(response.status >= 500 ? 'O serviço está indisponível. Tente novamente em instantes.' : mensagem, response.status);
+      throw new ApiError(response.status >= 500 ? 'O serviço está indisponível. Tente novamente em instantes.' : mensagem, response.status,
+                         response.status >= 500 ? '' : String(data.erro || ''));
     }
     if (response.status === 204) return null;
     return download ? response.blob() : response.json();
@@ -88,11 +89,11 @@ export function createApi(fetcher = globalThis.fetch.bind(globalThis)) {
 
   return {
     request,
-    async login(email, senha) {
+    async login(email, senha, codigoMfa = '') {
       clear();
       const current = generation;
       try {
-        const data = await send('/auth/login', {method:'POST', body:{email, senha}});
+        const data = await send('/auth/login', {method:'POST', body:{email, senha, ...(codigoMfa ? {codigo_mfa:codigoMfa} : {})}});
         if (current !== generation) throw expired();
         access = data.access_token; refresh = data.refresh_token;
         return await request('/auth/me');

@@ -76,6 +76,18 @@ class SemPermissao(ErroApp):
     mensagem = "Sua empresa não tem acesso a este recurso."
 
 
+class MfaNecessario(ErroApp):
+    """Senha conferiu; falta o código do app autenticador. Não emite sessão."""
+    codigo = "mfa_necessario"
+    http = status.HTTP_401_UNAUTHORIZED
+    mensagem = "Informe o código de 6 dígitos do seu app autenticador."
+
+
+class MfaObrigatorio(SemPermissao):
+    codigo = "mfa_obrigatorio"
+    mensagem = "Ative a verificação em duas etapas para usar a área da equipe ThermoTrace."
+
+
 class RegraDeNegocio(ErroApp):
     """A operação é sintaticamente válida mas o domínio recusa.
 

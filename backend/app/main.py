@@ -53,7 +53,8 @@ app = FastAPI(
         "Versão 0.6: compartilhamento explícito de carga com transportadora (convite, aceite, revogação; "
         "consultar e, se autorizado, exportar). Operar carga de outra empresa não é concedido. "
         "Versão 0.7: convite e redefinição de acesso por código de uso único, sem e-mail; "
-        "a pessoa cria a própria senha em /auth/ativar."
+        "a pessoa cria a própria senha em /auth/ativar. "
+        "Versão 0.8: verificação em duas etapas (TOTP), obrigatória para a equipe ThermoTrace."
     ),
     docs_url="/docs" if not cfg.em_producao else None,
     redoc_url="/redoc" if not cfg.em_producao else None,

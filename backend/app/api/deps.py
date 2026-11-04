@@ -7,7 +7,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
-from app.core.errors import NaoAutenticado, SemPermissao
+from app.core.errors import MfaObrigatorio, NaoAutenticado, SemPermissao
 from app.core.security import agora, ler_token
 from app.db.session import obter_sessao
 from app.models import Empresa, Usuario, SessaoAuth
@@ -61,4 +61,7 @@ def gestor(acesso: Acesso = Depends(autenticado)) -> Acesso:
 def plataforma(acesso: Acesso = Depends(autenticado)) -> Acesso:
     if acesso.usuario.papel != PapelUsuario.ADMIN or acesso.empresa.tipo != TipoEmpresa.PLATAFORMA:
         raise SemPermissao()
+    # Equipe ThermoTrace cadastra empresas e entrega acesso de gestores: senha sozinha não basta.
+    if not acesso.usuario.mfa_ativado_em:
+        raise MfaObrigatorio()
     return acesso

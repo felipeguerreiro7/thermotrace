@@ -9,7 +9,8 @@ from fastapi import HTTPException
 from sqlalchemy import select, text, update
 
 from app.core.config import obter_config
-from app.core.errors import NaoAutenticado
+from app.core.errors import MfaNecessario, NaoAutenticado
+from app.services import mfa
 from app.core.security import agora, hash_token, token_acesso, verificar_senha, hasher
 from app.models import Usuario, Empresa, SessaoAuth
 from app.services.auditoria import auditar
@@ -46,16 +47,27 @@ def emitir(db, usuario, familia_id=None, expira_em=None):
             "token_type": "bearer", "expires_in": obter_config().ACCESS_TOKEN_MINUTOS*60}
 
 
-def login(db, email, senha, ip):
+def login(db, email, senha, ip, codigo_mfa=None):
     email = str(email).strip().lower()
     limitar_login(db, email, ip)
-    user = db.scalar(select(Usuario).where(Usuario.email == email))
+    user = db.scalar(select(Usuario).where(Usuario.email == email).with_for_update())
     valido = verificar_senha(senha, user.senha_hash if user else None)
     empresa = db.get(Empresa, user.empresa_id) if user else None
     if not valido or not user.ativo or not empresa or not empresa.ativa:
         auditar(db, "login_recusado", "autenticacao")
         db.commit()
         raise NaoAutenticado()
+    if user.mfa_ativado_em:
+        # Só depois da senha correta: quem não sabe a senha não descobre que a conta tem MFA.
+        if codigo_mfa is None:
+            db.commit()  # Tentativa conta no limite.
+            raise MfaNecessario()
+        passo = mfa.verificar(user.mfa_segredo, codigo_mfa, user.mfa_ultimo_passo)
+        if passo is None:
+            auditar(db, "login_recusado_mfa", "usuario", user.id, user)
+            db.commit()
+            raise NaoAutenticado("Código do app autenticador inválido ou já usado.")
+        user.mfa_ultimo_passo = passo
     if hasher.check_needs_rehash(user.senha_hash):
         user.senha_hash = hasher.hash(senha)
     user.ultimo_login_em = agora()

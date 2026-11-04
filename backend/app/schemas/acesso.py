@@ -9,6 +9,11 @@ class Entrada(BaseModel):
 class Login(Entrada):
     email: EmailStr
     senha: SecretStr = Field(min_length=1, max_length=256)
+    codigo_mfa: SecretStr | None = Field(default=None, min_length=6, max_length=12)
+
+
+class CodigoMfa(Entrada):
+    codigo: SecretStr = Field(min_length=6, max_length=12)
 
 
 class Renovacao(Entrada):

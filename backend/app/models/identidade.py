@@ -10,6 +10,7 @@ from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import (
+    BigInteger,
     Boolean,
     CheckConstraint,
     DateTime,
@@ -78,6 +79,10 @@ class Usuario(Base, IdMixin, TimestampMixin):
         Boolean, nullable=False, server_default="true"
     )
     ultimo_login_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # MFA por TOTP (RFC 6238). Segredo pendente até a confirmação; último passo usado impede reuso do código.
+    mfa_segredo: Mapped[str | None] = mapped_column(String(64))
+    mfa_ativado_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    mfa_ultimo_passo: Mapped[int | None] = mapped_column(BigInteger)
 
     empresa: Mapped[Empresa] = relationship(back_populates="usuarios")
 
