@@ -265,7 +265,7 @@ function shell() {
   }));
   const nav=document.querySelector('nav');
   const recebe = area==='contratante' || area==='ambos';
-  const items=[...(area==='staff' ? [['empresas','Empresas cadastradas']] : [['cargas','Minhas cargas'], ...(recebe ? [['recebidas','Compartilhadas comigo']] : []), ...(user.papel==='gestor' ? [['catalogo','Produtos e perfis'],['equipe','Equipe da empresa'],['auditoria','Auditoria']] : [])]), ['seguranca','Segurança da conta']];
+  const items=[...(area==='staff' ? [['empresas','Empresas cadastradas']] : [['cargas','Minhas cargas'], ['acompanhamento','Acompanhamento'], ...(recebe ? [['recebidas','Compartilhadas comigo']] : []), ...(user.papel==='gestor' ? [['catalogo','Produtos e perfis'],['equipe','Equipe da empresa'],['auditoria','Auditoria']] : [])]), ['seguranca','Segurança da conta']];
   items.forEach(([key,label]) => { const b=button(label,()=>navigate(key),'nav-button'); b.dataset.page=key; nav.append(b); });
   // Equipe ThermoTrace sem MFA cai direto na ativação: o servidor recusa a área dela até lá.
   content=document.querySelector('#content'); navigate(user.mfa_obrigatorio && !user.mfa_ativo ? 'seguranca' : items[0][0]);
@@ -274,7 +274,7 @@ function shell() {
 async function navigate(key, offset=0, query='') {
   page=key; const ticket=++view;
   document.querySelectorAll('[data-page]').forEach(n => n.setAttribute('aria-current',n.dataset.page===key?'page':'false'));
-  const titles={cargas:['Minhas cargas',area==='contratante'?'Consulte as cargas cadastradas na sua transportadora.':'Localize a carga e acompanhe os registros recebidos.'],recebidas:['Compartilhadas comigo','Cargas que outras empresas autorizaram sua empresa a consultar.'],catalogo:['Produtos e perfis','Critérios térmicos aprovados pela sua empresa e os produtos que os usam.'],seguranca:['Segurança da conta','Verificação em duas etapas com app autenticador.'],empresas:['Empresas cadastradas','Visão administrativa da equipe ThermoTrace.'],equipe:['Equipe da empresa','Pessoas com acesso ao ambiente da sua empresa.'],auditoria:['Auditoria','Eventos registrados pelo servidor, do mais antigo ao mais recente.']};
+  const titles={cargas:['Minhas cargas',area==='contratante'?'Consulte as cargas cadastradas na sua transportadora.':'Localize a carga e acompanhe os registros recebidos.'],recebidas:['Compartilhadas comigo','Cargas que outras empresas autorizaram sua empresa a consultar.'],catalogo:['Produtos e perfis','Critérios térmicos aprovados pela sua empresa e os produtos que os usam.'],seguranca:['Segurança da conta','Verificação em duas etapas com app autenticador.'],empresas:['Empresas cadastradas','Visão administrativa da equipe ThermoTrace.'],equipe:['Equipe da empresa','Pessoas com acesso ao ambiente da sua empresa.'],auditoria:['Auditoria','Eventos registrados pelo servidor, do mais antigo ao mais recente.'],acompanhamento:['Acompanhamento','Etiquetas em campo sem leitura final e celulares que pararam de enviar.']};
   content.replaceChildren(heading(...titles[key]));
   if (key==='cargas') {
     content.append(notice(area==='contratante'
@@ -288,6 +288,7 @@ async function navigate(key, offset=0, query='') {
   }
   if (key==='catalogo') { try { await catalogPage(content,ticket); } catch(error){ if(ticket===view) showError(error,content); } return; }
   if (key==='seguranca') { securityPage(content); return; }
+  if (key==='acompanhamento') { try { await monitorPage(content,ticket); } catch(error){ if(ticket===view) showError(error,content); } return; }
   // Atualiza só a lista: o cartão com o código recém-gerado precisa continuar na tela.
   const codes=el('div',undefined,'stack'); let reload=()=>{};
   if (key==='empresas') { content.append(notice('O acesso de suporte ao conteúdo das cargas exigirá autorização e registro de auditoria. Esta área mostra os cadastros das empresas e permite entregar o acesso do gestor.'),codes); const d=el('details'); d.append(el('summary','Cadastrar empresa'),companyForm(codes,()=>reload())); content.append(d); }
@@ -330,6 +331,29 @@ async function navigate(key, offset=0, query='') {
     pager.append(controls); results.append(pager);
   } catch(error) { if(ticket===view) { results.replaceChildren(); showError(error,results); } } };
   await reload();
+}
+
+const monitorStatus={registro_encerrado:'Memória programada acabou',sem_coleta_recente:'Sem coleta recente',em_andamento:'Em andamento'};
+const hours=s=>s==null?'—':s<3600?`${Math.round(s/60)} min`:`${(s/3600).toLocaleString('pt-BR',{maximumFractionDigits:1})} h`;
+async function monitorPage(target, ticket, horas=24) {
+  // Só o que já chegou ao servidor; coletas ainda no celular não aparecem aqui.
+  const box=el('section',undefined,'stack'); target.append(box); box.append(el('p','Carregando…','loading'));
+  const p=await api.request(`/acompanhamento?horas_sem_coleta=${horas}`); if(ticket!==view) return;
+  const t=p.totais; box.replaceChildren();
+  box.append(notice('Mostra apenas o que já chegou ao servidor. Quando a memória programada da etiqueta acaba, ela para de registrar: faça a leitura final. Um celular com atraso grande de envio pode estar sem rede ou com a fila parada.'));
+  const filtro=el('form',undefined,'search'), [l,i]=input('Alertar sem coleta há mais de (horas)','horas',{type:'number',min:1,max:720,value:String(horas)});
+  const ok=el('button','Atualizar','secondary'); ok.type='submit'; filtro.append(l,ok);
+  filtro.addEventListener('submit',e=>{e.preventDefault(); const n=Number(i.value)||24; target.replaceChildren(target.firstChild); monitorPage(target,++view,n);});
+  box.append(filtro,values([['Sessões sem leitura final',String(t.sessoes_abertas)],['Memória programada acabou',String(t.registro_encerrado)],[`Sem coleta há mais de ${horas} h`,String(t.sem_coleta_recente)],['Consultado em',date(p.gerado_em)]]));
+  const sess=el('section',undefined,'card result'); sess.append(el('h2','Etiquetas sem leitura final'));
+  sess.append(p.sessoes_abertas.length?table(['Situação','Carga','Volume','Início','Última coleta','Coletas','Fim previsto da memória'],p.sessoes_abertas.map(s=>[
+    badge(monitorStatus[s.situacao]||s.situacao),button(s.remessa_codigo,()=>detail(s.remessa_id),'link-button'),s.volume,date(s.iniciada_em),date(s.ultima_coleta_em),String(s.coletas),
+    `${date(s.fim_previsto_memoria)}${s.horas_ate_fim_previsto>0?` (em ${hours(s.horas_ate_fim_previsto*3600)})`:''}`])):el('p','Nenhuma etiqueta aguardando leitura final.','muted'));
+  if(p.ha_mais_sessoes) sess.append(el('p','Há mais sessões abertas além das 200 mostradas.','muted'));
+  const dev=el('section',undefined,'card result'); dev.append(el('h2','Celulares da empresa'));
+  dev.append(p.aparelhos.length?table(['Aparelho','Versão do app','Último envio recebido','Coletas em 7 dias','Maior atraso de envio (7 dias)','Último operador','Situação'],p.aparelhos.map(a=>[
+    a.modelo||'Sem modelo',a.versao_app||'—',a.ultima_recepcao_em?date(a.ultima_recepcao_em):'Nunca enviou',String(a.coletas_7_dias),hours(a.maior_atraso_envio_7_dias_s),a.ultimo_operador||'—',badge(a.ativo?'Ativo':'Desativado')])):el('p','Nenhum celular registrado.','muted'));
+  box.append(sess,dev,el('p',`Regra ${p.versao}. ${p.limites[1]}`,'muted'));
 }
 
 function securityPage(target) {
