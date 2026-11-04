@@ -32,7 +32,13 @@ export function createApi(fetcher = globalThis.fetch.bind(globalThis)) {
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
       const fallback = {401:'E-mail ou senha inválidos, ou sessão encerrada.',403:'Sua conta não tem acesso a esta informação.',404:'Registro não encontrado para sua empresa.',422:'Confira os dados informados.',429:'Muitas tentativas. Aguarde um pouco para tentar novamente.'};
-      throw new ApiError(response.status >= 500 ? 'O serviço está indisponível. Tente novamente em instantes.' : (data.mensagem || fallback[response.status] || 'Não foi possível concluir a consulta.'), response.status);
+      let mensagem = data.mensagem || fallback[response.status] || 'Não foi possível concluir a consulta.';
+      // 422 de validação: regra de negócio mostra o próprio texto; formato mostra qual campo revisar.
+      const campos = response.status === 422 && Array.isArray(data.detalhes?.campos) ? data.detalhes.campos : [];
+      const motivos = [...new Set(campos.map(c => String(c.problema || '').startsWith('Value error, ')
+        ? String(c.problema).slice(13) : `revise o campo "${String(c.campo || 'corpo').split('.').at(-1)}"`))].slice(0, 4);
+      if (motivos.length) mensagem = `${mensagem} ${motivos.join('; ')}.`;
+      throw new ApiError(response.status >= 500 ? 'O serviço está indisponível. Tente novamente em instantes.' : mensagem, response.status);
     }
     if (response.status === 204) return null;
     return download ? response.blob() : response.json();

@@ -125,6 +125,126 @@ function rowAction(label, path, codes, done, nome, confirmText) {
 }
 
 const accessLabel={ativo:'Ativo',aguardando_primeiro_acesso:'Aguardando primeiro acesso',desativado:'Desativado'};
+const docTypes=[['nfe','NF-e'],['cte','CT-e'],['pedido','Pedido'],['nfce','NFC-e'],['cte_os','CT-e OS'],['mdfe','MDF-e'],['awb','AWB'],['outro','Outro']];
+
+function opt(select, items) { items.forEach(([v,t])=>{ const o=el('option',t); o.value=v; select.append(o); }); return select; }
+function input(label, name, {type='text', required=true, max, min, step, placeholder, value}={}) {
+  const l=el('label',label,'field'), i=el('input'); i.type=type; i.name=name; i.required=required; i.autocomplete='off';
+  if(max!==undefined) i[type==='number'?'max':'maxLength']=max; if(min!==undefined) i.min=min; if(step) i.step=step;
+  if(placeholder) i.placeholder=placeholder; if(value!==undefined) i.value=value; l.append(i); return [l,i];
+}
+function selectField(label, name, items) { const l=el('label',label,'field'), s=el('select'); s.name=name; opt(s,items); l.append(s); return [l,s]; }
+function submitForm(form, ok, msg, run) {
+  form.addEventListener('submit',async e=>{ e.preventDefault(); msg.replaceChildren(); ok.disabled=true;
+    try { await run(); } catch(error){ showError(error,msg); } finally { ok.disabled=false; } });
+}
+
+function newCargoForm(onCreated) {
+  // Carga nasce com o critério do produto congelado; o Android bipa sobre ela depois.
+  const wrap=el('div'), form=el('form',undefined,'stack'), msg=el('div');
+  const [pl,produto]=selectField('Produto','produto',[]);
+  const [cl,codigo]=input('Código da carga (opcional)','codigo',{required:false,max:64,placeholder:'Gerado automaticamente se vazio'});
+  const [dl,dest]=input('Destinatário','destinatario',{max:240});
+  const [sl,desc]=input('Descrição (opcional)','descricao',{required:false,max:1000});
+  const [vl,vol]=input('Quantidade de volumes','volumes',{type:'number',min:1,max:200,value:1});
+  const [tl,tipo]=selectField('Documento','tipo_doc',docTypes);
+  const [nl,num]=input('Número do documento (opcional se houver código)','numero',{required:false,max:64});
+  const [kl,chave]=input('Chave de acesso de 44 dígitos (opcional)','chave',{required:false,max:44});
+  const ok=el('button','Cadastrar carga','primary'); ok.type='submit';
+  form.append(pl,cl,dl,sl,vl,tl,nl,kl,ok); wrap.append(form,msg);
+  api.request('/produtos?limite=100').then(rows=>{
+    const disp=rows.filter(p=>p.disponivel_para_nova_carga);
+    if(!disp.length){ produto.disabled=ok.disabled=true; msg.append(el('p',user.papel==='gestor'?'Nenhum produto disponível. Configure um em "Produtos e perfis".':'Nenhum produto disponível. Peça ao gestor para configurar um produto.','muted')); }
+    opt(produto,disp.map(p=>[p.id,`${p.codigo} · ${p.produto||''} · ${p.min_c} a ${p.max_c} °C`]));
+  }).catch(error=>showError(error,msg));
+  submitForm(form,ok,msg,async()=>{
+    const documentos=num.value.trim()?[{tipo:tipo.value,numero:num.value.trim(),...(chave.value.trim()?{chave_acesso:chave.value.trim()}:{})}]:[];
+    const r=await api.request('/remessas',{method:'POST',body:{produto_configuracao_id:produto.value,
+      ...(codigo.value.trim()?{codigo:codigo.value.trim()}:{}),destinatario_nome:dest.value.trim(),
+      ...(desc.value.trim()?{descricao_carga:desc.value.trim()}:{}),quantidade_volumes:Number(vol.value),documentos}});
+    onCreated(r);
+  });
+  return wrap;
+}
+
+async function catalogPage(target, ticket) {
+  const perfis=el('section',undefined,'card result'), produtos=el('section',undefined,'card result');
+  target.append(perfis,produtos);
+  const loadPerfis=async()=>{
+    const rows=await api.request('/perfis?somente_ativos=false&limite=100'); if(ticket!==view) return rows;
+    const list=el('div'), status=p=>p.aprovado_em?(p.ativo?'Aprovado':'Retirado de uso'):'Rascunho';
+    list.append(rows.length?table(['Perfil','Versão','Faixa','Situação','Ações'],rows.map(p=>{
+      const acts=el('div',undefined,'controls'), m=el('div');
+      if(!p.aprovado_em){
+        const f=el('form',undefined,'search'), [l,decl]=input('Declaração do responsável (mín. 20 caracteres)','declaracao',{max:2000}); decl.minLength=20;
+        const b=el('button','Confirmar aprovação','primary'); b.type='submit'; f.append(l,b); f.hidden=true;
+        submitForm(f,b,m,async()=>{ await api.request(`/perfis/${p.id}/aprovar`,{method:'POST',body:{declaracao_responsavel:decl.value.trim()}}); await refresh(); });
+        acts.append(button('Aprovar',()=>{f.hidden=false;decl.focus();},'link-button'),f);
+      } else if(p.ativo) acts.append(rowAction('Retirar de uso',`/perfis/${p.id}/retirar`,m,()=>refresh(),p.rotulo,`Retirar ${p.codigo} v${p.versao}? Cargas novas deixam de usá-lo; as existentes mantêm o critério congelado.`));
+      acts.append(m);
+      return [`${p.codigo} · ${p.rotulo}`,p.versao,`${p.min_c} a ${p.max_c} °C`,badge(status(p)),acts];
+    })):el('p','Nenhum perfil cadastrado.','muted'));
+    return {rows,list};
+  };
+  const loadProdutos=async()=>api.request('/produtos?limite=100');
+  let perfisList=el('div'), produtosList=el('div');
+  const refresh=async()=>{
+    try {
+      const [{rows:ps,list},prods]=await Promise.all([loadPerfis(),loadProdutos()]); if(ticket!==view) return;
+      perfisList.replaceChildren(list);
+      aprovados.replaceChildren(); opt(aprovados,ps.filter(p=>p.ativo&&p.aprovado_em).map(p=>[p.id,`${p.codigo} v${p.versao} · ${p.min_c} a ${p.max_c} °C`]));
+      produtosAtuais=Object.fromEntries(prods.map(p=>[p.codigo,p.versao]));
+      produtosList.replaceChildren(prods.length?table(['Produto','Versão','Faixa','Intervalo','Para carga nova'],prods.map(p=>[`${p.codigo}${p.produto?' · '+p.produto:''}`,p.versao,`${p.min_c} a ${p.max_c} °C`,`${p.intervalo_segundos} s`,badge(p.disponivel_para_nova_carga?'Disponível':'Indisponível')])):el('p','Nenhum produto configurado.','muted'));
+    } catch(error){ perfisList.replaceChildren(); showError(error,perfisList); }
+  };
+
+  // Perfil: rascunho com evidência; modelo só preenche campos, nunca aprova.
+  perfis.append(el('h2','Perfis térmicos'),el('p','O perfil define a faixa de temperatura e a fonte que a justifica. Só um perfil aprovado pelo gestor pode ser usado em produto. Faixa e evidência de um perfil aprovado não mudam: para alterar, crie nova versão com o mesmo código.','muted'),perfisList);
+  const pd=el('details'), pf=el('form',undefined,'stack'), pm=el('div');
+  const [ml,modelo]=selectField('Partir de um modelo de referência (opcional)','modelo',[['','Preencher do zero']]);
+  const [cl,cod]=input('Código','codigo',{max:48,placeholder:'Ex.: VACINA-2-8'}); cod.pattern='[A-Za-z0-9][A-Za-z0-9_-]{1,47}';
+  const [rl,rot]=input('Nome','rotulo',{max:160});
+  const [nl,mn]=input('Mínimo °C','min_c',{type:'number',min:-200,max:150,step:'0.01'});
+  const [xl,mx]=input('Máximo °C','max_c',{type:'number',min:-200,max:150,step:'0.01'});
+  const [prl,prod]=input('Produto','produto',{max:240}), [al,apr]=input('Apresentação','apresentacao',{max:240}), [col,cond]=input('Condição','condicao',{max:500});
+  const [ul,url]=input('Fonte (endereço)','fonte_url',{type:'url'}), [ftl,ft]=input('Título da fonte','fonte_titulo',{max:500}), [fvl,fv]=input('Versão da fonte','fonte_versao',{max:120});
+  const [vdl,vd]=input('Fonte conferida em','verificada_em',{type:'date'}); vd.max=new Date().toISOString().slice(0,10);
+  const [jl,just]=input('Justificativa (mín. 10 caracteres)','justificativa',{max:2000}); just.minLength=10;
+  const pok=el('button','Salvar rascunho','primary'); pok.type='submit';
+  pf.append(ml,cl,rl,nl,xl,prl,al,col,ul,ftl,fvl,vdl,jl,pok);
+  pd.append(el('summary','Novo perfil (rascunho)'),notice('Modelos de referência são pontos de partida pesquisados, não aprovação sanitária. Confira a bula ou norma do produto antes de aprovar.'),pf,pm);
+  perfis.append(pd);
+  api.request('/perfis/modelos').then(ref=>{
+    const usaveis=(ref.profiles||[]).filter(p=>p.temperature_c&&p.temperature_c.min!=null&&p.temperature_c.max!=null);
+    opt(modelo,usaveis.map(p=>[p.id,`${p.name} (${p.temperature_c.min} a ${p.temperature_c.max} °C)`]));
+    modelo.addEventListener('change',()=>{ const p=usaveis.find(x=>x.id===modelo.value); if(!p) return;
+      cod.value=p.id.replace(/[^A-Z0-9_-]/gi,'-').slice(0,48).toUpperCase(); rot.value=p.name; mn.value=p.temperature_c.min; mx.value=p.temperature_c.max;
+      cond.value=p.condition||''; const s=(p.sources||[])[0]; if(s){ url.value=s.url||''; ft.value=s.id||''; } just.value=p.requirements||''; });
+  }).catch(()=>{});
+  submitForm(pf,pok,pm,async()=>{
+    await api.request('/perfis',{method:'POST',body:{codigo:cod.value.trim().toUpperCase(),rotulo:rot.value.trim(),min_c:mn.value,max_c:mx.value,
+      evidencia:{produto:prod.value.trim(),apresentacao:apr.value.trim(),condicao:cond.value.trim(),fonte_url:url.value.trim(),fonte_titulo:ft.value.trim(),
+                 fonte_versao:fv.value.trim(),verificada_em:vd.value,justificativa:just.value.trim()}}});
+    pf.reset(); pd.open=false; await refresh();
+  });
+
+  // Produto: liga um código de produto a um perfil aprovado e ao intervalo de medição.
+  produtos.append(el('h2','Produtos'),el('p','O produto liga um código ao perfil aprovado e ao intervalo de medição. Reconfigurar um código cria nova versão; cargas já criadas mantêm o critério anterior.','muted'),produtosList);
+  let produtosAtuais={};
+  const qd=el('details'), qf=el('form',undefined,'stack'), qm=el('div');
+  const [qcl,qcod]=input('Código do produto','codigo',{max:64,placeholder:'Ex.: SKU-VACINA-01'});
+  const [qpl,aprovados]=selectField('Perfil aprovado','perfil',[]);
+  const [qil,intervalo]=input('Intervalo entre medições (segundos)','intervalo',{type:'number',min:1,max:86400,value:600});
+  const qok=el('button','Configurar produto','primary'); qok.type='submit'; qf.append(qcl,qpl,qil,qok);
+  qd.append(el('summary','Configurar produto'),qf,qm); produtos.append(qd);
+  submitForm(qf,qok,qm,async()=>{
+    const codigo=qcod.value.trim().toUpperCase();
+    await api.request('/produtos',{method:'POST',body:{codigo,perfil_termico_id:aprovados.value,intervalo_segundos:Number(intervalo.value),
+      ...(produtosAtuais[codigo]?{versao_anterior:produtosAtuais[codigo]}:{})}});
+    qf.reset(); intervalo.value=600; qd.open=false; await refresh();
+  });
+  await refresh();
+}
 
 function shell() {
   root.innerHTML = `<div class="shell"><aside class="sidebar"><div><span class="brand">Thermo<span>Trace</span></span><div class="tagline">COLD CHAIN INTELLIGENCE</div></div><nav aria-label="Navegação principal"></nav><div class="sidebar-bottom">Homologação<br>Histórico com origem e autoria.<br>Acesso limitado à sua permissão.</div></aside><div class="main"><header class="topbar"><span id="area" class="eyebrow"></span><div class="top-actions"><div class="identity" id="identity"></div><div id="exit"></div></div></header><main id="content" class="content" tabindex="-1" aria-live="polite"></main></div></div>`;
@@ -139,7 +259,7 @@ function shell() {
   }));
   const nav=document.querySelector('nav');
   const recebe = area==='contratante' || area==='ambos';
-  const items=area==='staff' ? [['empresas','Empresas cadastradas']] : [['cargas','Minhas cargas'], ...(recebe ? [['recebidas','Compartilhadas comigo']] : []), ...(user.papel==='gestor' ? [['equipe','Equipe da empresa'],['auditoria','Auditoria']] : [])];
+  const items=area==='staff' ? [['empresas','Empresas cadastradas']] : [['cargas','Minhas cargas'], ...(recebe ? [['recebidas','Compartilhadas comigo']] : []), ...(user.papel==='gestor' ? [['catalogo','Produtos e perfis'],['equipe','Equipe da empresa'],['auditoria','Auditoria']] : [])];
   items.forEach(([key,label]) => { const b=button(label,()=>navigate(key),'nav-button'); b.dataset.page=key; nav.append(b); });
   content=document.querySelector('#content'); navigate(items[0][0]);
 }
@@ -147,7 +267,7 @@ function shell() {
 async function navigate(key, offset=0, query='') {
   page=key; const ticket=++view;
   document.querySelectorAll('[data-page]').forEach(n => n.setAttribute('aria-current',n.dataset.page===key?'page':'false'));
-  const titles={cargas:['Minhas cargas',area==='contratante'?'Consulte as cargas cadastradas na sua transportadora.':'Localize a carga e acompanhe os registros recebidos.'],recebidas:['Compartilhadas comigo','Cargas que outras empresas autorizaram sua empresa a consultar.'],empresas:['Empresas cadastradas','Visão administrativa da equipe ThermoTrace.'],equipe:['Equipe da empresa','Pessoas com acesso ao ambiente da sua empresa.'],auditoria:['Auditoria','Eventos registrados pelo servidor, do mais antigo ao mais recente.']};
+  const titles={cargas:['Minhas cargas',area==='contratante'?'Consulte as cargas cadastradas na sua transportadora.':'Localize a carga e acompanhe os registros recebidos.'],recebidas:['Compartilhadas comigo','Cargas que outras empresas autorizaram sua empresa a consultar.'],catalogo:['Produtos e perfis','Critérios térmicos aprovados pela sua empresa e os produtos que os usam.'],empresas:['Empresas cadastradas','Visão administrativa da equipe ThermoTrace.'],equipe:['Equipe da empresa','Pessoas com acesso ao ambiente da sua empresa.'],auditoria:['Auditoria','Eventos registrados pelo servidor, do mais antigo ao mais recente.']};
   content.replaceChildren(heading(...titles[key]));
   if (key==='cargas') {
     content.append(notice(area==='contratante'
@@ -157,7 +277,9 @@ async function navigate(key, offset=0, query='') {
     input.name='busca'; input.value=query; input.maxLength=96; input.placeholder='Ex.: REM-2026-00184 ou chave da NF-e'; l.append(input);
     const search=el('button','Buscar','primary'); search.type='submit';
     form.append(l,search,button('Limpar',()=>navigate(key))); form.addEventListener('submit',e=>{e.preventDefault(); navigate(key,0,input.value.trim());}); content.append(form);
+    if(!query){ const d=el('details'); d.append(el('summary','Nova carga'),newCargoForm(r=>detail(r.id))); content.append(d); }
   }
+  if (key==='catalogo') { try { await catalogPage(content,ticket); } catch(error){ if(ticket===view) showError(error,content); } return; }
   // Atualiza só a lista: o cartão com o código recém-gerado precisa continuar na tela.
   const codes=el('div',undefined,'stack'); let reload=()=>{};
   if (key==='empresas') { content.append(notice('O acesso de suporte ao conteúdo das cargas exigirá autorização e registro de auditoria. Esta área mostra os cadastros das empresas e permite entregar o acesso do gestor.'),codes); const d=el('details'); d.append(el('summary','Cadastrar empresa'),companyForm(codes,()=>reload())); content.append(d); }

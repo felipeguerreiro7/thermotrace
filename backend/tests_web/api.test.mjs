@@ -110,6 +110,15 @@ test('ativação envia código no corpo, sem token, e não abre sessão',async()
   await assert.rejects(api.request('/auth/me'),e=>e.status===401);
 });
 
+test('erro de validação diz o motivo da regra e o campo a revisar',async()=>{
+  const api=base(()=>reply({mensagem:'Alguns campos não passaram na validação.',detalhes:{campos:[
+    {campo:'corpo',problema:'Value error, Informe o código da carga ou pelo menos um documento.'},
+    {campo:'documentos.0.chave_acesso',problema:"String should match pattern '^[A-Z0-9]{44}$'"}]}},422));
+  await api.login('a@example.org','sintética');
+  await assert.rejects(api.request('/remessas',{method:'POST',body:{}}),e=>e.status===422
+    &&e.message.includes('Informe o código da carga')&&e.message.includes('"chave_acesso"')&&!e.message.includes('pattern'));
+});
+
 test('consulta não envia chave de idempotência',async()=>{
   const api=base((url,opts)=>{assert.equal(opts.headers['Idempotency-Key'],undefined);assert.equal(opts.method,'GET');return reply([]);});
   await api.login('a@example.org','sintética');await api.request('/compartilhamentos/recebidos');
