@@ -33,3 +33,5 @@ Risco principal: o ensaio físico. Se ele atrasar, o prazo atrasa junto; o resta
 ## Andamento
 
 - 04/11: MFA da equipe ThermoTrace concluída e publicada no GitHub (semana 1, item 1).
+- 04/11: ambiente Android montado e suíte JVM rodando (150 testes). Fila automática de envio adiantada da semana 2: Android 0.8.8, ver [[ThermoTrace - Envio automático Android 0.8.8]]. Roteiro do ensaio físico pronto: [[ThermoTrace - Roteiro do ensaio físico de novembro]].
+- Pendente do usuário: URL do Render; ensaio físico; A57 no cabo para os testes instrumentados.

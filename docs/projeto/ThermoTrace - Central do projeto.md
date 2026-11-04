@@ -126,3 +126,7 @@ Pessoas e empresas passam a ser cadastradas pelo portal, com código de acesso d
 ## Meta — piloto pronto até 30/11/2026
 
 Pedido do usuário em 04/11/2026. Plano semanal, responsáveis e risco principal (ensaio físico) em [[ThermoTrace - Plano até 30-11-2026]].
+
+## Atualização — Android 0.8.8, 04/11/2026
+
+Envio automático das coletas de sessões vinculadas, pelo mesmo caminho do botão de envio. [[ThermoTrace - Envio automático Android 0.8.8]]. Ensaio físico: [[ThermoTrace - Roteiro do ensaio físico de novembro]].
