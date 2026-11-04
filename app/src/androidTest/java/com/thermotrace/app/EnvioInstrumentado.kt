@@ -5,6 +5,8 @@ import androidx.room.withTransaction
 import com.thermotrace.app.data.conta.*
 import com.thermotrace.app.data.db.*
 import com.thermotrace.app.domain.*
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 import java.io.IOException
@@ -93,7 +95,18 @@ object EnvioInstrumentado {
             db.openHelper.writableDatabase.execSQL("DROP TRIGGER falha_recibo")
             db.close(); db=ThermoTraceDb.abrir(context,escopo)
             val reaberto=engine()
-            check(reaberto.enviar(d.id(1))==3)
+            // Fila automática (0.8.8): duas instâncias da mesma conta ao mesmo tempo, cada pedido transmitido uma vez.
+            check(reaberto.pendencias(d.id(1))==3)
+            val antesFila=chamadas
+            val (a,b)=coroutineScope {
+                val x=async { reaberto.enviarPendentes() }
+                val y=async { engine().enviarPendentes() }
+                x.await() to y.await()
+            }
+            check(a.enviados+b.enviados==3 && a.sessoesComFalha.isEmpty() && b.sessoesComFalha.isEmpty())
+            check(chamadas-antesFila==3) { "Fila e tela transmitiram o mesmo pedido" }
+            check(reaberto.pendencias(d.id(1))==0)
+            check(reaberto.enviarPendentes().enviados==0)
             check(reaberto.enviar(d.id(1))==0)
             check(db.leituraDao().naoSincronizadas().isEmpty())
             check(db.outboxDao().pendentes().single().chaveIdempotencia=="alerta-preservado")

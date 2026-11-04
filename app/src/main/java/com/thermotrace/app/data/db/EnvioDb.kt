@@ -31,6 +31,9 @@ data class AparelhoEnvio(@PrimaryKey val id: Int = 1, val installId: String, val
 interface EnvioDao {
     @Insert(onConflict = OnConflictStrategy.ABORT) suspend fun vincular(v: VinculoEnvio)
     @Query("SELECT * FROM vinculo_envio WHERE sessaoId = :id") suspend fun vinculo(id: String): VinculoEnvio?
+    /** Sessões já fixadas a carga/volume nesta conta; a fila automática só envia estas. */
+    @Query("SELECT sessaoId FROM vinculo_envio WHERE escopo = :escopo ORDER BY vinculadoEm, sessaoId")
+    suspend fun sessoesVinculadas(escopo: String): List<String>
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun preparar(p: PedidoEnvio)
     @Query("SELECT * FROM pedido_envio WHERE sessaoId = :id ORDER BY ordem, eventoId")
     suspend fun pedidos(id: String): List<PedidoEnvio>

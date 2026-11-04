@@ -55,6 +55,9 @@ class ThermoTraceApp : Application() {
                 }
             }
         preferencias = Preferencias(this)
+        // Fila automática: rodada na abertura (com internet) e rede de segurança a cada 15 minutos.
+        com.thermotrace.app.data.conta.EnvioAutomaticoWorker.agendarPeriodico(this)
+        com.thermotrace.app.data.conta.EnvioAutomaticoWorker.agendarAgora(this)
     }
 
     /** Um grafo fixo por contexto: nenhuma referência troca de empresa em uma operação em andamento. */
@@ -84,10 +87,12 @@ class ThermoTraceApp : Application() {
             leituraDao = db.leituraDao(),
         )
         return DadosLocais(escopo, db, repositorio, alertas,
-            FluxoRapido(repositorio, alertas, db), Preferencias(this, escopo.preferencias),
-            com.thermotrace.app.data.conta.EnvioColetas(db, conta, escopo, installId,
-                metadadosEnvio.getString("modelo"), metadadosEnvio.getString("so"), metadadosEnvio.getString("versao")))
+            FluxoRapido(repositorio, alertas, db), Preferencias(this, escopo.preferencias), novoEnvio(db, escopo))
     }
+
+    /** Mesma configuração de envio para a tela e para a fila automática. */
+    fun novoEnvio(db: ThermoTraceDb, escopo: EscopoLocal) = com.thermotrace.app.data.conta.EnvioColetas(db, conta, escopo,
+        installId, metadadosEnvio.getString("modelo"), metadadosEnvio.getString("so"), metadadosEnvio.getString("versao"))
 
     /**
      * URL do backend que envia os e-mails de alerta.

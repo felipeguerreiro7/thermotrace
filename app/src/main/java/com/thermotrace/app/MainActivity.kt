@@ -14,6 +14,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
@@ -69,6 +70,10 @@ class MainActivity : ComponentActivity() {
             val escopo by app.conta.escopo.collectAsStateWithLifecycle()
             key(escopo.chave) {
                 val dados = remember { app.abrirDados(escopo) }
+                // Entrar na conta (ou trocar de conta) dispara uma rodada da fila desta conta.
+                LaunchedEffect(escopo.chave) {
+                    if (escopo.vinculado) com.thermotrace.app.data.conta.EnvioAutomaticoWorker.agendarAgora(app)
+                }
                 val owner = remember { object : ViewModelStoreOwner {
                     override val viewModelStore = ViewModelStore()
                 } }
@@ -110,7 +115,8 @@ private class Fabrica(private val app: ThermoTraceApp, private val dados: DadosL
         modelClass.isAssignableFrom(RemessaViewModel::class.java) -> RemessaViewModel(repo, alertas)
         modelClass.isAssignableFrom(LeituraViewModel::class.java) ->
             LeituraViewModel(repo, alertas, dados.preferencias, dados.fluxo,
-                com.thermotrace.app.data.local.Localizador(app))
+                com.thermotrace.app.data.local.Localizador(app),
+                aoRegistrar = { com.thermotrace.app.data.conta.EnvioAutomaticoWorker.agendarAgora(app) })
         modelClass.isAssignableFrom(RelatorioViewModel::class.java) -> RelatorioViewModel(repo)
         modelClass.isAssignableFrom(EtiquetasViewModel::class.java) -> EtiquetasViewModel(repo)
         modelClass.isAssignableFrom(OcorrenciaViewModel::class.java) ->

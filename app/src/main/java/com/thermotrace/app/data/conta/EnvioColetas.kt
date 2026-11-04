@@ -8,12 +8,45 @@ import kotlinx.coroutines.sync.withLock
 import org.json.JSONObject
 import java.util.UUID
 
+data class ResultadoFila(val enviados: Int, val sessoesComFalha: List<String>, val loginNecessario: Boolean)
+
 /** Envio explícito por sessão. A rede nunca fica dentro de uma transação SQLite. */
 class EnvioColetas(private val db: ThermoTraceDb, private val conta: RepositorioConta,
     val escopo: EscopoLocal, private val installId: String, private val modelo: String,
     private val so: String, private val versao: String) {
-    private val mutex = Mutex()
+    // Um único envio por conta no processo: tela e fila automática nunca transmitem o mesmo pedido ao mesmo tempo.
+    private val mutex = travas.getOrPut(escopo.chave) { Mutex() }
     private val dao get() = db.envioDao()
+
+    companion object {
+        private val travas = java.util.concurrent.ConcurrentHashMap<String, Mutex>()
+    }
+
+    /** Coletas da sessão ainda sem recibo, incluindo as que nem viraram pedido. */
+    suspend fun pendencias(sessaoId: String): Int {
+        val pedidos = dao.pedidos(sessaoId)
+        val preparados = pedidos.map { it.eventoId }.toSet()
+        return pedidos.count { it.recibo == null } + db.leituraDao().porSessao(sessaoId).count { it.id !in preparados }
+    }
+
+    /**
+     * Fila automática: envia, em ordem, as sessões já vinculadas que têm pendência.
+     * Para na primeira falha de cada sessão (mesma regra do botão) e segue para a próxima;
+     * login expirado interrompe tudo, porque nenhuma outra conta pode assumir a autoria.
+     */
+    suspend fun enviarPendentes(): ResultadoFila {
+        var enviados = 0; val falhas = mutableListOf<String>()
+        for (id in dao.sessoesVinculadas(escopo.chave)) {
+            if (pendencias(id) == 0) continue
+            try { enviados += enviar(id) }
+            catch (e: CancellationException) { throw e }
+            catch (e: Exception) {
+                if (e.cause is LoginNecessario || e is LoginNecessario) return ResultadoFila(enviados, falhas + id, loginNecessario = true)
+                falhas += id
+            }
+        }
+        return ResultadoFila(enviados, falhas, loginNecessario = false)
+    }
     suspend fun vinculo(id: String) = dao.vinculo(id)
     suspend fun pedidos(id: String) = dao.pedidos(id)
     suspend fun cargas(busca: String): List<CargaConta> {

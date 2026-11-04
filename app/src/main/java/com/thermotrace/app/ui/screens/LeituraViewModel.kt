@@ -102,6 +102,8 @@ class LeituraViewModel(
      * localização, de forma explícita.
      */
     private val localizador: com.thermotrace.app.data.local.Localizador? = null,
+    /** Chamado depois do commit local de uma coleta: agenda a fila automática de envio. */
+    private val aoRegistrar: () -> Unit = {},
 ) : ViewModel() {
 
     private val _estado = MutableStateFlow(LeituraUiState())
@@ -506,6 +508,8 @@ class LeituraViewModel(
             check(persistir()) { "A coleta ainda não está pronta para registrar." }
             previaPendente = null
             ativacaoPendente = null
+            // Agendar envio nunca pode desfazer nem atrasar a coleta já gravada.
+            runCatching { aoRegistrar() }
             true
         } catch (e: CancellationException) {
             throw e
