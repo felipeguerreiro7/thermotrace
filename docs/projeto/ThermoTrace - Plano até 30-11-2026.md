@@ -36,3 +36,4 @@ Risco principal: o ensaio físico. Se ele atrasar, o prazo atrasa junto; o resta
 - 04/11: ambiente Android montado e suíte JVM rodando (150 testes). Fila automática de envio adiantada da semana 2: Android 0.8.8, ver [[ThermoTrace - Envio automático Android 0.8.8]]. Roteiro do ensaio físico pronto: [[ThermoTrace - Roteiro do ensaio físico de novembro]].
 - Pendente do usuário: URL do Render; ensaio físico; A57 no cabo para os testes instrumentados.
 - 04/11: viagem consolidada no portal (WEB-12) adiantada da semana 2: [[ThermoTrace - Viagem consolidada WEB-12]]. Do software previsto para as semanas 1 e 2, falta só executar os testes instrumentados no aparelho.
+- 04/11: backup e restauração comprovados localmente (semana 3 adiantada): [[ThermoTrace - Backup e restauração]]. Falta repetir com o banco do Render, o que depende do painel e da decisão de plano.
