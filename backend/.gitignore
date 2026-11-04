@@ -8,3 +8,6 @@ dados/
 .coverage
 htmlcov/
 *.egg-info/
+# Backups contêm dados de clientes e hashes de senha: nunca versionar.
+*.dump
+*.dump.sha256
