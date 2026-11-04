@@ -19,7 +19,7 @@ Semana 4 do [[ThermoTrace - Plano até 30-11-2026]], adiantada. Atende a primeir
 
 - **Onde está:** chave RSA 4096 (PKCS12, validade de 30 anos) em `C:\Users\lfgue\Projetos\_local-thermotrace\assinatura\`, com a senha em `senha.secret` na mesma pasta. **Fora do git e fora do OneDrive.**
 - **Se perder a chave:** os celulares do piloto não aceitam atualização assinada com outra. Seria preciso desinstalar, e isso apaga as coletas locais que ainda não subiram.
-- **Decisão do usuário:** onde guardar a cópia de segurança (por exemplo, um pendrive cifrado ou um cofre de senhas). Não guardar a senha junto da chave na mesma cópia.
+- **Cópia de segurança (decisão do usuário, 04/11):** a chave foi copiada para `OneDrive\Documentos\ThermoTrace - Chave de assinatura (privado)\`, com um LEIA-ME; a cópia foi conferida por SHA-256. **A senha não foi junto, de propósito.** Pendente do usuário: guardar a senha (`senha.secret`) num gerenciador de senhas. Se ativar o Cofre Pessoal do OneDrive, mover a pasta para lá.
 - **Como o build usa a chave:** lê o caminho de `local.properties` e a senha da variável `TT_ASSINATURA_SENHA`. Sem as duas, o release sai sem assinatura, e quem clona o repositório continua compilando.
 
 ## Diferença em relação ao APK de teste
