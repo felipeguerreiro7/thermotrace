@@ -1,8 +1,19 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
 }
+
+// Assinatura do piloto: caminho da chave em local.properties (fora do git) e senha só por
+// variável de ambiente (TT_ASSINATURA_SENHA). Sem as duas, o release sai sem assinatura,
+// e quem clona o repositório continua compilando normalmente.
+val local = Properties().apply {
+    rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+}
+val chave: File? = local.getProperty("tt.assinatura.arquivo")?.let { file(it) }?.takeIf { it.exists() }
+val senha: String? = System.getenv("TT_ASSINATURA_SENHA")
 
 android {
     namespace = "com.thermotrace.app"
@@ -18,12 +29,23 @@ android {
         testInstrumentationRunner = "com.thermotrace.app.EscopoInstrumentation"
     }
 
+    signingConfigs {
+        if (chave != null && !senha.isNullOrBlank()) create("piloto") {
+            storeFile = chave
+            storeType = "PKCS12"
+            storePassword = senha
+            keyAlias = local.getProperty("tt.assinatura.alias", "thermotrace-piloto")
+            keyPassword = senha
+        }
+    }
+
     buildTypes {
         debug {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
         }
         release {
+            signingConfig = signingConfigs.findByName("piloto")
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
