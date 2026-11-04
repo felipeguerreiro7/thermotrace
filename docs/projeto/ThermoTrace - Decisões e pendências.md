@@ -198,3 +198,7 @@ Responde provisoriamente à lacuna "quem pode compartilhar carga e por quanto te
 - Destinatário (terceira parte) ainda não tem papel próprio.
 
 Evidência: [[ThermoTrace - Compartilhamento de cargas WEB-10]].
+
+## Decisão provisória de implementação — acesso sem e-mail, 04/11/2026
+
+Para não contratar envio de e-mail agora, o acesso é entregue por código de uso único mostrado a quem cadastra e repassado por outro canal (convite: 72 horas; redefinição: 24 horas). O gestor redefine operadores; a equipe ThermoTrace redefine gestores, com registro na auditoria do cliente. Revisar quando houver e-mail transacional contratado ou exigência de autoatendimento. [[ThermoTrace - Convites e acesso WEB-11]].

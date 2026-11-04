@@ -7,6 +7,6 @@ Comece por **ThermoTrace - Portal e próximas entregas.md** e **ThermoTrace - Ce
 Os links `[[...]]` são links nativos do Obsidian. No GitHub, abra a nota correspondente nesta pasta.
 
 
-Entrega atual: **Compartilhamento de cargas WEB-10**, API 0.6 e Portal com convite/aceite/revogação; Android 0.8.7 sem mudança. Consulte a nota correspondente nesta pasta; 38 notas pessoais sincronizadas em 04/11/2026. Render e domínio ainda dependem de confirmação.
+Entrega atual: **Convites e acesso WEB-11** (API 0.7), sobre o **Compartilhamento de cargas WEB-10** (API 0.6); Android 0.8.7 sem mudança. Consulte as notas correspondentes nesta pasta; 39 notas pessoais sincronizadas em 04/11/2026. Render e domínio ainda dependem de confirmação.
 
 Entrega anterior: Portal 0.2 e gráficos por coleta, API 0.5, publicada em 4ba684ad6d48e981405f6e07e9471f0137d5ce7b.

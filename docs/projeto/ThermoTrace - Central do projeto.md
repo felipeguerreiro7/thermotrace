@@ -116,3 +116,9 @@ Estado atual: Portal 0.2/API 0.5 com gráfico e exportação por coleta; Android
 Retomada em computador novo; base conferida antes da mudança. Estado atual: Portal 0.3/API 0.6 com compartilhamento explícito de carga entre dono e transportadora (convite, aceite, recusa, revogação, prazo opcional; consultar e, se autorizado, exportar). A operação da carga pela transportadora, a consolidação da viagem e a homologação publicada (WEB-03/04) continuam pendentes. Android permanece 0.8.7, sem mudança.
 
 [[ThermoTrace - Compartilhamento de cargas WEB-10]].
+
+## Atualização — WEB-11 parte 1, API 0.7, 04/11/2026
+
+Pessoas e empresas passam a ser cadastradas pelo portal, com código de acesso de uso único e senha criada pela própria pessoa. Isso completa o caminho para uma transportadora nova receber uma carga compartilhada sem passar pela API. Pendentes: Render (URL pública ainda não registrada), operação entre empresas, consolidação da viagem e testes físicos.
+
+[[ThermoTrace - Convites e acesso WEB-11]].

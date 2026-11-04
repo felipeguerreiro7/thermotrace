@@ -80,3 +80,9 @@ WEB-12 parcial entregue: projeção por coleta, gráfico, CSV/SVG/relatório e a
 WEB-10 entregue para consulta e exportação: o dono compartilha uma carga específica com a transportadora pelo CNPJ, e o gestor da transportadora aceita. Qualquer das partes encerra o acesso. Exportar exige permissão explícita do dono. RLS e filtros de rota protegem as duas pontas, e cada consulta da transportadora aparece na auditoria do dono. A transportadora ainda não opera a carga do dono (bipar, documentos, cancelamento); isso fica como próxima etapa. Prioridade seguinte: WEB-03/04 com um compartilhamento real entre empresas de teste no ambiente publicado.
 
 [[ThermoTrace - Compartilhamento de cargas WEB-10]].
+
+## Atualização — WEB-11 parte 1 e API 0.7, 04/11/2026
+
+Convite e redefinição de acesso por código de uso único, sem e-mail e sem senha definida por terceiros. O gestor convida a equipe; a equipe ThermoTrace cadastra empresas e entrega o acesso do gestor. WEB-09 avançou: largura de celular conferida nas telas novas e nas do WEB-10. Seguem abertos no WEB-11: cadastro de cargas pelo portal e MFA da equipe ThermoTrace.
+
+[[ThermoTrace - Convites e acesso WEB-11]].
