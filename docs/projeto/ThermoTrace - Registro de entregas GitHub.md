@@ -65,3 +65,7 @@ Código enviado: [4ba684a](https://github.com/felipeguerreiro7/thermotrace/commi
 Código: [aa6786a](https://github.com/felipeguerreiro7/thermotrace/commit/aa6786a), "feat(compartilhamento): dono compartilha carga com transportadora por aceite explícito (WEB-10)". Notas: e18eed2 [skip render]. Push em main feito pelo usuário no próprio terminal, com login no GitHub no computador novo; SHA remoto conferido igual ao local (e18eed2dedfba5df8acf298293388c5dc674de7b). 166 testes API, 15 web e alembic check aprovados antes do envio.
 
 O push dispara o deploy do código no Render, com a migração b10411040001 pelo preDeployCommand. Resultado do deploy, domínio/HTTPS e ensaio integrado não foram conferidos. Detalhes: [[ThermoTrace - Compartilhamento de cargas WEB-10]].
+
+## WEB-11 parte 1 · API 0.7, 04/11/2026
+
+Código: [4e76ec2](https://github.com/felipeguerreiro7/thermotrace/commit/4e76ec2), "feat(acesso): convite e redefinição por código de uso único, sem e-mail (WEB-11)". Notas: 060b958 [skip render]. Push em main feito daqui com o login já salvo no computador; SHA remoto conferido igual ao local. 174 testes API, 16 web e alembic check aprovados antes do envio. Deploy no Render (migração c10411040002) não conferido; a URL pública do serviço continua sem registro. [[ThermoTrace - Convites e acesso WEB-11]].
