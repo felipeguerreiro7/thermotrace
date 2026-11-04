@@ -265,7 +265,7 @@ function shell() {
   }));
   const nav=document.querySelector('nav');
   const recebe = area==='contratante' || area==='ambos';
-  const items=[...(area==='staff' ? [['empresas','Empresas cadastradas']] : [['cargas','Minhas cargas'], ['acompanhamento','Acompanhamento'], ...(recebe ? [['recebidas','Compartilhadas comigo']] : []), ...(user.papel==='gestor' ? [['catalogo','Produtos e perfis'],['equipe','Equipe da empresa'],['auditoria','Auditoria']] : [])]), ['seguranca','Segurança da conta']];
+  const items=[...(area==='staff' ? [['empresas','Empresas cadastradas']] : [['cargas','Minhas cargas'], ['acompanhamento','Acompanhamento'], ...(recebe ? [['recebidas','Compartilhadas comigo']] : []), ...(user.papel==='gestor' ? [['catalogo','Produtos e perfis'],['equipe','Equipe da empresa'],['integridade','Integridade'],['auditoria','Auditoria']] : [])]), ['seguranca','Segurança da conta']];
   items.forEach(([key,label]) => { const b=button(label,()=>navigate(key),'nav-button'); b.dataset.page=key; nav.append(b); });
   // Equipe ThermoTrace sem MFA cai direto na ativação: o servidor recusa a área dela até lá.
   content=document.querySelector('#content'); navigate(user.mfa_obrigatorio && !user.mfa_ativo ? 'seguranca' : items[0][0]);
@@ -274,7 +274,7 @@ function shell() {
 async function navigate(key, offset=0, query='') {
   page=key; const ticket=++view;
   document.querySelectorAll('[data-page]').forEach(n => n.setAttribute('aria-current',n.dataset.page===key?'page':'false'));
-  const titles={cargas:['Minhas cargas',area==='contratante'?'Consulte as cargas cadastradas na sua transportadora.':'Localize a carga e acompanhe os registros recebidos.'],recebidas:['Compartilhadas comigo','Cargas que outras empresas autorizaram sua empresa a consultar.'],catalogo:['Produtos e perfis','Critérios térmicos aprovados pela sua empresa e os produtos que os usam.'],seguranca:['Segurança da conta','Verificação em duas etapas com app autenticador.'],empresas:['Empresas cadastradas','Visão administrativa da equipe ThermoTrace.'],equipe:['Equipe da empresa','Pessoas com acesso ao ambiente da sua empresa.'],auditoria:['Auditoria','Eventos registrados pelo servidor, do mais antigo ao mais recente.'],acompanhamento:['Acompanhamento','Etiquetas em campo sem leitura final e celulares que pararam de enviar.']};
+  const titles={cargas:['Minhas cargas',area==='contratante'?'Consulte as cargas cadastradas na sua transportadora.':'Localize a carga e acompanhe os registros recebidos.'],recebidas:['Compartilhadas comigo','Cargas que outras empresas autorizaram sua empresa a consultar.'],catalogo:['Produtos e perfis','Critérios térmicos aprovados pela sua empresa e os produtos que os usam.'],seguranca:['Segurança da conta','Verificação em duas etapas com app autenticador.'],empresas:['Empresas cadastradas','Visão administrativa da equipe ThermoTrace.'],equipe:['Equipe da empresa','Pessoas com acesso ao ambiente da sua empresa.'],auditoria:['Auditoria','Eventos registrados pelo servidor, do mais antigo ao mais recente.'],acompanhamento:['Acompanhamento','Etiquetas em campo sem leitura final e celulares que pararam de enviar.'],integridade:['Integridade das evidências','Manifesto para guardar fora da ThermoTrace e conferir depois.']};
   content.replaceChildren(heading(...titles[key]));
   if (key==='cargas') {
     content.append(notice(area==='contratante'
@@ -288,6 +288,7 @@ async function navigate(key, offset=0, query='') {
   }
   if (key==='catalogo') { try { await catalogPage(content,ticket); } catch(error){ if(ticket===view) showError(error,content); } return; }
   if (key==='seguranca') { securityPage(content); return; }
+  if (key==='integridade') { integrityPage(content,ticket); return; }
   if (key==='acompanhamento') { try { await monitorPage(content,ticket); } catch(error){ if(ticket===view) showError(error,content); } return; }
   // Atualiza só a lista: o cartão com o código recém-gerado precisa continuar na tela.
   const codes=el('div',undefined,'stack'); let reload=()=>{};
@@ -354,6 +355,36 @@ async function monitorPage(target, ticket, horas=24) {
   dev.append(p.aparelhos.length?table(['Aparelho','Versão do app','Último envio recebido','Coletas em 7 dias','Maior atraso de envio (7 dias)','Último operador','Situação'],p.aparelhos.map(a=>[
     a.modelo||'Sem modelo',a.versao_app||'—',a.ultima_recepcao_em?date(a.ultima_recepcao_em):'Nunca enviou',String(a.coletas_7_dias),hours(a.maior_atraso_envio_7_dias_s),a.ultimo_operador||'—',badge(a.ativo?'Ativo':'Desativado')])):el('p','Nenhum celular registrado.','muted'));
   box.append(sess,dev,el('p',`Regra ${p.versao}. ${p.limites[1]}`,'muted'));
+}
+
+const integrityStatus={divergente:'Diferente do manifesto',cadeia_divergente_depois:'Cadeia alterada depois',sessao_ausente:'Sessão não encontrada'};
+function integrityPage(target, ticket) {
+  // TT-060: a referência fica com o cliente. O servidor sozinho não prova que não reescreveu a cadeia.
+  const emit=el('section',undefined,'card result'), check=el('section',undefined,'card result');
+  emit.append(el('h2','1. Baixar manifesto'),el('p','O arquivo lista cada sessão com a quantidade de leituras e o código de integridade (hash) da última. Não contém temperaturas nem dados das cargas. Guarde-o fora da ThermoTrace: e-mail para você mesmo, pasta da qualidade ou impressão. A emissão fica na Auditoria.','muted'));
+  const msg1=el('div'), get=button('Baixar manifesto agora',async e=>{
+    const b=e.currentTarget; b.disabled=true; msg1.replaceChildren();
+    try { const blob=await api.request('/integridade/manifesto',{download:true}); if(ticket!==view)return;
+      const m=JSON.parse(await blob.text()), url=URL.createObjectURL(blob), a=document.createElement('a');
+      a.href=url; a.download=`ThermoTrace-manifesto-${m.emitido_em.slice(0,10)}-${m.hash_manifesto.slice(0,12)}.json`; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000);
+      msg1.append(notice(`Manifesto emitido em ${date(m.emitido_em)}: ${m.total_sessoes} sessão(ões), ${m.total_leituras} leitura(s). Código do manifesto: ${m.hash_manifesto.slice(0,16)}…`));
+    } catch(error){ showError(error,msg1); } finally { b.disabled=false; }
+  },'primary');
+  emit.append(get,msg1);
+  check.append(el('h2','2. Conferir um manifesto guardado'),el('p','Escolha um manifesto baixado antes. O servidor confere se cada sessão ainda tem exatamente o mesmo código naquela posição. Leituras recebidas depois da emissão não atrapalham.','muted'));
+  const form=el('form',undefined,'search'), l=el('label','Arquivo do manifesto (.json)','field'), file=el('input'); file.type='file'; file.accept='application/json,.json'; file.required=true; l.append(file);
+  const ok=el('button','Conferir','primary'); ok.type='submit'; form.append(l,ok); const msg2=el('div');
+  submitForm(form,ok,msg2,async()=>{
+    let m; try { m=JSON.parse(await file.files[0].text()); } catch { throw new Error('O arquivo escolhido não é um manifesto em JSON.'); }
+    const r=await api.request('/integridade/manifesto/conferir',{method:'POST',body:m}); if(ticket!==view)return;
+    msg2.replaceChildren(notice(r.conferencia==='confere'
+      ? `Confere: as ${r.sessoes_conferidas} sessão(ões) do manifesto de ${date(r.emitido_em)} não mudaram desde a emissão.`
+      : !r.arquivo_intacto ? 'O arquivo do manifesto foi editado depois de emitido. Use a cópia original guardada.'
+      : `Atenção: ${r.sessoes_com_problema} sessão(ões) diferem do manifesto. Encaminhe para a qualidade e para a equipe ThermoTrace.`));
+    if(r.problemas.length) msg2.append(table(['Sessão','Situação','Leituras no manifesto','Leituras agora'],r.problemas.map(p=>[p.sessao_id||'—',integrityStatus[p.situacao]||p.situacao,p.leituras_no_manifesto??'—',p.leituras_agora??'—'])));
+    msg2.append(el('p',r.limites[0],'muted'));
+  });
+  check.append(form,msg2); target.append(emit,check);
 }
 
 function securityPage(target) {

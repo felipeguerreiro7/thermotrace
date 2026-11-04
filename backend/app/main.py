@@ -56,7 +56,8 @@ app = FastAPI(
         "a pessoa cria a própria senha em /auth/ativar. "
         "Versão 0.8: verificação em duas etapas (TOTP), obrigatória para a equipe ThermoTrace. "
         "Versão 0.9: viagem consolidada por sessão (coleta mais completa como base, demais conferidas, excursões). "
-        "Versão 0.10: acompanhamento da operação (sessões sem leitura final, fim previsto da memória, envio dos aparelhos)."
+        "Versão 0.10: acompanhamento da operação (sessões sem leitura final, fim previsto da memória, envio dos aparelhos). "
+        "Versão 0.11: manifesto de integridade para guardar fora do servidor e conferir depois (TT-060)."
     ),
     docs_url="/docs" if not cfg.em_producao else None,
     redoc_url="/redoc" if not cfg.em_producao else None,
