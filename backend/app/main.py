@@ -96,6 +96,10 @@ async def rastrear_requisicao(request: Request, proximo):
         resposta.headers["Cache-Control"] = "no-store"
     resposta.headers["X-Content-Type-Options"] = "nosniff"
     resposta.headers["Referrer-Policy"] = "no-referrer"
+    if cfg.AMBIENTE != "local":
+        # Publicado só atrás de HTTPS (Render). Sem isto, um primeiro acesso por http://
+        # poderia ser interceptado antes do redirecionamento, com o login em texto claro.
+        resposta.headers["Strict-Transport-Security"] = "max-age=31536000"
     if request.url.path == "/":
         resposta.headers["Vary"] = "Accept"
         resposta.headers["Cache-Control"] = "no-store"

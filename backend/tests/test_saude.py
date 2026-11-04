@@ -47,3 +47,11 @@ def test_404_usa_o_formato_de_erro_do_projeto(cliente):
     assert corpo["erro"] == "nao_encontrado"
     assert corpo["mensagem"]
     assert corpo["request_id"]
+
+
+def test_hsts_so_fora_do_ambiente_local(cliente, monkeypatch):
+    """Publicado exige HTTPS no navegador; local continua em http://127.0.0.1 sem travar o navegador."""
+    from app import main
+    assert "Strict-Transport-Security" not in cliente.get("/api/v1/saude").headers
+    monkeypatch.setattr(main.cfg, "AMBIENTE", "homologacao")
+    assert cliente.get("/api/v1/saude").headers["Strict-Transport-Security"] == "max-age=31536000"
