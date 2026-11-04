@@ -94,10 +94,11 @@ jobs:
       - uses: actions/checkout@v5
 
       # Antes do JDK 25: o sdkmanager do runner roda com o Java padrão da imagem.
+      # Desde a API 36 o pacote leva versão menor (android-37.0). nfcinstruct compila com 35.
       - name: Instalar plataforma Android 37
         run: |
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "platforms;android-37"
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "platforms;android-37.0" "platforms;android-35" "build-tools;37.0.0"
 
       # O daemon do Gradle 9.7.1 exige JDK 25 (gradle/gradle-daemon-jvm.properties).
       - uses: actions/setup-java@v5
