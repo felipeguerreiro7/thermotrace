@@ -39,3 +39,12 @@ Ninguém define a senha de outra pessoa e nenhum e-mail é enviado, então não 
 ## Publicação
 
 Migração `c10411040002`, que acrescenta colunas à tabela `token_recuperacao`, criada no início do projeto e sem uso até aqui. Papel restrito já existente: aplicar `backend/scripts/runtime-acesso-permissoes.sql` depois da migração. O Render usa o mesmo usuário para migrar e rodar e não precisa disso.
+
+## Parte 2 — cadastro de perfis, produtos e cargas pelo portal, 04/11/2026
+
+Motivo: o Android 0.8.6 só envia coletas para cargas que já existem no servidor, e até aqui elas só podiam ser criadas pela API.
+
+- **Produtos e perfis (gestor):** cria o rascunho do perfil térmico, opcionalmente a partir de um modelo de referência. O modelo preenche faixa, condição e fonte, mas deixa produto, apresentação, versão da fonte e data de conferência para a pessoa. A aprovação exige declaração de responsabilidade (mínimo de 20 caracteres) e há ação de retirar de uso. Configurar produto liga o código ao perfil aprovado e ao intervalo; reconfigurar o mesmo código cria nova versão.
+- **Minhas cargas → Nova carga (operador e gestor):** produto disponível, código opcional, destinatário, descrição, volumes e documento opcional (NF-e, CT-e, pedido…). O critério do produto fica congelado na carga.
+- **Mensagens de erro:** quando a API recusa por validação, o portal mostra o motivo da regra (por exemplo, "Informe o código da carga ou pelo menos um documento") ou o campo a revisar, em vez de uma mensagem genérica.
+- **Evidências:** API sem mudança (174 testes seguem passando) e 17 testes web. No navegador, com dados fictícios, conferi rascunho a partir do modelo "Vacina refrigerada", aprovação, produto v1 e v2 sem conflito, a lista de produtos disponíveis na nova carga e a mensagem de erro. A criação da carga com sucesso pelo formulário ainda não foi conferida no navegador.

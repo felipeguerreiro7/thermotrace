@@ -86,3 +86,7 @@ WEB-10 entregue para consulta e exportação: o dono compartilha uma carga espec
 Convite e redefinição de acesso por código de uso único, sem e-mail e sem senha definida por terceiros. O gestor convida a equipe; a equipe ThermoTrace cadastra empresas e entrega o acesso do gestor. WEB-09 avançou: largura de celular conferida nas telas novas e nas do WEB-10. Seguem abertos no WEB-11: cadastro de cargas pelo portal e MFA da equipe ThermoTrace.
 
 [[ThermoTrace - Convites e acesso WEB-11]].
+
+## Atualização — WEB-11 parte 2, 04/11/2026
+
+Perfis térmicos, produtos e cargas passam a ser cadastrados pelo portal, sem mudança na API. Com isso, um cliente novo vai do convite à carga pronta para o Android bipar sem usar a API diretamente. Segue aberto no WEB-11: MFA da equipe ThermoTrace.
