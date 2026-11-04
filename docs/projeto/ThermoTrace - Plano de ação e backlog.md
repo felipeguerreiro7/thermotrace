@@ -10,14 +10,14 @@ atualizado: 2026-09-13
 
 Estimativa de planejamento, não compromisso: 8–12 semanas para piloto Android, com uma pessoa de desenvolvimento dedicada, apoio de produto/qualidade e hardware disponível. Reestimar após bancada. iOS e homologações externas fora desse intervalo. Papéis abaixo são responsáveis propostos, pessoas a designar.
 
-| Etapa | Janela indicativa | Responsável | Dependência | Saída verificável |
-|---|---|---|---|---|
-| 0 — Recuperar base | semana 1 | Desenvolvimento | Código e etiquetas | Versão compilada, inventário e comparação com chinês |
-| 1 — Identidade e banco | semanas 2–3 | Backend + produto | Etapa 0 | Duas contas isoladas, cargas/documentos e migração testada |
-| 2 — Campo e sincronização | semanas 3–5 | Android + backend | Contrato e identidade | Início/checkpoints/final entre dois celulares, offline e reenvio |
-| 3 — Gráfico e relatório | semanas 5–7 | Desenvolvimento + qualidade | Leituras persistidas | Gráfico parcial/final, exportações e reconstrução |
-| 4 — Portais | semanas 6–8 | Desenvolvimento | API autorizada | Cliente e equipe com escopos distintos |
-| 5 — Segurança e piloto | semanas 8–12 | Desenvolvimento + qualidade + produto | Fluxo completo | Restauração, testes A/B, distribuição e aceite de campo |
+| Etapa                     | Janela indicativa | Responsável                           | Dependência           | Saída verificável                                                |
+| ------------------------- | ----------------- | ------------------------------------- | --------------------- | ---------------------------------------------------------------- |
+| 0 — Recuperar base        | semana 1          | Desenvolvimento                       | Código e etiquetas    | Versão compilada, inventário e comparação com chinês             |
+| 1 — Identidade e banco    | semanas 2–3       | Backend + produto                     | Etapa 0               | Duas contas isoladas, cargas/documentos e migração testada       |
+| 2 — Campo e sincronização | semanas 3–5       | Android + backend                     | Contrato e identidade | Início/checkpoints/final entre dois celulares, offline e reenvio |
+| 3 — Gráfico e relatório   | semanas 5–7       | Desenvolvimento + qualidade           | Leituras persistidas  | Gráfico parcial/final, exportações e reconstrução                |
+| 4 — Portais               | semanas 6–8       | Desenvolvimento                       | API autorizada        | Cliente e equipe com escopos distintos                           |
+| 5 — Segurança e piloto    | semanas 8–12      | Desenvolvimento + qualidade + produto | Fluxo completo        | Restauração, testes A/B, distribuição e aceite de campo          |
 
 ## Backlog executável
 - [x] TT-001 — Inventariar base e divergências documentais. Evidência: [[ThermoTrace - Diagnóstico da base]].
