@@ -10,7 +10,7 @@ from app.core.errors import NaoEncontrado
 from app.schemas.ingestao import RegistrarDispositivo, IniciarSessao, ReceberLeitura, ReciboLeitura
 from app.services import ingestao, idempotencia
 from app.services.auditoria import auditar
-from app.services.cargas import remessa_por_id
+from app.services.compartilhamentos import remessa_legivel, auditar_acesso
 from typing import Literal
 from fastapi import Response
 from app.services import temperaturas
@@ -23,20 +23,21 @@ router=APIRouter(tags=['Recepção de evidências'])
 def temperaturas_da_coleta(sessao_id:UUID, leitura_id:UUID,
         formato:Literal['json','csv','svg','html']='json',
         acesso:Acesso=Depends(operador), db:Session=Depends(obter_sessao)):
-    s,r,v=ingestao.sessao_por_id(db,acesso.empresa.id,sessao_id)
+    # Consulta basta para o JSON; CSV/SVG/HTML exigem escopo de exportação na concessão.
+    s,r,v,comp=ingestao.sessao_legivel(db,acesso,sessao_id,exportar=formato!='json')
     l=db.scalar(select(LeituraEtiqueta).where(LeituraEtiqueta.id==leitura_id,
         LeituraEtiqueta.sessao_id==sessao_id,LeituraEtiqueta.contrato_ingestao=='1'))
     if not l: raise NaoEncontrado()
-    integra=ingestao.verificar_integridade(db,acesso.empresa.id,sessao_id)['integra']
+    integra=ingestao.verificar_integridade(db,r.empresa_embarcador_id,sessao_id)['integra']
     dados=temperaturas.resultado(s,l,r,integra)
     evento={'sessao_id':str(sessao_id),'formato':formato,'versao':temperaturas.VERSAO,
             'hash_projecao':dados['hash_projecao'],'conferencia':dados['conferencia']}
     if formato=='json':
-        auditar(db,'temperaturas_consultadas','leitura_etiqueta',l.id,acesso.usuario,depois=evento)
+        auditar_acesso(db,'temperaturas_consultadas','leitura_etiqueta',l.id,acesso,r,comp,evento)
         return dados
     conteudo,mime=temperaturas.exportar(dados,formato)
     evento['sha256_arquivo']=hashlib.sha256(conteudo.encode('utf-8')).hexdigest()
-    auditar(db,'temperaturas_exportadas','leitura_etiqueta',l.id,acesso.usuario,depois=evento)
+    auditar_acesso(db,'temperaturas_exportadas','leitura_etiqueta',l.id,acesso,r,comp,evento)
     return Response(conteudo,media_type=mime,headers={
         'Content-Disposition':f'attachment; filename="ThermoTrace-{leitura_id}.{formato}"',
         'Cache-Control':'no-store','X-Content-Type-Options':'nosniff',
@@ -48,18 +49,18 @@ def sessoes_do_volume(volume_id:UUID,limite:int=Query(50,ge=1,le=100),offset:int
                       acesso:Acesso=Depends(operador),db:Session=Depends(obter_sessao)):
     v=db.scalar(select(Volume).where(Volume.id==volume_id))
     if not v:raise NaoEncontrado()
-    remessa_por_id(db,acesso.empresa.id,v.remessa_id)
+    r,comp=remessa_legivel(db,acesso,v.remessa_id)
     rows=db.execute(select(SessaoMonitoramento,LeituraEtiqueta.envelope_integridade)
         .join(VinculoEtiqueta,VinculoEtiqueta.id==SessaoMonitoramento.vinculo_id)
         .join(LeituraEtiqueta,and_(LeituraEtiqueta.sessao_id==SessaoMonitoramento.id,LeituraEtiqueta.ordem_recebimento==1))
         .where(VinculoEtiqueta.volume_id==v.id,SessaoMonitoramento.contrato_ingestao=='1')
         .order_by(SessaoMonitoramento.criado_em.desc(),SessaoMonitoramento.id).limit(limite).offset(offset))
-    resultado=[{'id':s.id,'volume_id':v.id,'remessa_id':s.remessa_id,'empresa_id':acesso.empresa.id,
+    resultado=[{'id':s.id,'volume_id':v.id,'remessa_id':s.remessa_id,'empresa_id':r.empresa_embarcador_id,
         'etiqueta_id':s.etiqueta_id,'estado_logico':s.status,'encerrada_em':s.encerrada_em,'origem':e['origem'],
         'epoch_inicio_etiqueta':s.epoch_inicio_etiqueta,'intervalo_segundos':s.intervalo_segundos,
         'min_configurado_c':str(s.min_configurado_c),'max_configurado_c':str(s.max_configurado_c),
         'stop_fisico':'nao_confirmado_pelo_servidor'} for s,e in rows]
-    auditar(db,'sessoes_consultadas','volume',v.id,acesso.usuario,depois={'quantidade':len(resultado)})
+    auditar_acesso(db,'sessoes_consultadas','volume',v.id,acesso,r,comp,{'quantidade':len(resultado)})
     return resultado
 
 
@@ -90,20 +91,21 @@ def leitura(sessao_id:UUID,body:ReceberLeitura,chave:Chave,acesso:Acesso=Depends
 @router.get('/sessoes/{sessao_id}/leituras',response_model=list[ReciboLeitura])
 def listar(sessao_id:UUID,apos_ordem:int=Query(0,ge=0),limite:int=Query(50,ge=1,le=100),
            acesso:Acesso=Depends(operador),db:Session=Depends(obter_sessao)):
-    ingestao.sessao_por_id(db,acesso.empresa.id,sessao_id)
+    _,r,_,comp=ingestao.sessao_legivel(db,acesso,sessao_id)
     ls=db.scalars(select(LeituraEtiqueta).where(LeituraEtiqueta.sessao_id==sessao_id,
         LeituraEtiqueta.ordem_recebimento>apos_ordem).order_by(LeituraEtiqueta.ordem_recebimento).limit(limite))
     resultados=[ingestao.recibo(l) for l in ls]
-    auditar(db,'leituras_consultadas','sessao_monitoramento',sessao_id,acesso.usuario,
-            depois={'apos_ordem':apos_ordem,'quantidade':len(resultados)})
+    auditar_acesso(db,'leituras_consultadas','sessao_monitoramento',sessao_id,acesso,r,comp,
+                   {'apos_ordem':apos_ordem,'quantidade':len(resultados)})
     return resultados
 
 
 @router.get('/sessoes/{sessao_id}/integridade')
 def integridade(sessao_id:UUID,acesso:Acesso=Depends(operador),db:Session=Depends(obter_sessao)):
-    resultado=ingestao.verificar_integridade(db,acesso.empresa.id,sessao_id)
-    auditar(db,'integridade_verificada','sessao_monitoramento',sessao_id,acesso.usuario,
-            depois={'integra':resultado['integra'],'quantidade':resultado['quantidade'],'hash_final':resultado['hash_final']})
+    _,r,_,comp=ingestao.sessao_legivel(db,acesso,sessao_id)
+    resultado=ingestao.verificar_integridade(db,r.empresa_embarcador_id,sessao_id)
+    auditar_acesso(db,'integridade_verificada','sessao_monitoramento',sessao_id,acesso,r,comp,
+                   {'integra':resultado['integra'],'quantidade':resultado['quantidade'],'hash_final':resultado['hash_final']})
     return resultado
 
 

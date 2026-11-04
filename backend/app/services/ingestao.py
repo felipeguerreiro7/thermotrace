@@ -55,6 +55,16 @@ def sessao_por_id(db, empresa, id_, escrita=False):
     return s,r,v
 
 
+def sessao_legivel(db, acesso, id_, exportar=False):
+    """Sessão de carga própria ou concedida (WEB-10). Retorna (sessao, remessa, volume, compartilhamento|None)."""
+    from app.services.compartilhamentos import remessa_legivel
+    s=db.scalar(select(SessaoMonitoramento).where(SessaoMonitoramento.id==id_,SessaoMonitoramento.contrato_ingestao=='1'))
+    if not s: raise NaoEncontrado()
+    r,c=remessa_legivel(db,acesso,s.remessa_id,exportar=exportar)
+    s,r,v=sessao_por_id(db,r.empresa_embarcador_id,id_)
+    return s,r,v,c
+
+
 def recibo(l):
     e=l.envelope_integridade
     return {'leitura_id':l.id,'sessao_id':l.sessao_id,'evento_id':l.evento_id,'empresa_id':e['empresa_id'],

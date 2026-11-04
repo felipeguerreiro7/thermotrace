@@ -14,7 +14,7 @@ export function createApi(fetcher = globalThis.fetch.bind(globalThis)) {
   function clear() { access = ''; refresh = ''; generation++; pendingRefresh = null; }
   const expired = () => new ApiError('Sua sessão terminou. Entre novamente.', 401);
 
-  async function send(path, {method = 'GET', body, token = '', download = false} = {}) {
+  async function send(path, {method = 'GET', body, token = '', download = false, key = ''} = {}) {
     // Impede o envio de credenciais a destinos externos, inclusive redirects.
     if (!/^\/[a-z][a-z0-9/?=&_%.-]*$/i.test(path) || path.includes('..')) throw new ApiError('Endereço inválido.');
     let response;
@@ -23,7 +23,8 @@ export function createApi(fetcher = globalThis.fetch.bind(globalThis)) {
     try {
       response = await fetcher('/api/v1' + path, {
         method, credentials: 'omit', cache: 'no-store', redirect: 'error', signal: controller.signal,
-        headers: {...(body ? {'Content-Type': 'application/json'} : {}), ...(token ? {Authorization: `Bearer ${token}`} : {})},
+        headers: {...(body ? {'Content-Type': 'application/json'} : {}), ...(token ? {Authorization: `Bearer ${token}`} : {}),
+                  ...(key ? {'Idempotency-Key': key} : {})},
         ...(body ? {body: JSON.stringify(body)} : {}),
       });
     } catch { throw new ApiError('Não foi possível conectar. Verifique sua conexão e tente novamente.'); }
@@ -53,11 +54,14 @@ export function createApi(fetcher = globalThis.fetch.bind(globalThis)) {
     try { await task; } finally { if (pendingRefresh === task) pendingRefresh = null; }
   }
 
-  async function request(path, {download = false} = {}) {
+  async function request(path, {download = false, method = 'GET', body} = {}) {
     if (!access) throw expired();
     const current = generation, previous = access;
+    // Ação de escrita: uma chave por clique, reaproveitada na nova tentativa após renovar o acesso.
+    const key = method === 'GET' ? '' : globalThis.crypto.randomUUID();
+    const options = {download, method, body, key};
     try {
-      const data = await send(path, {token:previous, download});
+      const data = await send(path, {...options, token:previous});
       if (current !== generation) throw expired();
       return data;
     } catch (error) {
@@ -66,7 +70,7 @@ export function createApi(fetcher = globalThis.fetch.bind(globalThis)) {
       if (access === previous) await renew();
       if (current !== generation) throw expired();
       try {
-        const data = await send(path, {token:access, download});
+        const data = await send(path, {...options, token:access});
         if (current !== generation) throw expired();
         return data;
       } catch (retryError) {

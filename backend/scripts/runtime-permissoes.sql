@@ -12,6 +12,7 @@ GRANT UPDATE ON produto_configuracao, remessa TO thermotrace_runtime;
 GRANT SELECT, INSERT ON dispositivo, vinculo_etiqueta, sessao_monitoramento, leitura_etiqueta TO thermotrace_runtime;
 GRANT SELECT ON etiqueta TO thermotrace_runtime;
 GRANT UPDATE ON volume, etiqueta, sessao_monitoramento TO thermotrace_runtime;
+GRANT SELECT, INSERT, UPDATE ON compartilhamento_remessa TO thermotrace_runtime;
 COMMIT;
 -- No psql, defina a senha interativamente: \password thermotrace_runtime
 -- Ajuste pg_hba.conf/rede para autenticação SCRAM e TLS no ambiente publicado.

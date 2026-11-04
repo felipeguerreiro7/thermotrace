@@ -46,10 +46,12 @@ app = FastAPI(
     version=cfg.VERSAO,
     description=(
         "API do ThermoTrace — monitoramento térmico de remessas por etiqueta NFC.\n\n"
-        "Versão 0.5: acesso, perfis, cargas, evidências e projeção térmica por coleta. "
+        "Versão 0.5 (base): acesso, perfis, cargas, evidências e projeção térmica por coleta. "
         "Declarações de início/checkpoint/final preservadas com cadeia de integridade. "
         "Receber uma evidência não confirma o hardware nem libera uma carga. "
-        "Gráficos e exportações por coleta preservam divergências; consolidação entre coletas permanece pendente."
+        "Gráficos e exportações por coleta preservam divergências; consolidação entre coletas permanece pendente. "
+        "Versão 0.6: compartilhamento explícito de carga com transportadora (convite, aceite, revogação; "
+        "consultar e, se autorizado, exportar). Operar carga de outra empresa não é concedido."
     ),
     docs_url="/docs" if not cfg.em_producao else None,
     redoc_url="/redoc" if not cfg.em_producao else None,

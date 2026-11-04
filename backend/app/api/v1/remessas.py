@@ -10,7 +10,7 @@ from app.models import Remessa, Documento
 from app.models.enums import StatusRemessa
 from app.schemas.cargas import NovaRemessa, NovoDocumento, MotivoAcao
 from app.schemas.cargas_saida import RemessaSaida, DetalheRemessa, LocalizacaoRemessa, DocumentoSaida
-from app.services import cargas, idempotencia
+from app.services import cargas, compartilhamentos, idempotencia
 
 router = APIRouter(prefix="/remessas", tags=["Cargas e documentos"])
 
@@ -52,7 +52,11 @@ def localizar(valor: str = Query(min_length=1, max_length=96),
 
 @router.get("/{remessa_id}", response_model=DetalheRemessa)
 def obter(remessa_id: UUID, acesso: Acesso = Depends(operador), db: Session = Depends(obter_sessao)):
-    return cargas.detalhe_remessa(db, cargas.remessa_por_id(db, acesso.empresa.id, remessa_id))
+    r, comp = compartilhamentos.remessa_legivel(db, acesso, remessa_id)
+    if comp is not None:
+        # Consulta da própria empresa segue sem registro, como antes; a da parceira fica visível ao dono.
+        compartilhamentos.auditar_acesso(db, "remessa_consultada", "remessa", r.id, acesso, r, comp)
+    return cargas.detalhe_remessa(db, r)
 
 
 @router.post("/{remessa_id}/documentos", status_code=201, response_model=DocumentoSaida)

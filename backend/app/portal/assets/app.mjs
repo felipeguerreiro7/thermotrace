@@ -5,7 +5,8 @@ const api = createApi();
 const root = document.querySelector('#app');
 const labels = {staff:'Equipe ThermoTrace', cliente:'Cliente · dono da carga', contratante:'Contratante · transportadora', ambos:'Cliente e contratante'};
 const statuses = {preparacao:'Em preparação', aguardando_aceite:'Aguardando aceite', aguardando_coleta:'Aguardando coleta', em_transporte:'Em transporte', entregue_aguardando_leitura:'Aguardando leitura final', concluida:'Concluída', cancelada:'Cancelada'};
-let user, area, content, page = 'cargas', view = 0;
+const shareStatus = {pendente:'Aguardando aceite', ativo:'Ativo', recusado:'Recusado', revogado:'Encerrado', expirado:'Prazo vencido'};
+let user, area, content, page = 'cargas', view = 0, shared = null;
 const date = value => value ? new Intl.DateTimeFormat('pt-BR', {dateStyle:'short', timeStyle:'short'}).format(new Date(value)) : 'Não informado';
 function el(tag, text, cls) { const n = document.createElement(tag); if (text !== undefined) n.textContent = text; if (cls) n.className = cls; return n; }
 function button(text, action, cls = 'secondary') { const b = el('button', text, cls); b.type = 'button'; b.addEventListener('click', action); return b; }
@@ -60,7 +61,8 @@ function shell() {
     login(message);
   }));
   const nav=document.querySelector('nav');
-  const items=area==='staff' ? [['empresas','Empresas cadastradas']] : [['cargas','Minhas cargas'], ...(user.papel==='gestor' ? [['equipe','Equipe da empresa'],['auditoria','Auditoria']] : [])];
+  const recebe = area==='contratante' || area==='ambos';
+  const items=area==='staff' ? [['empresas','Empresas cadastradas']] : [['cargas','Minhas cargas'], ...(recebe ? [['recebidas','Compartilhadas comigo']] : []), ...(user.papel==='gestor' ? [['equipe','Equipe da empresa'],['auditoria','Auditoria']] : [])];
   items.forEach(([key,label]) => { const b=button(label,()=>navigate(key),'nav-button'); b.dataset.page=key; nav.append(b); });
   content=document.querySelector('#content'); navigate(items[0][0]);
 }
@@ -68,22 +70,31 @@ function shell() {
 async function navigate(key, offset=0, query='') {
   page=key; const ticket=++view;
   document.querySelectorAll('[data-page]').forEach(n => n.setAttribute('aria-current',n.dataset.page===key?'page':'false'));
-  const titles={cargas:['Minhas cargas',area==='contratante'?'Consulte as cargas cadastradas na sua transportadora.':'Localize a carga e acompanhe os registros recebidos.'],empresas:['Empresas cadastradas','Visão administrativa da equipe ThermoTrace.'],equipe:['Equipe da empresa','Pessoas com acesso ao ambiente da sua empresa.'],auditoria:['Auditoria','Eventos registrados pelo servidor, do mais antigo ao mais recente.']};
+  const titles={cargas:['Minhas cargas',area==='contratante'?'Consulte as cargas cadastradas na sua transportadora.':'Localize a carga e acompanhe os registros recebidos.'],recebidas:['Compartilhadas comigo','Cargas que outras empresas autorizaram sua empresa a consultar.'],empresas:['Empresas cadastradas','Visão administrativa da equipe ThermoTrace.'],equipe:['Equipe da empresa','Pessoas com acesso ao ambiente da sua empresa.'],auditoria:['Auditoria','Eventos registrados pelo servidor, do mais antigo ao mais recente.']};
   content.replaceChildren(heading(...titles[key]));
   if (key==='cargas') {
-    content.append(notice('Nesta versão, cada empresa consulta suas próprias cargas. O compartilhamento entre transportadora e dono da carga está em preparação.'));
+    content.append(notice(area==='contratante'
+      ? 'Aqui aparecem as cargas cadastradas pela sua empresa. Cargas de outras empresas ficam em "Compartilhadas comigo", depois do aceite do gestor.'
+      : 'Aqui aparecem as cargas cadastradas pela sua empresa. O gestor pode compartilhar uma carga com a transportadora na página da carga; nenhuma outra carga fica visível para ela.'));
     const form=el('form',undefined,'search'), l=el('label','Código da carga ou documento fiscal','field'), input=el('input');
     input.name='busca'; input.value=query; input.maxLength=96; input.placeholder='Ex.: REM-2026-00184 ou chave da NF-e'; l.append(input);
     const search=el('button','Buscar','primary'); search.type='submit';
     form.append(l,search,button('Limpar',()=>navigate(key))); form.addEventListener('submit',e=>{e.preventDefault(); navigate(key,0,input.value.trim());}); content.append(form);
   }
   if (key==='empresas') content.append(notice('O acesso de suporte ao conteúdo das cargas exigirá autorização e registro de auditoria. Esta área mostra os cadastros das empresas.'));
+  if (key==='recebidas') content.append(notice(user.papel==='gestor'
+    ? 'Aceite apenas convites que você reconhece. Depois do aceite, a equipe da sua empresa consulta somente esta carga; o dono pode encerrar o acesso a qualquer momento e vê cada consulta.'
+    : 'Somente cargas com compartilhamento aceito pelo gestor da sua empresa aparecem aqui.'));
   const results=el('section'); results.setAttribute('aria-label','Resultados'); results.append(el('p','Carregando…','loading')); content.append(results);
   try {
-    const path= key==='empresas'?`/plataforma/clientes?limite=20&offset=${offset}`:key==='equipe'?`/usuarios?limite=20&offset=${offset}`:key==='auditoria'?`/auditoria?limite=20&depois_id=${offset}`:query?`/remessas/localizar?valor=${encodeURIComponent(query)}&limite=20&offset=${offset}`:`/remessas?limite=20&offset=${offset}`;
+    const path= key==='recebidas'?`/compartilhamentos/recebidos?situacao=pendente&situacao=ativo&limite=20&offset=${offset}`:key==='empresas'?`/plataforma/clientes?limite=20&offset=${offset}`:key==='equipe'?`/usuarios?limite=20&offset=${offset}`:key==='auditoria'?`/auditoria?limite=20&depois_id=${offset}`:query?`/remessas/localizar?valor=${encodeURIComponent(query)}&limite=20&offset=${offset}`:`/remessas?limite=20&offset=${offset}`;
     const data=await api.request(path); if (ticket!==view) return;
     const rows=query&&key==='cargas'?data.candidatas:data; results.replaceChildren();
-    if (!rows.length) results.append(empty('Nenhum registro nesta consulta',key==='cargas'?'Confira o código ou documento. Cargas e leituras que ainda estão só no celular não aparecem aqui.':'Não há registros disponíveis nesta página.'));
+    if (!rows.length) results.append(empty('Nenhum registro nesta consulta',key==='cargas'?'Confira o código ou documento. Cargas e leituras que ainda estão só no celular não aparecem aqui.':key==='recebidas'?'Nenhuma empresa compartilhou uma carga com a sua, ou o acesso foi encerrado.':'Não há registros disponíveis nesta página.'));
+    else if (key==='recebidas') results.append(table(['Carga','Dono da carga','Situação','Permissão','Prazo','Ações'],rows.map(c=>[
+      c.situacao==='ativo'?button(c.remessa_codigo,()=>detail(c.remessa_id,c),'link-button'):c.remessa_codigo,
+      c.empresa_dona,badge(shareStatus[c.situacao]||c.situacao),c.pode_exportar?'Consultar e exportar':'Somente consultar',
+      c.expira_em?date(c.expira_em):'Até ser encerrado',shareActions(c,()=>navigate('recebidas'))])));
     else if (key==='cargas') results.append(table(['Carga','Situação','Destinatário','Criada em'],rows.map(r=>[button(r.codigo,()=>detail(r.id),'link-button'),badge(statuses[r.status]||r.status),r.destinatario_nome,date(r.criado_em)])));
     else if (key==='empresas') results.append(table(['Empresa','CNPJ','Cadastro'],rows.map(r=>[r.razao_social,r.cnpj,badge(r.ativa?'Ativo':'Inativo')])));
     else if (key==='equipe') results.append(table(['Pessoa','E-mail','Permissão','Cadastro'],rows.map(r=>[r.nome,r.email,r.papel==='gestor'?'Gestor':'Operador',badge(r.ativo?'Ativo':'Inativo')])));
@@ -97,11 +108,62 @@ async function navigate(key, offset=0, query='') {
   } catch(error) { if(ticket===view) { results.replaceChildren(); showError(error,results); } }
 }
 
-async function detail(id) {
-  const ticket=++view; content.replaceChildren(button('← Voltar às cargas',()=>navigate('cargas'),'secondary back'),el('p','Carregando carga…','loading'));
+function shareActions(c, done) {
+  const box=el('div',undefined,'controls');
+  if(user.papel!=='gestor') return box;
+  const msg=el('div');
+  const run=(path,body)=>async e=>{
+    e.currentTarget.disabled=true; msg.replaceChildren();
+    try { await api.request(path,{method:'POST',body}); done(); }
+    catch(error){ e.currentTarget.disabled=false; showError(error,msg); }
+  };
+  if(c.minha_parte==='parceira' && c.situacao==='pendente')
+    box.append(button('Aceitar',run(`/compartilhamentos/${c.id}/aceitar`,{}),'primary'),button('Recusar',run(`/compartilhamentos/${c.id}/recusar`,{})));
+  // Parceira recusa um convite pendente; só encerra o que já aceitou. Dono encerra pendente ou ativo.
+  if(c.situacao==='ativo' || (c.situacao==='pendente' && c.minha_parte==='dona')) {
+    const form=el('form',undefined,'search'), l=el('label','Motivo do encerramento','field'), input=el('input');
+    input.name='motivo'; input.minLength=10; input.maxLength=2000; input.required=true; l.append(input);
+    const ok=el('button','Confirmar encerramento','secondary'); ok.type='submit'; form.append(l,ok); form.hidden=true;
+    form.addEventListener('submit',e=>{e.preventDefault(); run(`/compartilhamentos/${c.id}/revogar`,{motivo:input.value.trim()})({currentTarget:ok});});
+    box.append(button(c.minha_parte==='dona'?'Encerrar acesso':'Sair do compartilhamento',()=>{form.hidden=false;input.focus();}),form);
+  }
+  box.append(msg); return box;
+}
+
+async function sharingCard(r, ticket) {
+  const card=el('section',undefined,'card result');
+  card.append(el('h2','Compartilhamento com transportadora'),
+    el('p','A transportadora só consulta esta carga depois do aceite do gestor dela. Você vê cada consulta na Auditoria e pode encerrar o acesso a qualquer momento.','muted'));
+  const list=el('div'), form=el('form',undefined,'search'), msg=el('div');
+  const [cnpjLabel,cnpj]=field('CNPJ da transportadora','text','cnpj','off'); cnpj.maxLength=18; cnpj.placeholder='Somente a transportadora cadastrada na ThermoTrace';
+  const exp=el('label','Permitir baixar CSV, gráfico e relatório','field'), chk=el('input'); chk.type='checkbox'; chk.name='exportar'; exp.prepend(chk);
+  const prazoLabel=el('label','Prazo (opcional)','field'), prazo=el('input'); prazo.type='date'; prazo.name='prazo'; prazoLabel.append(prazo);
+  const send=el('button','Compartilhar esta carga','primary'); send.type='submit';
+  form.append(cnpjLabel,exp,prazoLabel,send);
+  const load=async()=>{
+    const rows=await api.request(`/remessas/${r.id}/compartilhamentos`); if(ticket!==view)return;
+    list.replaceChildren(rows.length?table(['Transportadora','Situação','Permissão','Prazo','Ações'],rows.map(c=>[c.empresa_parceira,badge(shareStatus[c.situacao]||c.situacao),c.pode_exportar?'Consultar e exportar':'Somente consultar',c.expira_em?date(c.expira_em):'Até ser encerrado',shareActions(c,load)])):el('p','Esta carga não foi compartilhada.','muted'));
+  };
+  form.addEventListener('submit',async e=>{
+    e.preventDefault(); msg.replaceChildren(); send.disabled=true;
+    // Fim do dia escolhido no horário local, enviado com fuso.
+    const body={cnpj_parceira:cnpj.value.trim(),pode_exportar:chk.checked,...(prazo.value?{expira_em:new Date(`${prazo.value}T23:59:59`).toISOString()}:{})};
+    try { await api.request(`/remessas/${r.id}/compartilhamentos`,{method:'POST',body}); cnpj.value=''; chk.checked=false; prazo.value=''; await load(); }
+    catch(error){ showError(error,msg); } finally { send.disabled=false; }
+  });
+  card.append(list,form,msg);
+  try { await load(); } catch(error) { showError(error,list); }
+  return card;
+}
+
+async function detail(id, share=null) {
+  shared=share;
+  const back=()=>share?button('← Voltar às compartilhadas',()=>navigate('recebidas'),'secondary back'):button('← Voltar às cargas',()=>navigate('cargas'),'secondary back');
+  const ticket=++view; content.replaceChildren(back(),el('p','Carregando carga…','loading'));
   try {
     const r=await api.request(`/remessas/${id}`); if(ticket!==view)return;
-    content.replaceChildren(button('← Voltar às cargas',()=>navigate('cargas'),'secondary back'),heading(r.codigo,r.descricao_carga||'Detalhes e evidências da carga'));
+    content.replaceChildren(back(),heading(r.codigo,r.descricao_carga||'Detalhes e evidências da carga'));
+    if(share) content.append(notice(`Carga de ${share.empresa_dona}, compartilhada com a sua empresa para ${share.pode_exportar?'consulta e exportação':'consulta, sem exportação'}. O dono vê cada consulta e pode encerrar o acesso a qualquer momento.`));
     content.append(notice('Escolha uma coleta para consultar o gráfico e baixar os registros recebidos. Cada gráfico mostra o histórico daquele bipe; não soma coletas repetidas. A confirmação de parada da etiqueta ainda permanece no aplicativo.'));
     const grid=el('div',undefined,'grid'), summary=el('section',undefined,'card'), docs=el('section',undefined,'card');
     summary.append(el('h2','Resumo da carga'),values([['Situação',statuses[r.status]||r.status],['Destinatário',r.destinatario_nome],['Criada em',date(r.criado_em)],['Intervalo',`${r.intervalo_segundos} segundos`]]));
@@ -114,6 +176,7 @@ async function detail(id) {
     if(!r.volumes.length)volumes.append(el('p','Nenhum volume cadastrado.','muted'));
     r.volumes.forEach(v=>{ const box=el('div',undefined,'volume'), h=el('div',undefined,'volume-header'), result=el('div',undefined,'result'); h.append(el('strong',v.identidade||`Volume ${v.sequencia}`),button('Consultar coletas',e=>sessions(v.id,result,e.currentTarget,ticket))); box.append(h,result);volumes.append(box); });
     content.append(volumes);
+    if(!share && user.papel==='gestor' && r.empresa_id===user.empresa_id) { const card=await sharingCard(r,ticket); if(ticket===view) content.append(card); }
   } catch(error) { if(ticket===view){ content.querySelector('.loading')?.remove(); showError(error,content); } }
 }
 
@@ -145,7 +208,8 @@ function receipts(id,target,trigger,ticket,after=0){
   return action(target,trigger,ticket,async()=>{
     const rows=await api.request(`/sessoes/${id}/leituras?limite=20&apos_ordem=${after}`), panel=el('div'), evidence=el('div',undefined,'result');
     if(!rows.length) panel.append(el('p','Nenhum comprovante nesta página.','muted'));
-    else panel.append(table(['Ordem','Coleta','Recebida no servidor','Temperaturas','Evidência'],rows.map(r=>[r.ordem_recebimento,r.tipo,date(r.recebida_em_servidor),button('Gráfico e relatório',e=>temperatures(id,r.leitura_id,evidence,e.currentTarget,ticket),'link-button'),button('Abrir',e=>action(evidence,e.currentTarget,ticket,async()=>json(await api.request(`/sessoes/${id}/leituras/${r.leitura_id}`))),'link-button')])));
+    // Evidência bruta fica com o dono da carga; a parceira consulta comprovantes e gráfico.
+    else panel.append(table(['Ordem','Coleta','Recebida no servidor','Temperaturas','Evidência'],rows.map(r=>[r.ordem_recebimento,r.tipo,date(r.recebida_em_servidor),button('Gráfico e relatório',e=>temperatures(id,r.leitura_id,evidence,e.currentTarget,ticket),'link-button'),shared?'Com o dono da carga':button('Abrir',e=>action(evidence,e.currentTarget,ticket,async()=>json(await api.request(`/sessoes/${id}/leituras/${r.leitura_id}`))),'link-button')])));
     if(after>0)panel.append(button('Voltar ao início',e=>receipts(id,target,e.currentTarget,ticket)));
     if(rows.length===20)panel.append(button('Próximos comprovantes',e=>receipts(id,target,e.currentTarget,ticket,rows.at(-1).ordem_recebimento)));
     panel.append(evidence);return panel;

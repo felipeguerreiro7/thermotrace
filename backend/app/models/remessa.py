@@ -11,6 +11,7 @@ from uuid import UUID
 
 from sqlalchemy import (
     Boolean,
+    CheckConstraint,
     DateTime,
     ForeignKey,
     Index,
@@ -18,6 +19,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PgUUID
@@ -163,6 +165,56 @@ class Volume(Base, IdMixin, TimestampMixin):
     __table_args__ = (
         UniqueConstraint("remessa_id", "sequencia", name="uq_volume_remessa_sequencia"),
         Index("ix_volume_remessa_id", "remessa_id"),
+    )
+
+
+class CompartilhamentoRemessa(Base, IdMixin, CriadoMixin):
+    """Autorização explícita para outra empresa consultar uma carga (WEB-10).
+
+    Vale só depois do aceite da parceira e até revogação ou prazo. Nome do
+    destinatário, NF ou `empresa_transportadora_id` nunca concedem acesso.
+    Nada é apagado: aceite, recusa e revogação ficam registrados na linha.
+    """
+
+    __tablename__ = "compartilhamento_remessa"
+
+    remessa_id: Mapped[UUID] = mapped_column(
+        PgUUID(as_uuid=True), ForeignKey("remessa.id"), nullable=False
+    )
+    # Código visível no convite antes do aceite; o banco confere com a remessa.
+    remessa_codigo: Mapped[str] = mapped_column(String(64), nullable=False)
+    empresa_dona_id: Mapped[UUID] = mapped_column(
+        PgUUID(as_uuid=True), ForeignKey("empresa.id"), nullable=False
+    )
+    empresa_parceira_id: Mapped[UUID] = mapped_column(
+        PgUUID(as_uuid=True), ForeignKey("empresa.id"), nullable=False
+    )
+    papel: Mapped[str] = mapped_column(String(32), nullable=False, server_default="transportadora")
+    pode_exportar: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+    expira_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    criado_por: Mapped[UUID] = mapped_column(
+        PgUUID(as_uuid=True), ForeignKey("usuario.id"), nullable=False
+    )
+    aceito_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    aceito_por: Mapped[UUID | None] = mapped_column(PgUUID(as_uuid=True), ForeignKey("usuario.id"))
+    recusado_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    recusado_por: Mapped[UUID | None] = mapped_column(PgUUID(as_uuid=True), ForeignKey("usuario.id"))
+    revogado_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    revogado_por: Mapped[UUID | None] = mapped_column(PgUUID(as_uuid=True), ForeignKey("usuario.id"))
+    motivo_revogacao: Mapped[str | None] = mapped_column(Text)
+
+    __table_args__ = (
+        Index("uq_compartilhamento_vigente", "remessa_id", "empresa_parceira_id", unique=True,
+              postgresql_where=text("revogado_em IS NULL AND recusado_em IS NULL")),
+        Index("ix_compartilhamento_parceira", "empresa_parceira_id", "criado_em"),
+        Index("ix_compartilhamento_remessa", "remessa_id"),
+        CheckConstraint("empresa_dona_id <> empresa_parceira_id", name="partes_distintas"),
+        CheckConstraint("papel = 'transportadora'", name="papel_conhecido"),
+        CheckConstraint("(aceito_em IS NULL) = (aceito_por IS NULL)", name="aceite_com_autor"),
+        CheckConstraint("(recusado_em IS NULL) = (recusado_por IS NULL)", name="recusa_com_autor"),
+        CheckConstraint("(revogado_em IS NULL) = (revogado_por IS NULL)", name="revogacao_com_autor"),
+        CheckConstraint("NOT (aceito_em IS NOT NULL AND recusado_em IS NOT NULL)", name="aceite_ou_recusa"),
+        CheckConstraint("expira_em IS NULL OR expira_em > criado_em", name="prazo_futuro"),
     )
 
 

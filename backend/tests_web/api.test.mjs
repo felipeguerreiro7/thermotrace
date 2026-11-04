@@ -86,6 +86,25 @@ test('403 não tenta renovar sessão; erro do servidor não expõe detalhes inte
   assert.equal(count,2);
 });
 
+test('ação de escrita envia corpo e reaproveita a mesma chave após renovar o acesso',async()=>{
+  const keys=[];
+  const api=base(async(url,opts)=>{
+    if(url.endsWith('/auth/refresh'))return reply(tokens(2));
+    assert.equal(opts.method,'POST');assert.deepEqual(JSON.parse(opts.body),{motivo:'Encerrado no teste sintético.'});
+    keys.push(opts.headers['Idempotency-Key']);
+    return opts.headers.Authorization==='Bearer access-1'?reply({},401):reply({situacao:'revogado'});
+  });
+  await api.login('a@example.org','sintética');
+  const r=await api.request('/compartilhamentos/abc/revogar',{method:'POST',body:{motivo:'Encerrado no teste sintético.'}});
+  assert.equal(r.situacao,'revogado');assert.equal(keys.length,2);assert.equal(keys[0],keys[1]);assert.ok(keys[0].length>=16);
+  const outra=base(()=>reply([]));await outra.login('b@example.org','sintética');
+});
+
+test('consulta não envia chave de idempotência',async()=>{
+  const api=base((url,opts)=>{assert.equal(opts.headers['Idempotency-Key'],undefined);assert.equal(opts.method,'GET');return reply([]);});
+  await api.login('a@example.org','sintética');await api.request('/compartilhamentos/recebidos');
+});
+
 test('falha no logout ainda remove a sessão local',async()=>{
   const api=base(()=>{throw new Error('offline');});
   await api.login('a@example.org','sintética');await assert.rejects(api.logout());

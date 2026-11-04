@@ -30,14 +30,14 @@ from app.models.operacao import (
     EventoCustodia,
     Ocorrencia,
 )
-from app.models.remessa import Documento, Remessa, VinculoEtiqueta, Volume
+from app.models.remessa import CompartilhamentoRemessa, Documento, Remessa, VinculoEtiqueta, Volume
 from app.models.transversais import Arquivo, ChaveIdempotencia, Laudo, LogAuditoria
 
 __all__ = [
     "Base",
     "Empresa", "Usuario", "Dispositivo", "SessaoAuth", "TokenRecuperacao",
     "LoteEtiqueta", "Etiqueta", "PerfilTermico", "ProdutoConfiguracao", "LimiteLogin",
-    "Remessa", "Documento", "Volume", "VinculoEtiqueta",
+    "Remessa", "Documento", "Volume", "VinculoEtiqueta", "CompartilhamentoRemessa",
     "SessaoMonitoramento", "LeituraEtiqueta", "SerieMedicao", "Excursao",
     "EventoCustodia", "Ocorrencia", "AcaoCorretiva",
     "DestinatarioAlerta", "EnvioAlerta",
