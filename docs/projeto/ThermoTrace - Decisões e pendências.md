@@ -185,3 +185,16 @@ Domínio comprado: thermotrace.com.br. GitHub: https://github.com/felipeguerreir
 Instrução permanente do usuário: usar GitHub nas entregas e commitar explicando o que mudou e por quê. Procedimento em CONTRIBUTING.md. O Obsidian continua sendo o planejamento operacional; cópia apenas das notas ThermoTrace em docs/projeto acompanha os commits.
 
 Decisão de implementação: Portal 0.1 no contêiner da API já contratado; sem serviço extra ou mudança de recursos Render. Próximos aceites em [[ThermoTrace - Portal e próximas entregas]]. Permanecem válidas a persistência antes de STOP (D08), localização aprovada (D07) e separação do projeto em relação ao trabalho.
+
+## Decisão provisória de implementação — compartilhamento, 04/11/2026
+
+Responde provisoriamente à lacuna "quem pode compartilhar carga e por quanto tempo", para permitir o WEB-10. Substituível quando o usuário ou o primeiro contrato definirem outra regra:
+
+- Compartilha: gestor da empresa dona da carga, uma carga por vez, com transportadora cadastrada (tipo transportadora ou ambos), identificada pelo CNPJ.
+- Aceita ou recusa: gestor da transportadora. Operadores só consultam o que já foi aceito.
+- Encerra: qualquer das partes, a qualquer momento, com motivo registrado.
+- Prazo: opcional; sem prazo vale até ser encerrado.
+- Escopo: consultar sempre; exportar só com permissão do dono; operar a carga não é concedido nesta versão.
+- Destinatário (terceira parte) ainda não tem papel próprio.
+
+Evidência: [[ThermoTrace - Compartilhamento de cargas WEB-10]].

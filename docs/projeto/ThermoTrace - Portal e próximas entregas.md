@@ -35,7 +35,7 @@ Ser gestor/operador é uma permissão dentro da empresa, não a definição de c
 - [x] WEB-07 — Staff consulta empresas; gestores consultam equipe e auditoria da própria empresa. Não existe acesso de suporte irrestrito às cargas.
 - [x] WEB-08 — Estados de carregamento/vazio/erro, navegação responsiva, sessão apenas em memória, renovação concorrente protegida e proteção contra inserção de conteúdo executável.
 - [ ] WEB-09 — Validar visual e uso no computador e celular, com contas fictícias. Aceite: busca, retorno à lista, paginação, coletas e saída funcionam sem confundir empresas ou perder contexto.
-- [ ] WEB-10 P0 — Vínculo entre dono da carga e transportadora. Implementar contrato/vínculo explícito por remessa, aceite e revogação, escopos de leitura/operação/exportação, autoria e testes RLS entre três empresas. Não reutilizar nome de destinatário nem número de NF como autorização. Aceite: cliente A compartilha somente carga X com transportadora T; B e carga Y permanecem invisíveis; revogação bloqueia novas consultas/exportações imediatamente e é auditada.
+- [x] WEB-10 P0 — (consulta/exportação entregue em 04/11/2026; operação entre empresas segue aberta, ver [[ThermoTrace - Compartilhamento de cargas WEB-10]]) Vínculo entre dono da carga e transportadora. Implementar contrato/vínculo explícito por remessa, aceite e revogação, escopos de leitura/operação/exportação, autoria e testes RLS entre três empresas. Não reutilizar nome de destinatário nem número de NF como autorização. Aceite: cliente A compartilha somente carga X com transportadora T; B e carga Y permanecem invisíveis; revogação bloqueia novas consultas/exportações imediatamente e é auditada.
 - [ ] WEB-11 P1 — Gestão pelo portal: cadastrar empresas/usuários e cargas, convites e recuperação de senha. Parte dos endpoints já existe; faltam telas, entrega segura do acesso e auditoria de suporte autorizado. Aceite: nenhum envio de senha por URL ou log; ações sensíveis claras e reversões registradas.
 - [ ] WEB-12 P0 — Gráfico e laudo central. Depende de fila Android vinculada à conta e decodificação canônica versionada no servidor. Aceite: temperaturas e horários reproduzíveis do bruto, divergências e ausência de dados explícitas, exportação autorizada com hash/versão e trilha de acesso.
 
@@ -74,3 +74,9 @@ Android 0.8.6 envia manualmente novas sessões com evidência de START para carg
 WEB-12 parcial entregue: projeção por coleta, gráfico, CSV/SVG/relatório e auditoria. WEB-09 parcialmente verificado com dados fictícios no navegador, inclusive largura de celular; homologação com empresas reais de teste no servidor continua pendente. Prioridade seguinte: WEB-10, vínculo autorizado entre empresas, e WEB-03/04, ambiente publicado. As observações anteriores sobre ausência total de gráficos descrevem o Portal 0.1.
 
 [[ThermoTrace - Portal 0.2 e gráficos por coleta]].
+
+## Atualização — WEB-10 e API 0.6, 04/11/2026
+
+WEB-10 entregue para consulta e exportação: o dono compartilha uma carga específica com a transportadora pelo CNPJ, e o gestor da transportadora aceita. Qualquer das partes encerra o acesso. Exportar exige permissão explícita do dono. RLS e filtros de rota protegem as duas pontas, e cada consulta da transportadora aparece na auditoria do dono. A transportadora ainda não opera a carga do dono (bipar, documentos, cancelamento); isso fica como próxima etapa. Prioridade seguinte: WEB-03/04 com um compartilhamento real entre empresas de teste no ambiente publicado.
+
+[[ThermoTrace - Compartilhamento de cargas WEB-10]].

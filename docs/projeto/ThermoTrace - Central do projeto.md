@@ -110,3 +110,9 @@ Próximas prioridades: homologar cadastro/catálogo e percurso celular→servido
 Estado atual: Portal 0.2/API 0.5 com gráfico e exportação por coleta; Android 0.8.7 corrige o limite de histórico. Primeira entrega de gráficos centrais concluída, consolidação da viagem e vínculo dono/transportadora pendentes.
 
 [[ThermoTrace - Portal 0.2 e gráficos por coleta]].
+
+## Atualização — WEB-10, API 0.6, 04/11/2026
+
+Retomada em computador novo; base conferida antes da mudança. Estado atual: Portal 0.3/API 0.6 com compartilhamento explícito de carga entre dono e transportadora (convite, aceite, recusa, revogação, prazo opcional; consultar e, se autorizado, exportar). A operação da carga pela transportadora, a consolidação da viagem e a homologação publicada (WEB-03/04) continuam pendentes. Android permanece 0.8.7, sem mudança.
+
+[[ThermoTrace - Compartilhamento de cargas WEB-10]].
