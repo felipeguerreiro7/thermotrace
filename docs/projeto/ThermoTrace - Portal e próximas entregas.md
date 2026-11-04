@@ -94,3 +94,7 @@ Perfis térmicos, produtos e cargas passam a ser cadastrados pelo portal, sem mu
 ## Atualização — WEB-12 viagem consolidada, 04/11/2026
 
 Consolidação entre coletas, excursões e relatório da viagem entregues (API 0.9). Junção de sessões com troca de etiqueta fica para depois. [[ThermoTrace - Viagem consolidada WEB-12]].
+
+## Atualização — acompanhamento da operação, API 0.10, 04/11/2026
+
+Página Acompanhamento: etiquetas sem leitura final com fim previsto da memória programada, sessões sem coleta recente e atraso de envio de cada celular. Só dados já recebidos e só da própria empresa. Alerta ativo por e-mail ou push fica para quando houver canal de envio contratado. [[ThermoTrace - Acompanhamento da operação]].
