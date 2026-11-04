@@ -116,7 +116,7 @@ test('erro de validação diz o motivo da regra e o campo a revisar',async()=>{
     {campo:'documentos.0.chave_acesso',problema:"String should match pattern '^[A-Z0-9]{44}$'"}]}},422));
   await api.login('a@example.org','sintética');
   await assert.rejects(api.request('/remessas',{method:'POST',body:{}}),e=>e.status===422
-    &&e.message.includes('Informe o código da carga')&&e.message.includes('"chave_acesso"')&&!e.message.includes('pattern'));
+    &&e.message.includes('Informe o código da carga')&&e.message.includes('"chave_acesso"')&&!e.message.includes('pattern')&&!e.message.includes('..'));
 });
 
 test('consulta não envia chave de idempotência',async()=>{

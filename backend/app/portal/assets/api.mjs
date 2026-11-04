@@ -36,7 +36,7 @@ export function createApi(fetcher = globalThis.fetch.bind(globalThis)) {
       // 422 de validação: regra de negócio mostra o próprio texto; formato mostra qual campo revisar.
       const campos = response.status === 422 && Array.isArray(data.detalhes?.campos) ? data.detalhes.campos : [];
       const motivos = [...new Set(campos.map(c => String(c.problema || '').startsWith('Value error, ')
-        ? String(c.problema).slice(13) : `revise o campo "${String(c.campo || 'corpo').split('.').at(-1)}"`))].slice(0, 4);
+        ? String(c.problema).slice(13).replace(/[.\s]+$/, '') : `revise o campo "${String(c.campo || 'corpo').split('.').at(-1)}"`))].slice(0, 4);
       if (motivos.length) mensagem = `${mensagem} ${motivos.join('; ')}.`;
       throw new ApiError(response.status >= 500 ? 'O serviço está indisponível. Tente novamente em instantes.' : mensagem, response.status);
     }
