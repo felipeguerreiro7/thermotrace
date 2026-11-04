@@ -453,7 +453,7 @@ function sessions(id,target,trigger,ticket,offset=0) {
     for(const s of rows){
       const box=el('section',undefined,'card');box.append(el('h3',`Sessão · ${s.estado_logico}`),values([['Identificação',s.id],['Origem',s.origem==='simulacao'?'Simulação':'Declaração do Android'],['Faixa configurada',`${s.min_configurado_c} a ${s.max_configurado_c} °C`],['Intervalo',`${s.intervalo_segundos} segundos`]]));
       const readings=el('div',undefined,'result'), integrity=el('div',undefined,'result');
-      box.append(button('Ver comprovantes',e=>receipts(s.id,readings,e.currentTarget,ticket)),button('Verificar integridade',e=>action(integrity,e.currentTarget,ticket,async()=>{
+      box.append(button('Viagem consolidada',e=>trip(s.id,readings,e.currentTarget,ticket),'primary'),button('Ver comprovantes',e=>receipts(s.id,readings,e.currentTarget,ticket)),button('Verificar integridade',e=>action(integrity,e.currentTarget,ticket,async()=>{
         const data=await api.request(`/sessoes/${s.id}/integridade`); const panel=el('div'); panel.append(notice(data.integra?'Cadeia de evidências íntegra. Isso não certifica a temperatura nem o sensor.':'A cadeia de evidências apresenta divergência. Encaminhe para conferência.'),json(data));return panel;
       }),'link-button'),readings,integrity);list.append(box);
     }
@@ -472,6 +472,29 @@ function receipts(id,target,trigger,ticket,after=0){
     if(after>0)panel.append(button('Voltar ao início',e=>receipts(id,target,e.currentTarget,ticket)));
     if(rows.length===20)panel.append(button('Próximos comprovantes',e=>receipts(id,target,e.currentTarget,ticket,rows.at(-1).ordem_recebimento)));
     panel.append(evidence);return panel;
+  });
+}
+
+function trip(session,target,trigger,ticket) {
+  // WEB-12: coleta mais completa como base; as demais conferidas, nunca somadas.
+  const path=`/sessoes/${session}/viagem`;
+  return action(target,trigger,ticket,async()=>{
+    const v=await api.request(path), r=v.resumo;
+    const base=v.coletas.find(c=>c.leitura_id===v.base_leitura_id);
+    const dados={...v,tipo:r?(r.inclui_leitura_final?'Viagem completa':'Viagem parcial'):'Viagem',lida_em:base?.lida_em,origem:'declaracao',
+      leitura_id:v.base_leitura_id||'—',hash_evidencia:'ver coletas abaixo',resumo:r?{minima_c:r.minima_c,maxima_c:r.maxima_c,abaixo:r.pontos_fora_da_faixa,acima:0}:null};
+    const panel=temperaturePanel(dados,async(format,control,error)=>{
+      control.disabled=true; error.textContent='';
+      try { const blob=await api.request(`${path}?formato=${format}`,{download:true}); if(ticket!==view)return;
+        const url=URL.createObjectURL(blob),a=document.createElement('a'); a.href=url; a.download=`ThermoTrace-viagem-${session}.${format}`; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000); }
+      catch(e){ if(ticket===view)showError(e,error); } finally { control.disabled=false; }
+    },'Viagem consolidada');
+    const extra=el('div',undefined,'stack');
+    if(r) extra.append(values([['Período',`${date(r.primeiro_instante)} a ${date(r.ultimo_instante)}`],['Na faixa',`${r.percentual_na_faixa}%`],['Tempo fora da faixa',`${Math.round(r.tempo_fora_nominal_s/60)} min (nominal)`],['Coletas conferidas',String(r.coletas_consideradas)]]));
+    extra.append(el('h4','Excursões'),v.excursoes.length?table(['Tipo','Início','Fim','Duração','Extremo'],v.excursoes.map(e=>[e.tipo==='abaixo'?'Abaixo da faixa':'Acima da faixa',date(e.inicio),date(e.fim),`${Math.round(e.duracao_nominal_s/60)} min`,`${Number(e.extremo_c).toLocaleString('pt-BR')} °C`])):el('p','Nenhuma medição fora da faixa.','muted'));
+    extra.append(el('h4','Coletas consideradas'),table(['Ordem','Tipo','Lida em','Medições','Uso'],v.coletas.map(c=>[c.ordem_recebimento,c.tipo,date(c.lida_em),c.medicoes,c.leitura_id===v.base_leitura_id?'Base da viagem':c.utilizavel?'Conferida contra a base':'Sem série'])));
+    if(v.divergencias.length) extra.append(el('h4','Divergências entre coletas'),table(['Índice','Base','Outra coleta'],v.divergencias.map(x=>[x.indice,x.base_c??'—',x.coleta_c])));
+    panel.append(extra); return panel;
   });
 }
 

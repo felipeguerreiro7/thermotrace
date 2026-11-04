@@ -13,7 +13,7 @@ from app.services.auditoria import auditar
 from app.services.compartilhamentos import remessa_legivel, auditar_acesso
 from typing import Literal
 from fastapi import Response
-from app.services import temperaturas
+from app.services import temperaturas, viagem
 import hashlib
 
 router=APIRouter(tags=['Recepção de evidências'])
@@ -40,6 +40,29 @@ def temperaturas_da_coleta(sessao_id:UUID, leitura_id:UUID,
     auditar_acesso(db,'temperaturas_exportadas','leitura_etiqueta',l.id,acesso,r,comp,evento)
     return Response(conteudo,media_type=mime,headers={
         'Content-Disposition':f'attachment; filename="ThermoTrace-{leitura_id}.{formato}"',
+        'Cache-Control':'no-store','X-Content-Type-Options':'nosniff',
+        'Content-Security-Policy':"default-src 'none'; style-src 'unsafe-inline'; sandbox"})
+
+
+@router.get('/sessoes/{sessao_id}/viagem')
+def viagem_da_sessao(sessao_id:UUID, formato:Literal['json','csv','svg','html']='json',
+        acesso:Acesso=Depends(operador), db:Session=Depends(obter_sessao)):
+    """WEB-12: viagem consolidada a partir de todas as coletas recebidas da sessão."""
+    s,r,v,comp=ingestao.sessao_legivel(db,acesso,sessao_id,exportar=formato!='json')
+    ls=list(db.scalars(select(LeituraEtiqueta).where(LeituraEtiqueta.sessao_id==sessao_id,
+        LeituraEtiqueta.contrato_ingestao=='1').order_by(LeituraEtiqueta.ordem_recebimento)))
+    integra=ingestao.verificar_integridade(db,r.empresa_embarcador_id,sessao_id)['integra']
+    dados=viagem.consolidar(s,ls,r,integra)
+    evento={'formato':formato,'versao':viagem.VERSAO,'hash_projecao':dados['hash_projecao'],
+            'conferencia':dados['conferencia'],'base_leitura_id':dados['base_leitura_id']}
+    if formato=='json':
+        auditar_acesso(db,'viagem_consultada','sessao_monitoramento',sessao_id,acesso,r,comp,evento)
+        return dados
+    conteudo,mime=viagem.exportar(dados,formato)
+    evento['sha256_arquivo']=hashlib.sha256(conteudo.encode('utf-8')).hexdigest()
+    auditar_acesso(db,'viagem_exportada','sessao_monitoramento',sessao_id,acesso,r,comp,evento)
+    return Response(conteudo,media_type=mime,headers={
+        'Content-Disposition':f'attachment; filename="ThermoTrace-viagem-{sessao_id}.{formato}"',
         'Cache-Control':'no-store','X-Content-Type-Options':'nosniff',
         'Content-Security-Policy':"default-src 'none'; style-src 'unsafe-inline'; sandbox"})
 
