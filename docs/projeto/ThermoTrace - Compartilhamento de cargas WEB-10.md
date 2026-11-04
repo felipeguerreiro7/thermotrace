@@ -49,3 +49,7 @@ Migração nova `b10411040001`, aplicada pelo `preDeployCommand` do Render (`ale
 2. Operação entre empresas (próxima etapa do WEB-10): permitir que a transportadora bipe na carga do dono, com etiqueta e aparelho dela e a autoria preservada. Exige decidir de quem é a etiqueta e quem fecha a sessão.
 3. WEB-11: cadastro de empresas/usuários e convites pelo portal, já que hoje a transportadora precisa estar cadastrada pela equipe ThermoTrace.
 4. WEB-12 restante: consolidação da viagem entre coletas.
+
+## Publicação no GitHub — 04/11/2026
+
+Código enviado em aa6786a e notas em e18eed2; SHA remoto conferido igual ao local. O envio não comprova deploy bem-sucedido no Render: conferir no painel se a migração b10411040001 rodou e se /api/v1/saude/completa responde.

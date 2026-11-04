@@ -59,3 +59,9 @@ Obsidian atualizado com roteiro, limites, backlog e processo de primeiro envio. 
 Código enviado: [4ba684a](https://github.com/felipeguerreiro7/thermotrace/commit/4ba684ad6d48e981405f6e07e9471f0137d5ce7b). Push em main concluído e SHA remoto conferido igual ao local. Mensagem explica gráficos/exportações auditadas por coleta, correção do limite de histórico, testes e limites. 158 testes API, 150 JVM e 13 web aprovados; APK 0.8.7-debug gerado.
 
 37 notas do projeto sincronizadas. O envio ao GitHub não comprova deploy bem-sucedido no Render; domínio/HTTPS e ensaio integrado continuam pendentes. Nenhuma contratação nova. Detalhes: [[ThermoTrace - Portal 0.2 e gráficos por coleta]].
+
+## WEB-10 · API 0.6, 04/11/2026
+
+Código: [aa6786a](https://github.com/felipeguerreiro7/thermotrace/commit/aa6786a), "feat(compartilhamento): dono compartilha carga com transportadora por aceite explícito (WEB-10)". Notas: e18eed2 [skip render]. Push em main feito pelo usuário no próprio terminal, com login no GitHub no computador novo; SHA remoto conferido igual ao local (e18eed2dedfba5df8acf298293388c5dc674de7b). 166 testes API, 15 web e alembic check aprovados antes do envio.
+
+O push dispara o deploy do código no Render, com a migração b10411040001 pelo preDeployCommand. Resultado do deploy, domínio/HTTPS e ensaio integrado não foram conferidos. Detalhes: [[ThermoTrace - Compartilhamento de cargas WEB-10]].
