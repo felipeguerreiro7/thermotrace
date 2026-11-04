@@ -3,7 +3,7 @@ tipo: projeto
 projeto: ThermoTrace
 contexto: pessoal-independente
 status: em-implementacao
-atualizado: 2026-09-13
+atualizado: 2026-11-04
 ---
 
 # Plano de ação e backlog
@@ -312,3 +312,34 @@ Detalhes e roteiro: [[ThermoTrace - Envio de coletas Android 0.8.6]].
 - [ ] Consolidar viagem e excursões, completar administração e processos de atendimento.
 
 [[ThermoTrace - Portal 0.2 e gráficos por coleta]].
+
+## Situação consolidada dos cartões — 04/11/2026
+
+Quadro único do estado atual. Os blocos acima ficam como histórico. "Código pronto" quer dizer implementado e testado automaticamente; **nenhum item abaixo passou por etiqueta real depois de 12/09**. Plano do mês em [[ThermoTrace - Plano até 30-11-2026]].
+
+| Cartão | Situação | O que falta |
+|---|---|---|
+| TT-010 versionamento | Feito: remoto no GitHub e CI verde a cada push, o que comprova o "clone limpo compila" | Deixar o repositório **privado** (hoje está público) |
+| TT-011 matriz do app chinês | Aberto | Bancada com etiqueta |
+| TT-012 fechamento × STOP | Código pronto (leitura gravada antes do STOP, confirmação do STOP registrada) | Ensaio físico; TT-057 (reuso da etiqueta) |
+| TT-020 dono, membros, compartilhamento | Feito para consulta e exportação (WEB-10) | Transportadora operar carga do dono: não concedido nesta versão |
+| TT-021 documentos e vínculos | Feito | — |
+| TT-022 login, convite, recuperação, MFA | Feito: convite e redefinição por código (WEB-11), MFA obrigatória para a equipe ThermoTrace, revogação | "Esqueci minha senha" por conta própria depende de e-mail contratado |
+| TT-030 ingestão e catálogo | Parcial: recepção, recibos e cadastro de perfis/produtos/cargas pelo portal | Decodificação canônica do SDK no servidor, validada contra o fabricante (TT-005) |
+| TT-031 fila offline e reenvio | Código pronto: envio automático Android 0.8.8 | Teste instrumentado no aparelho; modo avião do roteiro físico |
+| TT-032 concorrência e conflito | Parcial: recepção concorrente testada; viagem mostra coletas que discordam | Continuidade da sessão entre dois celulares |
+| TT-040 série e gráfico no app | Parcial: gráfico local no app; viagem consolidada no servidor | Integrar a viagem do servidor no app |
+| TT-041 exportações | Parcial: CSV, SVG e relatório HTML com hash, por coleta e por viagem; XLSX no app | PDF/PNG; laudo assinado |
+| TT-050 portal do cliente | Feito: cargas, busca, detalhe, viagem, equipe, auditoria, acompanhamento, integridade | WEB-09 no ambiente publicado |
+| TT-051 portal da equipe ThermoTrace | Parcial: cadastrar empresa e entregar acesso do gestor | Acesso de suporte autorizado e auditado ao conteúdo; a equipe segue sem ver cargas |
+| TT-060 proteção de evidências | Feito no código: cadeia local + manifesto externo (API 0.11) | Política de guarda dos dumps de backup (contêm dados de clientes) |
+| TT-061 / TT-066 backup e monitoramento | Parcial: backup e restauração comprovados localmente; acompanhamento da operação no portal | Repetir no Render; rotina automática; alerta de falha |
+| TT-062 pipeline, assinatura, distribuição | Parcial: CI no GitHub, APK de piloto assinado, instalação por cabo | Atualizar versão assinada no aparelho sem perder dados |
+| TT-063 piloto real | Aberto | Tudo acima + parceiro (TT-007) |
+| TT-004 / TT-005 / TT-006 | Abertos: maior risco do prazo | Ensaio físico com o [[ThermoTrace - Roteiro do ensaio físico de novembro]] |
+| TT-007 parceiro de saúde | Aberto | Usuário |
+| TT-064 homologação | Feito em parte: `https://thermotrace-api.onrender.com`, HTTPS, deploy automático pelo GitHub | Domínio `thermotrace.com.br` sem DNS |
+| TT-065 isolamento em homologação | Testado só automaticamente | WEB-04 com duas empresas fictícias no ambiente publicado |
+| TT-067 região dos dados | Aberto | Decisão do usuário |
+| TT-056 migrações Android | Parcial: 2→7 testadas | 1→2 e banco real |
+| TT-047c / TT-049 localização e privacidade | Abertos | Política de privacidade |
