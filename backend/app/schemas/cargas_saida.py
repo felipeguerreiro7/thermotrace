@@ -52,10 +52,13 @@ class RemessaSaida(BaseModel):
     produto_configuracao_id: UUID | None
     perfil_termico_id: UUID
     intervalo_segundos: int
+    # Deduzido dos volumes; nulo onde a rota não o calcula. Não substitui `status`.
+    andamento: Literal["sem_monitoramento", "em_monitoramento", "leitura_final_recebida", "cancelada"] | None = None
     # "propria" = cadastrada pela empresa que consulta; "compartilhada" = de outra empresa,
     # visível por autorização dela. `pode_operar` diz se esta empresa pode bipar nesta carga.
     acesso: Literal["propria", "compartilhada"] = "propria"
     pode_operar: bool = True
+    pode_exportar: bool = True
     empresa_dona: str | None = None
 
 

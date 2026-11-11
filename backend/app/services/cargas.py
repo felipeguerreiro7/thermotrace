@@ -3,7 +3,7 @@ from sqlalchemy import select, text, func, or_, and_
 
 from app.core.errors import Conflito, NaoEncontrado, RegraDeNegocio
 from app.models import ProdutoConfiguracao, PerfilTermico, Remessa, Documento, Volume
-from app.models.enums import StatusRemessa
+from app.models.enums import StatusRemessa, StatusVolume
 from app.services.auditoria import auditar
 from app.services.idempotencia import hash_json
 
@@ -119,20 +119,48 @@ def remessa_por_id(db, empresa_id, id_, escrita=False):
     return r
 
 
-def remessa_resumo(r):
-    return {"id": r.id, "codigo": r.codigo, "status": r.status, "criado_em": r.criado_em,
+def andamento_de(status_remessa, status_volumes):
+    """Onde a carga está, deduzido dos volumes. Não altera nem substitui `status`.
+
+    `status` segue sendo o estado cadastral (preparação, cancelada…). O andamento responde
+    à pergunta de quem abre a lista: já tem etiqueta gravando? já chegou a leitura final?
+    """
+    if status_remessa == StatusRemessa.CANCELADA:
+        return "cancelada"
+    vs = list(status_volumes)
+    if any(v == StatusVolume.MONITORANDO for v in vs):
+        return "em_monitoramento"
+    if any(v == StatusVolume.ENCERRADO for v in vs):
+        return "leitura_final_recebida"
+    return "sem_monitoramento"
+
+
+def andamentos(db, remessas):
+    """Andamento de várias cargas com uma consulta só."""
+    remessas = list(remessas)
+    por_remessa = {r.id: [] for r in remessas}
+    if remessas:
+        for rid, st in db.execute(select(Volume.remessa_id, Volume.status).where(Volume.remessa_id.in_(por_remessa))):
+            por_remessa[rid].append(st)
+    return {r.id: andamento_de(r.status, por_remessa[r.id]) for r in remessas}
+
+
+def remessa_resumo(r, andamento=None):
+    return {"andamento": andamento, "id": r.id, "codigo": r.codigo, "status": r.status, "criado_em": r.criado_em,
             "empresa_id": r.empresa_embarcador_id, "destinatario_nome": r.destinatario_nome,
             "produto_configuracao_id": r.produto_configuracao_id,
             "perfil_termico_id": r.perfil_termico_id, "intervalo_segundos": r.intervalo_segundos}
 
 
 def detalhe_remessa(db, r):
-    return {**remessa_resumo(r), "criterio": r.criterio_snapshot, "descricao_carga": r.descricao_carga,
+    volumes = [{"id": v.id, "sequencia": v.sequencia, "identidade": v.identidade,
+                "status": v.status, "monitorado": v.monitorado}
+               for v in db.scalars(select(Volume).where(Volume.remessa_id == r.id).order_by(Volume.sequencia))]
+    return {**remessa_resumo(r, andamento_de(r.status, [v["status"] for v in volumes])),
+            "criterio": r.criterio_snapshot, "descricao_carga": r.descricao_carga,
             "documentos": [documento_resumo(d) for d in db.scalars(select(Documento).where(
                 Documento.remessa_id == r.id).order_by(Documento.criado_em, Documento.id))],
-            "volumes": [{"id": v.id, "sequencia": v.sequencia, "identidade": v.identidade,
-                         "status": v.status, "monitorado": v.monitorado}
-                        for v in db.scalars(select(Volume).where(Volume.remessa_id == r.id).order_by(Volume.sequencia))]}
+            "volumes": volumes}
 
 
 def criar_remessa(db, acesso, body):

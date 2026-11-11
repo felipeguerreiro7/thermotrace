@@ -13,11 +13,12 @@ Nada aqui altera dados nem conclui sobre a temperatura. O fim previsto é nomina
 """
 from datetime import timedelta
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 
-from app.models import (Dispositivo, LeituraEtiqueta, Remessa, SessaoMonitoramento, Usuario,
+from app.models import (Dispositivo, Empresa, LeituraEtiqueta, Remessa, SessaoMonitoramento, Usuario,
                         VinculoEtiqueta, Volume)
 from app.models.enums import StatusSessao
+from app.services.compartilhamentos import operaveis_por
 
 VERSAO = 'tt-acompanhamento-1'
 JANELA_APARELHOS = timedelta(days=7)
@@ -48,23 +49,30 @@ def sessoes_abertas(db, empresa_id, agora, sem_coleta):
                .where(LeituraEtiqueta.contrato_ingestao == '1')
                .group_by(LeituraEtiqueta.sessao_id).subquery())
     rows = db.execute(
-        select(SessaoMonitoramento, Remessa.id, Remessa.codigo, Volume.id, Volume.codigo_externo, Volume.sequencia,
+        select(SessaoMonitoramento, Remessa.id, Remessa.codigo, Remessa.empresa_embarcador_id, Volume.id, Volume.codigo_externo, Volume.sequencia,
                ultimas.c.coletas, ultimas.c.ultima_coleta, ultimas.c.ultima_recepcao)
         .join(VinculoEtiqueta, VinculoEtiqueta.id == SessaoMonitoramento.vinculo_id)
         .join(Volume, Volume.id == VinculoEtiqueta.volume_id)
         .join(Remessa, Remessa.id == SessaoMonitoramento.remessa_id)
         .join(ultimas, ultimas.c.sessao_id == SessaoMonitoramento.id)
-        # Filtro explícito além do RLS: só cargas da própria empresa, nunca as compartilhadas.
-        .where(Remessa.empresa_embarcador_id == empresa_id,
+        # Filtro explícito além do RLS: cargas da própria empresa e as que ela pode operar agora.
+        # Carga compartilhada só para consulta fica fora: a leitura final não cabe a esta empresa.
+        .where(or_(Remessa.empresa_embarcador_id == empresa_id, Remessa.id.in_(operaveis_por(empresa_id))),
                SessaoMonitoramento.contrato_ingestao == '1',
                SessaoMonitoramento.status == StatusSessao.ATIVA)
         .order_by(SessaoMonitoramento.inicio_dispositivo_em, SessaoMonitoramento.id)
         .limit(LIMITE_SESSOES + 1)).all()
+    alheias = {dona for _, _, _, dona, *_ in rows if dona != empresa_id}
+    donas = ({e.id: e.razao_social for e in db.scalars(select(Empresa).where(Empresa.id.in_(alheias)))}
+             if alheias else {})
     saida = []
-    for s, rid, codigo, vid, externo, seq, coletas, ultima, recepcao in rows[:LIMITE_SESSOES]:
+    for s, rid, codigo, dona, vid, externo, seq, coletas, ultima, recepcao in rows[:LIMITE_SESSOES]:
         fim = fim_previsto(s)
         saida.append({
             'sessao_id': s.id, 'remessa_id': rid, 'remessa_codigo': codigo,
+            'acesso': 'propria' if dona == empresa_id else 'compartilhada',
+            'empresa_dona_id': None if dona == empresa_id else dona,
+            'empresa_dona': None if dona == empresa_id else donas.get(dona),
             'volume_id': vid, 'volume': externo or f'Volume {seq}',
             'iniciada_em': s.inicio_dispositivo_em, 'coletas': coletas,
             'ultima_coleta_em': ultima, 'ultima_recepcao_em': recepcao,

@@ -15,7 +15,8 @@ import io
 from app.services.idempotencia import hash_json
 from app.services.temperaturas import resultado, svg
 
-VERSAO = 'tt-viagem-1'
+# 2: a viagem passa a declarar a origem das evidências (simulação ou aplicativo). Regra de consolidação igual à 1.
+VERSAO = 'tt-viagem-2'
 
 
 def _excursoes(pontos, minimo, maximo, intervalo):
@@ -37,8 +38,10 @@ def _excursoes(pontos, minimo, maximo, intervalo):
 
 def consolidar(sessao, leituras, carga, integra):
     faixa = {'min_c': float(sessao.min_configurado_c), 'max_c': float(sessao.max_configurado_c)}
+    # A sessão não mistura origens (a recepção recusa); a ativação diz qual é.
+    origem = next(((l.envelope_integridade or {}).get('origem') for l in leituras), None) or 'indisponivel'
     d = {'versao': VERSAO, 'sessao_id': str(sessao.id), 'remessa_id': str(carga.id), 'codigo_carga': carga.codigo,
-         'tipo': 'viagem', 'faixa': faixa, 'intervalo_segundos': sessao.intervalo_segundos,
+         'tipo': 'viagem', 'origem': origem, 'faixa': faixa, 'intervalo_segundos': sessao.intervalo_segundos,
          'integridade_cadeia': integra, 'validacao_fisica': False, 'stop_fisico': 'nao_confirmado_pelo_servidor',
          'coletas': [], 'base_leitura_id': None, 'pontos': [], 'excursoes': [], 'divergencias': [],
          'resumo': None, 'conferencia': 'nao_avaliavel', 'avisos': []}
@@ -115,7 +118,7 @@ def exportar(d, formato):
               f"{r.get('excursoes',0)} excursão(ões), {r.get('tempo_fora_nominal_s',0)//60} min fora da faixa.</p>") if r else '<p>Sem série utilizável.</p>'
     return f'''<!doctype html><html lang="pt-BR"><meta charset="utf-8"><title>Relatório da viagem ThermoTrace</title>
 <style>body{{font:16px system-ui;max-width:1050px;margin:32px auto;padding:24px;color:#17394b}}svg{{width:100%}}table{{border-collapse:collapse;width:100%;margin:12px 0}}td,th{{border:1px solid #c9d6dc;padding:6px;text-align:left}}code{{overflow-wrap:anywhere}}@media print{{body{{margin:0}}}}</style>
-<h1>ThermoTrace · {escape(d['codigo_carga'])} · viagem</h1><p>Conferência: {escape(d['conferencia'])}. Faixa: {d['faixa']['min_c']:g} a {d['faixa']['max_c']:g} °C.</p>
+<h1>ThermoTrace · {escape(d['codigo_carga'])} · viagem</h1>{'<p><strong>SIMULAÇÃO: dados fictícios, sem etiqueta real.</strong></p>' if d.get('origem') == 'simulacao' else ''}<p>Origem: {escape(str(d.get('origem')))}. Conferência: {escape(d['conferencia'])}. Faixa: {d['faixa']['min_c']:g} a {d['faixa']['max_c']:g} °C.</p>
 {resumo}<ul>{avisos}</ul>{svg(d)}
 <h2>Excursões</h2>{f'<table><tr><th>Tipo</th><th>Início</th><th>Fim</th><th>Duração nominal</th><th>Extremo</th></tr>{exc}</table>' if exc else '<p>Nenhuma medição fora da faixa.</p>'}
 <h2>Coletas consideradas</h2><table><tr><th>Ordem</th><th>Tipo</th><th>Lida em</th><th>Medições</th><th>Uso</th></tr>{col}</table>

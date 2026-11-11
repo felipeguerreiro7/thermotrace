@@ -5,6 +5,11 @@ const api = createApi();
 const root = document.querySelector('#app');
 const labels = {staff:'Equipe ThermoTrace', cliente:'Cliente · dono da carga', contratante:'Contratante · transportadora', ambos:'Cliente e contratante'};
 const statuses = {preparacao:'Em preparação', aguardando_aceite:'Aguardando aceite', aguardando_coleta:'Aguardando coleta', em_transporte:'Em transporte', entregue_aguardando_leitura:'Aguardando leitura final', concluida:'Concluída', cancelada:'Cancelada'};
+// Andamento deduzido das etiquetas; o estado cadastral só aparece quando não há monitoramento.
+const progress = {em_monitoramento:'Em monitoramento', leitura_final_recebida:'Leitura final recebida', cancelada:'Cancelada'};
+const cargoStatus = r => progress[r.andamento] || statuses[r.status] || r.status;
+const volumeStatus = {sem_etiqueta:'Sem etiqueta', vinculado:'Etiqueta vinculada', monitorando:'Em monitoramento', encerrado:'Leitura final recebida'};
+const sessionStatus = {ativa:'em andamento', encerrada_normal:'leitura final recebida', encerrada_anormal:'encerrada com problema', abandonada:'abandonada'};
 const shareStatus = {pendente:'Aguardando aceite', ativo:'Ativo', recusado:'Recusado', revogado:'Encerrado', expirado:'Prazo vencido'};
 let user, area, content, page = 'cargas', view = 0, shared = null;
 const date = value => value ? new Intl.DateTimeFormat('pt-BR', {dateStyle:'short', timeStyle:'short'}).format(new Date(value)) : 'Não informado';
@@ -307,7 +312,7 @@ async function navigate(key, offset=0, query='') {
       c.situacao==='ativo'?button(c.remessa_codigo,()=>detail(c.remessa_id,c),'link-button'):c.remessa_codigo,
       c.empresa_dona,badge(shareStatus[c.situacao]||c.situacao),sharePermission(c),
       c.expira_em?date(c.expira_em):'Até ser encerrado',shareActions(c,()=>navigate('recebidas'))])));
-    else if (key==='cargas') results.append(table(['Carga','Situação','Destinatário','Criada em'],rows.map(r=>[button(r.codigo,()=>detail(r.id),'link-button'),badge(statuses[r.status]||r.status),r.destinatario_nome,date(r.criado_em)])));
+    else if (key==='cargas') results.append(table(['Carga','Situação','Destinatário','Criada em'],rows.map(r=>[button(r.codigo,()=>detail(r.id),'link-button'),badge(cargoStatus(r)),r.destinatario_nome,date(r.criado_em)])));
     else if (key==='empresas') results.append(table(['Empresa','CNPJ','Atividade','Cadastro','Gestores'],rows.map(r=>{
       const gs=el('div',undefined,'stack');
       (r.gestores||[]).forEach(g=>{ const line=el('div'); line.append(el('span',`${g.nome} · ${accessLabel[g.acesso]||g.acesso} `),
@@ -336,6 +341,11 @@ async function navigate(key, offset=0, query='') {
 
 const monitorStatus={registro_encerrado:'Memória programada acabou',sem_coleta_recente:'Sem coleta recente',em_andamento:'Em andamento'};
 const hours=s=>s==null?'—':s<3600?`${Math.round(s/60)} min`:`${(s/3600).toLocaleString('pt-BR',{maximumFractionDigits:1})} h`;
+function monitorCargo(s) {
+  const link=button(s.remessa_codigo,()=>detail(s.remessa_id),'link-button');
+  if(s.acesso!=='compartilhada') return link;
+  const box=el('div'); box.append(link,el('div',`Carga de ${s.empresa_dona||'outra empresa'}`,'muted')); return box;
+}
 async function monitorPage(target, ticket, horas=24) {
   // Só o que já chegou ao servidor; coletas ainda no celular não aparecem aqui.
   const box=el('section',undefined,'stack'); target.append(box); box.append(el('p','Carregando…','loading'));
@@ -348,10 +358,11 @@ async function monitorPage(target, ticket, horas=24) {
   box.append(filtro,values([['Sessões sem leitura final',String(t.sessoes_abertas)],['Memória programada acabou',String(t.registro_encerrado)],[`Sem coleta há mais de ${horas} h`,String(t.sem_coleta_recente)],['Consultado em',date(p.gerado_em)]]));
   const sess=el('section',undefined,'card result'); sess.append(el('h2','Etiquetas sem leitura final'));
   sess.append(p.sessoes_abertas.length?table(['Situação','Carga','Volume','Início','Última coleta','Coletas','Fim previsto da memória'],p.sessoes_abertas.map(s=>[
-    badge(monitorStatus[s.situacao]||s.situacao),button(s.remessa_codigo,()=>detail(s.remessa_id),'link-button'),s.volume,date(s.iniciada_em),date(s.ultima_coleta_em),String(s.coletas),
+    badge(monitorStatus[s.situacao]||s.situacao),monitorCargo(s),s.volume,date(s.iniciada_em),date(s.ultima_coleta_em),String(s.coletas),
     `${date(s.fim_previsto_memoria)}${s.horas_ate_fim_previsto>0?` (em ${hours(s.horas_ate_fim_previsto*3600)})`:''}`])):el('p','Nenhuma etiqueta aguardando leitura final.','muted'));
   if(p.ha_mais_sessoes) sess.append(el('p','Há mais sessões abertas além das 200 mostradas.','muted'));
   const dev=el('section',undefined,'card result'); dev.append(el('h2','Celulares da empresa'));
+  if(p.sessoes_abertas.some(s=>s.acesso==='compartilhada')) sess.append(el('p','Inclui etiquetas em cargas de outras empresas que a sua pode operar. O dono da carga vê que este acompanhamento foi consultado.','muted'));
   dev.append(p.aparelhos.length?table(['Aparelho','Versão do app','Último envio recebido','Coletas em 7 dias','Maior atraso de envio (7 dias)','Último operador','Situação'],p.aparelhos.map(a=>[
     a.modelo||'Sem modelo',a.versao_app||'—',a.ultima_recepcao_em?date(a.ultima_recepcao_em):'Nunca enviou',String(a.coletas_7_dias),hours(a.maior_atraso_envio_7_dias_s),a.ultimo_operador||'—',badge(a.ativo?'Ativo':'Desativado')])):el('p','Nenhum celular registrado.','muted'));
   box.append(sess,dev,el('p',`Regra ${p.versao}. ${p.limites[1]}`,'muted'));
@@ -456,13 +467,13 @@ async function sharingCard(r, ticket) {
   const card=el('section',undefined,'card result');
   card.append(el('h2','Compartilhamento com transportadora'),
     el('p','A transportadora só acessa esta carga depois do aceite do gestor dela. Se você permitir operar, os operadores dela iniciam o monitoramento e enviam leituras com etiquetas e celulares da transportadora; documentos e cancelamento continuam só com a sua empresa. Você vê cada consulta e cada leitura na Auditoria e pode encerrar o acesso a qualquer momento.','muted'));
-  const list=el('div'), form=el('form',undefined,'search'), msg=el('div');
-  const [cnpjLabel,cnpj]=field('CNPJ da transportadora','text','cnpj','off'); cnpj.maxLength=18; cnpj.placeholder='Somente a transportadora cadastrada na ThermoTrace';
-  const exp=el('label','Permitir baixar CSV, gráfico e relatório','field'), chk=el('input'); chk.type='checkbox'; chk.name='exportar'; exp.prepend(chk);
-  const opr=el('label','Permitir operar a carga (bipar etiquetas e enviar leituras)','field'), chkOp=el('input'); chkOp.type='checkbox'; chkOp.name='operar'; opr.prepend(chkOp);
+  const list=el('div'), form=el('form',undefined,'share-form'), msg=el('div');
+  const [cnpjLabel,cnpj]=field('CNPJ da transportadora','text','cnpj','off'); cnpj.maxLength=18; cnpj.placeholder='Transportadora cadastrada na ThermoTrace';
+  const exp=el('label','Permitir baixar CSV, gráfico e relatório','field check'), chk=el('input'); chk.type='checkbox'; chk.name='exportar'; exp.prepend(chk);
+  const opr=el('label','Permitir operar a carga (bipar etiquetas e enviar leituras)','field check'), chkOp=el('input'); chkOp.type='checkbox'; chkOp.name='operar'; opr.prepend(chkOp);
   const prazoLabel=el('label','Prazo (opcional)','field'), prazo=el('input'); prazo.type='date'; prazo.name='prazo'; prazoLabel.append(prazo);
   const send=el('button','Compartilhar esta carga','primary'); send.type='submit';
-  form.append(cnpjLabel,exp,opr,prazoLabel,send);
+  form.append(cnpjLabel,prazoLabel,exp,opr,send);
   const load=async()=>{
     const rows=await api.request(`/remessas/${r.id}/compartilhamentos`); if(ticket!==view)return;
     list.replaceChildren(rows.length?table(['Transportadora','Situação','Permissão','Prazo','Ações'],rows.map(c=>[c.empresa_parceira,badge(shareStatus[c.situacao]||c.situacao),sharePermission(c),c.expira_em?date(c.expira_em):'Até ser encerrado',shareActions(c,load)])):el('p','Esta carga não foi compartilhada.','muted'));
@@ -485,19 +496,21 @@ async function detail(id, share=null) {
   const ticket=++view; content.replaceChildren(back(),el('p','Carregando carga…','loading'));
   try {
     const r=await api.request(`/remessas/${id}`); if(ticket!==view)return;
+    // Chegou por outro caminho (acompanhamento): o servidor diz se a carga é de outra empresa e o que foi concedido.
+    if(!share && r.acesso==='compartilhada') share=shared={empresa_dona:r.empresa_dona||'outra empresa',pode_operar:r.pode_operar,pode_exportar:r.pode_exportar};
     content.replaceChildren(back(),heading(r.codigo,r.descricao_carga||'Detalhes e evidências da carga'));
     if(share) content.append(notice(`Carga de ${share.empresa_dona}, compartilhada com a sua empresa. Permissão: ${sharePermission(share).toLowerCase()}. ${share.pode_operar?'Os operadores da sua empresa iniciam o monitoramento e enviam leituras pelo aplicativo, com etiquetas e celulares da sua empresa. ':''}O dono vê cada consulta${share.pode_operar?' e cada leitura':''} e pode encerrar o acesso a qualquer momento.`));
     content.append(notice('Escolha uma coleta para consultar o gráfico e baixar os registros recebidos. Cada gráfico mostra o histórico daquele bipe; não soma coletas repetidas. A confirmação de parada da etiqueta ainda permanece no aplicativo.'));
     const grid=el('div',undefined,'grid'), summary=el('section',undefined,'card'), docs=el('section',undefined,'card');
-    summary.append(el('h2','Resumo da carga'),values([['Situação',statuses[r.status]||r.status],['Destinatário',r.destinatario_nome],['Criada em',date(r.criado_em)],['Intervalo',`${r.intervalo_segundos} segundos`]]));
+    summary.append(el('h2','Resumo da carga'),values([['Situação',cargoStatus(r)],['Destinatário',r.destinatario_nome],['Criada em',date(r.criado_em)],['Intervalo',`${r.intervalo_segundos} segundos`]]));
     if(r.criterio) { const d=el('details');d.append(el('summary','Critério térmico preservado'),json(r.criterio));summary.append(d); }
     docs.append(el('h2','Documentos vinculados'));
     if(!r.documentos.length) docs.append(el('p','Nenhum documento vinculado.','muted'));
     r.documentos.forEach(d=>docs.append(values([['Documento',`${d.tipo} · ${d.numero||'Sem número'}`],['Chave',d.chave_acesso||'Não informada'],['Origem',d.digitado_manualmente?'Digitado manualmente':'Leitura do documento'],['Validação',d.validado?'Validado':'Pendente de conferência']])));
     grid.append(summary,docs); content.append(grid);
-    const volumes=el('section',undefined,'card result'); volumes.append(el('h2','Volumes monitorados'));
+    const volumes=el('section',undefined,'card result'); volumes.append(el('h2','Volumes'));
     if(!r.volumes.length)volumes.append(el('p','Nenhum volume cadastrado.','muted'));
-    r.volumes.forEach(v=>{ const box=el('div',undefined,'volume'), h=el('div',undefined,'volume-header'), result=el('div',undefined,'result'); h.append(el('strong',v.identidade||`Volume ${v.sequencia}`),button('Consultar coletas',e=>sessions(v.id,result,e.currentTarget,ticket))); box.append(h,result);volumes.append(box); });
+    r.volumes.forEach(v=>{ const box=el('div',undefined,'volume'), h=el('div',undefined,'volume-header'), result=el('div',undefined,'result'); const nome=el('div'); nome.append(el('strong',`Volume ${v.sequencia}`),document.createTextNode(' '),badge(volumeStatus[v.status]||v.status)); if(v.identidade) nome.append(el('div',v.identidade,'muted')); h.append(nome); if(v.monitorado) h.append(button('Consultar coletas',e=>sessions(v.id,result,e.currentTarget,ticket))); else h.append(el('span','Aguardando ativação da etiqueta pelo aplicativo','muted')); box.append(h,result);volumes.append(box); });
     content.append(volumes);
     if(!share && user.papel==='gestor' && r.empresa_id===user.empresa_id) { const card=await sharingCard(r,ticket); if(ticket===view) content.append(card); }
   } catch(error) { if(ticket===view){ content.querySelector('.loading')?.remove(); showError(error,content); } }
@@ -515,7 +528,7 @@ function sessions(id,target,trigger,ticket,offset=0) {
     const rows=await api.request(`/volumes/${id}/sessoes?limite=20&offset=${offset}`), list=el('div',undefined,'stack');
     if(!rows.length)list.append(empty('Sem sessões nesta página','Só aparecem as evidências que já chegaram ao servidor.'));
     for(const s of rows){
-      const box=el('section',undefined,'card');box.append(el('h3',`Sessão · ${s.estado_logico}`),values([['Identificação',s.id],['Origem',s.origem==='simulacao'?'Simulação':'Declaração do Android'],['Faixa configurada',`${s.min_configurado_c} a ${s.max_configurado_c} °C`],['Intervalo',`${s.intervalo_segundos} segundos`]]));
+      const box=el('section',undefined,'card');box.append(el('h3',`Sessão · ${sessionStatus[s.estado_logico]||s.estado_logico}`),values([['Identificação',s.id],['Origem',s.origem==='simulacao'?'Simulação':'Declaração do Android'],['Faixa configurada',`${s.min_configurado_c} a ${s.max_configurado_c} °C`],['Intervalo',`${s.intervalo_segundos} segundos`]]));
       const readings=el('div',undefined,'result'), integrity=el('div',undefined,'result');
       box.append(button('Viagem consolidada',e=>trip(s.id,readings,e.currentTarget,ticket),'primary'),button('Ver comprovantes',e=>receipts(s.id,readings,e.currentTarget,ticket)),button('Verificar integridade',e=>action(integrity,e.currentTarget,ticket,async()=>{
         const data=await api.request(`/sessoes/${s.id}/integridade`); const panel=el('div'); panel.append(notice(data.integra?'Cadeia de evidências íntegra. Isso não certifica a temperatura nem o sensor.':'A cadeia de evidências apresenta divergência. Encaminhe para conferência.'),json(data));return panel;

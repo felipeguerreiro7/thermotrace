@@ -58,7 +58,8 @@ app = FastAPI(
         "Versão 0.9: viagem consolidada por sessão (coleta mais completa como base, demais conferidas, excursões). "
         "Versão 0.10: acompanhamento da operação (sessões sem leitura final, fim previsto da memória, envio dos aparelhos). "
         "Versão 0.11: manifesto de integridade para guardar fora do servidor e conferir depois (TT-060). "
-        "Versão 0.12: a transportadora opera a carga compartilhada quando o dono autoriza (inicia monitoramento e envia leituras)."
+        "Versão 0.12: a transportadora opera a carga compartilhada quando o dono autoriza (inicia monitoramento e envia leituras). "
+        "Versão 0.13: andamento da carga deduzido das etiquetas, acompanhamento também das cargas que a empresa opera e origem declarada na viagem."
     ),
     docs_url="/docs" if not cfg.em_producao else None,
     redoc_url="/redoc" if not cfg.em_producao else None,

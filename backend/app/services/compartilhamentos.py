@@ -15,7 +15,7 @@ from app.core.security import agora
 from app.models import CompartilhamentoRemessa, Empresa, Remessa
 from app.models.enums import StatusRemessa, TipoEmpresa
 from app.services.auditoria import auditar
-from app.services.cargas import remessa_por_id, remessa_resumo
+from app.services.cargas import andamentos as andamentos_das_cargas, remessa_por_id, remessa_resumo
 
 TIPOS_PARCEIRA = (TipoEmpresa.TRANSPORTADORA, TipoEmpresa.AMBOS)
 
@@ -96,7 +96,7 @@ def remessa_operavel(db, acesso, remessa_id):
 def marcar_acesso(db, dados, comp):
     """Diz a quem consulta que a carga é de outra empresa e se pode operá-la."""
     if comp is not None:
-        dados.update(acesso="compartilhada", pode_operar=comp.pode_operar,
+        dados.update(acesso="compartilhada", pode_operar=comp.pode_operar, pode_exportar=comp.pode_exportar,
                      empresa_dona=nomes(db, [comp.empresa_dona_id]).get(comp.empresa_dona_id))
     return dados
 
@@ -117,7 +117,7 @@ def nomes(db, ids):
     return {e.id: e.razao_social for e in db.scalars(select(Empresa).where(Empresa.id.in_(set(ids))))}
 
 
-def resumo(c, nomes_empresas, acesso, remessa=None):
+def resumo(c, nomes_empresas, acesso, remessa=None, andamentos=None):
     s = situacao(c)
     out = {"id": c.id, "remessa_id": c.remessa_id, "remessa_codigo": c.remessa_codigo,
            "empresa_dona_id": c.empresa_dona_id, "empresa_dona": nomes_empresas.get(c.empresa_dona_id),
@@ -130,9 +130,9 @@ def resumo(c, nomes_empresas, acesso, remessa=None):
            "remessa": None}
     # A parceira só recebe dados da carga enquanto a concessão vale.
     if remessa is not None and (out["minha_parte"] == "dona" or s == "ativo"):
-        out["remessa"] = remessa_resumo(remessa)
+        out["remessa"] = remessa_resumo(remessa, andamentos.get(remessa.id) if andamentos else None)
         if out["minha_parte"] == "parceira":
-            out["remessa"].update(acesso="compartilhada", pode_operar=c.pode_operar,
+            out["remessa"].update(acesso="compartilhada", pode_operar=c.pode_operar, pode_exportar=c.pode_exportar,
                                   empresa_dona=out["empresa_dona"])
     return out
 
@@ -140,7 +140,8 @@ def resumo(c, nomes_empresas, acesso, remessa=None):
 def _resumir(db, acesso, lista):
     n = nomes(db, [x.empresa_dona_id for x in lista] + [x.empresa_parceira_id for x in lista])
     remessas = {r.id: r for r in db.scalars(select(Remessa).where(Remessa.id.in_({x.remessa_id for x in lista})))} if lista else {}
-    return [resumo(x, n, acesso, remessas.get(x.remessa_id)) for x in lista]
+    andamentos = andamentos_das_cargas(db, remessas.values())
+    return [resumo(x, n, acesso, remessas.get(x.remessa_id), andamentos) for x in lista]
 
 
 def convidar(db, acesso, remessa_id, body):

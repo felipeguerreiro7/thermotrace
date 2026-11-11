@@ -29,8 +29,9 @@ def listar(limite: int = Query(50, ge=1, le=100), offset: int = Query(0, ge=0),
     q = select(Remessa).where(Remessa.empresa_embarcador_id == acesso.empresa.id)
     if status is not None:
         q = q.where(Remessa.status == status)
-    return [cargas.remessa_resumo(r) for r in db.scalars(q.order_by(Remessa.criado_em.desc(), Remessa.id)
-                                                        .limit(limite).offset(offset))]
+    rows = db.scalars(q.order_by(Remessa.criado_em.desc(), Remessa.id).limit(limite).offset(offset)).all()
+    andamento = cargas.andamentos(db, rows)
+    return [cargas.remessa_resumo(r, andamento[r.id]) for r in rows]
 
 
 @router.get("/localizar", response_model=LocalizacaoRemessa)
@@ -52,11 +53,12 @@ def localizar(valor: str = Query(min_length=1, max_length=96),
     rows = db.scalars(q.order_by(Remessa.criado_em.desc(), Remessa.id).limit(limite+1).offset(offset)).all()
     # Sempre retorna candidatos. Nunca decide por uma entrega parcial silenciosamente.
     candidatas = []
+    andamento = cargas.andamentos(db, rows[:limite])
     for r in rows[:limite]:
         comp = None if r.empresa_embarcador_id == acesso.empresa.id else compartilhamentos.vigente_para(db, r.id, acesso.empresa.id)
         if comp is not None:
             compartilhamentos.auditar_acesso(db, "remessa_localizada", "remessa", r.id, acesso, r, comp)
-        candidatas.append(compartilhamentos.marcar_acesso(db, cargas.remessa_resumo(r), comp))
+        candidatas.append(compartilhamentos.marcar_acesso(db, cargas.remessa_resumo(r, andamento[r.id]), comp))
     return {"candidatas": candidatas, "ha_mais": len(rows)>limite}
 
 

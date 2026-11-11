@@ -138,3 +138,7 @@ Portal mostra a viagem de cada sessão a partir de todas as coletas, sem somar h
 ## Atualização — operação entre empresas, API 0.12 e Android 0.8.9, 10/11/2026
 
 A transportadora passa a bipar na carga que o dono compartilhou, quando ele marca a permissão de operar: etiqueta e aparelho dela, autoria registrada em cada leitura e espelhada na auditoria do dono. Corrigido no Android um defeito que deixaria cargas novas sem volume para escolher no envio. Sem ensaio em aparelho. [[ThermoTrace - Operação entre empresas]].
+
+## Atualização — API 0.13, 11/11/2026
+
+Empresas de demonstração por comando, acompanhamento também para a transportadora, andamento da carga visível nas listas e viagem simulada identificada como simulação. Detalhes na seção de 11/11 de [[ThermoTrace - Operação entre empresas]].

@@ -58,3 +58,21 @@ Migração nova `e10411100001`, aplicada pelo `preDeployCommand` do Render. Não
 2. Continuar no celular da transportadora uma sessão ativada no celular do dono depende da continuidade entre aparelhos (TT-032), que segue aberta. O servidor já aceita; falta o app.
 3. Destinatário ainda sem papel próprio: link de consulta e aceite no recebimento ficaram como ideias na conversa de 10/11.
 4. WEB-04: repetir este fluxo no ambiente publicado, com duas empresas fictícias e um aparelho.
+
+## Atualização — API 0.13, 11/11/2026
+
+Pedido do usuário: seguir melhorando o que não depende de hardware. Entregue e conferido no navegador, em servidor local com dados fictícios:
+
+- **Empresas de demonstração:** `python -m app.demo_cli` cria um dono e uma transportadora fictícios com três cargas (viagem dentro da faixa, viagem com excursão e carga em trânsito operada pela transportadora). Usa as mesmas rotas do portal e do app; as evidências entram como simulação. Recusa rodar em produção e não repete se as empresas já existirem. A senha é pedida no terminal ou lida de `THERMOTRACE_DEMO_SENHA`. Serve para apresentar o portal ao parceiro e para o ensaio WEB-04. Sem teste automático próprio: foi executado à mão nesta rodada.
+- **Acompanhamento da transportadora:** o painel passa a incluir as etiquetas abertas em cargas que a empresa pode operar, identificadas com o nome do dono. O dono recebe um registro de auditoria quando a transportadora consulta. Cargas compartilhadas só para consulta ficam fora. Fecha o limite 1 acima.
+- **Andamento da carga:** listas e detalhe mostram "Em monitoramento" ou "Leitura final recebida", deduzido dos volumes. Antes toda carga aparecia "Em preparação" para sempre, porque o estado cadastral não muda com as etiquetas. O campo `status` continua igual; o novo é `andamento`.
+- **Volumes no portal:** "Volume 1 · Leitura final recebida" no lugar do identificador técnico como título; volume sem etiqueta avisa que aguarda ativação pelo aplicativo.
+- **Formulário de compartilhamento:** reorganizado; com as duas permissões ele ficava espremido numa linha.
+
+### Defeito encontrado e corrigido
+
+A viagem consolidada não informava a origem das evidências, e a tela tratava a falta do campo como "Declaração do aplicativo". Uma viagem simulada aparecia como se viesse de etiqueta real. Agora a viagem declara a origem, a tela mostra SIMULAÇÃO e o relatório exportado traz o aviso em destaque. A regra passou a `tt-viagem-2` porque o conteúdo da projeção mudou; a consolidação é a mesma. Relatórios de viagem já exportados com `tt-viagem-1` continuam válidos para o que diziam, mas o hash da projeção recalculada hoje é outro.
+
+### Evidências
+
+201 testes de API (197 + 4), `alembic check` sem divergência, sem migração nova. 17 testes web. Android sem mudança nesta rodada. Portal conferido no navegador com as contas de demonstração: convite com permissão de operar, lista e detalhe da carga, acompanhamento do dono e da transportadora, viagem com excursão. Largura de celular não conferida. Contrato em `backend/docs/openapi-0.13.json`.

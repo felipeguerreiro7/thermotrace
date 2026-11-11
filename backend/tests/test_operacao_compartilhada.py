@@ -283,3 +283,59 @@ def test_permissao_de_operar_nao_muda_depois_do_convite(ambiente):
     with pytest.raises(DBAPIError, match='imutável'):
         with db.begin_nested():
             db.execute(text('UPDATE compartilhamento_remessa SET pode_operar=true WHERE id=:id'), {'id': s['comp']['id']})
+
+
+def test_acompanhamento_da_transportadora_inclui_o_que_ela_opera(ambiente):
+    s = operando(ambiente); aceitar(s)
+    tag, aparelho, corpo = kit_da_transportadora(s)
+    v2 = s['x']['volumes'][1]['id']
+    assert post(s['c'], f'/volumes/{v2}/sessoes', s['hop'], corpo).status_code == 201
+    p = get(s, '/acompanhamento?horas_sem_coleta=720', s['hop']).json()
+    # As duas etiquetas abertas na carga X: a que ela ativou e a do dono, que ela também pode fechar.
+    assert {i['sessao_id'] for i in p['sessoes_abertas']} == {corpo['sessao_id'], s['sessao']}
+    assert all(i['acesso'] == 'compartilhada' and i['empresa_dona'] == 'Teste a' for i in p['sessoes_abertas'])
+    assert [a['modelo'] for a in p['aparelhos']] == ['Aparelho da transportadora']
+    dono = get(s, '/acompanhamento?horas_sem_coleta=720', s['ha']).json()
+    assert {i['sessao_id'] for i in dono['sessoes_abertas']} == {corpo['sessao_id'], s['sessao']}
+    assert all(i['acesso'] == 'propria' and i['empresa_dona'] is None for i in dono['sessoes_abertas'])
+    assert get(s, '/acompanhamento', s['hb']).json()['sessoes_abertas'] == []
+    visto = s['db'].scalars(select(LogAuditoria).where(LogAuditoria.acao == 'acompanhamento_consultado',
+                                                       LogAuditoria.empresa_id == UUID(s['x']['empresa_id']))).all()
+    assert len(visto) == 1 and visto[0].depois == {'empresa_acesso_id': str(s['t'].id), 'remessas': [s['x']['id']]}
+    # Encerrado o compartilhamento, as etiquetas somem do painel dela e seguem no do dono.
+    assert post(s['c'], f"/compartilhamentos/{s['comp']['id']}/revogar", s['ha'], {'motivo': MOTIVO}).status_code == 200
+    assert get(s, '/acompanhamento', s['hop']).json()['sessoes_abertas'] == []
+    assert len(get(s, '/acompanhamento?horas_sem_coleta=720', s['ha']).json()['sessoes_abertas']) == 2
+
+
+def test_acompanhamento_nao_mostra_carga_so_de_consulta(ambiente):
+    s = operando(ambiente, operar=False); aceitar(s)
+    assert get(s, '/acompanhamento', s['hop']).json()['sessoes_abertas'] == []
+
+
+def test_andamento_da_carga_segue_as_etiquetas(ambiente):
+    s = operando(ambiente); aceitar(s)
+    x, y = s['x'], s['y']
+    lista = {r['id']: r['andamento'] for r in get(s, '/remessas', s['ha']).json()}
+    assert lista[x['id']] == 'em_monitoramento' and lista[y['id']] == 'sem_monitoramento'
+    assert get(s, f"/remessas/{y['id']}", s['ha']).json()['andamento'] == 'sem_monitoramento'
+    fim = post(s['c'], f"/sessoes/{s['sessao']}/leituras", s['ha'], leitura(s['body'], 'final', 60))
+    assert fim.status_code == 201
+    assert get(s, f"/remessas/{x['id']}", s['hop']).json()['andamento'] == 'leitura_final_recebida'
+    busca = get(s, '/remessas/localizar?valor=' + x['codigo'], s['ha']).json()['candidatas']
+    assert busca[0]['andamento'] == 'leitura_final_recebida' and busca[0]['status'] == 'preparacao'
+    # Outro volume em viagem volta a carga para "em monitoramento".
+    tag, aparelho, corpo = kit_da_transportadora(s)
+    assert post(s['c'], f"/volumes/{x['volumes'][1]['id']}/sessoes", s['hop'], corpo).status_code == 201
+    assert get(s, '/compartilhamentos/recebidos', s['hop']).json()[0]['remessa']['andamento'] == 'em_monitoramento'
+    assert post(s['c'], f"/remessas/{y['id']}/cancelar", s['ha'], {'motivo': MOTIVO}).status_code == 200
+    assert get(s, f"/remessas/{y['id']}", s['ha']).json()['andamento'] == 'cancelada'
+
+
+def test_viagem_declara_que_a_evidencia_e_simulada(ambiente):
+    """Achado ao conferir o portal: a viagem não dizia a origem e a tela a tratava como declaração do aplicativo."""
+    s = cenario(ambiente, exportar=True)
+    v = get(s, f"/sessoes/{s['sessao']}/viagem", s['ha'])
+    assert v.status_code == 200 and v.json()['origem'] == 'simulacao' and v.json()['versao'] == 'tt-viagem-2'
+    html = get(s, f"/sessoes/{s['sessao']}/viagem?formato=html", s['ha']).text
+    assert 'SIMULAÇÃO' in html and 'Origem: simulacao' in html
