@@ -35,19 +35,29 @@ def listar(limite: int = Query(50, ge=1, le=100), offset: int = Query(0, ge=0),
 
 @router.get("/localizar", response_model=LocalizacaoRemessa)
 def localizar(valor: str = Query(min_length=1, max_length=96),
-              incluir_canceladas: bool = False, limite: int = Query(20, ge=1, le=100),
+              incluir_canceladas: bool = False, incluir_operaveis: bool = False, limite: int = Query(20, ge=1, le=100),
               offset: int = Query(0, ge=0), acesso: Acesso = Depends(operador),
               db: Session = Depends(obter_sessao)):
     valor = valor.strip().upper()
     match_doc = select(Documento.id).where(Documento.remessa_id == Remessa.id,
                   or_(Documento.numero == valor, Documento.chave_acesso == valor)).exists()
-    q = select(Remessa).where(Remessa.empresa_embarcador_id == acesso.empresa.id,
+    escopo = Remessa.empresa_embarcador_id == acesso.empresa.id
+    if incluir_operaveis:
+        # Para o aplicativo de campo: também as cargas de outra empresa que esta pode bipar.
+        escopo = or_(escopo, Remessa.id.in_(compartilhamentos.operaveis_por(acesso.empresa.id)))
+    q = select(Remessa).where(escopo,
                             or_(Remessa.codigo == valor, Remessa.identidade_documento == valor, match_doc))
     if not incluir_canceladas:
         q = q.where(Remessa.status != StatusRemessa.CANCELADA)
     rows = db.scalars(q.order_by(Remessa.criado_em.desc(), Remessa.id).limit(limite+1).offset(offset)).all()
     # Sempre retorna candidatos. Nunca decide por uma entrega parcial silenciosamente.
-    return {"candidatas": [cargas.remessa_resumo(r) for r in rows[:limite]], "ha_mais": len(rows)>limite}
+    candidatas = []
+    for r in rows[:limite]:
+        comp = None if r.empresa_embarcador_id == acesso.empresa.id else compartilhamentos.vigente_para(db, r.id, acesso.empresa.id)
+        if comp is not None:
+            compartilhamentos.auditar_acesso(db, "remessa_localizada", "remessa", r.id, acesso, r, comp)
+        candidatas.append(compartilhamentos.marcar_acesso(db, cargas.remessa_resumo(r), comp))
+    return {"candidatas": candidatas, "ha_mais": len(rows)>limite}
 
 
 @router.get("/{remessa_id}", response_model=DetalheRemessa)
@@ -56,7 +66,7 @@ def obter(remessa_id: UUID, acesso: Acesso = Depends(operador), db: Session = De
     if comp is not None:
         # Consulta da própria empresa segue sem registro, como antes; a da parceira fica visível ao dono.
         compartilhamentos.auditar_acesso(db, "remessa_consultada", "remessa", r.id, acesso, r, comp)
-    return cargas.detalhe_remessa(db, r)
+    return compartilhamentos.marcar_acesso(db, cargas.detalhe_remessa(db, r), comp)
 
 
 @router.post("/{remessa_id}/documentos", status_code=201, response_model=DocumentoSaida)

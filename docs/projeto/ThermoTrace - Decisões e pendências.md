@@ -202,3 +202,15 @@ Evidência: [[ThermoTrace - Compartilhamento de cargas WEB-10]].
 ## Decisão provisória de implementação — acesso sem e-mail, 04/11/2026
 
 Para não contratar envio de e-mail agora, o acesso é entregue por código de uso único mostrado a quem cadastra e repassado por outro canal (convite: 72 horas; redefinição: 24 horas). O gestor redefine operadores; a equipe ThermoTrace redefine gestores, com registro na auditoria do cliente. Revisar quando houver e-mail transacional contratado ou exigência de autoatendimento. [[ThermoTrace - Convites e acesso WEB-11]].
+
+## Decisão provisória de implementação — operação entre empresas, 10/11/2026
+
+Pedido do usuário em 10/11: a transportadora operar a carga compartilhada. Completa a decisão provisória de 04/11, que deixava "operar" fora do escopo. Substituível pelo usuário ou pelo primeiro contrato:
+
+- O dono concede "operar" no convite, junto de consultar e, se quiser, exportar. A permissão não muda depois; para alterar, encerra e convida de novo.
+- A etiqueta e o aparelho são sempre de quem bipa. Nenhuma empresa enxerga o catálogo de etiquetas da outra.
+- Qualquer das duas empresas envia checkpoint e leitura final na mesma sessão.
+- Documentos, cancelamento, novos compartilhamentos e evidência bruta continuam só com o dono.
+- Encerrado o compartilhamento, o servidor deixa de aceitar leituras da transportadora, inclusive as que ainda estavam no celular dela.
+
+Evidência: [[ThermoTrace - Operação entre empresas]].

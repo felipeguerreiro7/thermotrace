@@ -1,6 +1,7 @@
 """Contrato público para integração do Android e portais."""
 from datetime import datetime
 from uuid import UUID
+from typing import Literal
 from pydantic import BaseModel
 from app.models.enums import StatusRemessa, StatusVolume, TipoDocumento
 
@@ -51,6 +52,11 @@ class RemessaSaida(BaseModel):
     produto_configuracao_id: UUID | None
     perfil_termico_id: UUID
     intervalo_segundos: int
+    # "propria" = cadastrada pela empresa que consulta; "compartilhada" = de outra empresa,
+    # visível por autorização dela. `pode_operar` diz se esta empresa pode bipar nesta carga.
+    acesso: Literal["propria", "compartilhada"] = "propria"
+    pode_operar: bool = True
+    empresa_dona: str | None = None
 
 
 class DetalheRemessa(RemessaSaida):

@@ -180,6 +180,11 @@ class LeituraEtiqueta(Base, IdMixin):
     lida_por: Mapped[UUID | None] = mapped_column(
         PgUUID(as_uuid=True), ForeignKey("usuario.id")
     )
+    # Empresa que enviou a leitura: o dono da carga ou a transportadora autorizada a operar.
+    # Nula nas leituras anteriores à operação entre empresas, quando só o dono enviava.
+    empresa_autora_id: Mapped[UUID | None] = mapped_column(
+        PgUUID(as_uuid=True), ForeignKey("empresa.id")
+    )
     lida_em_dispositivo: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )

@@ -191,6 +191,8 @@ class CompartilhamentoRemessa(Base, IdMixin, CriadoMixin):
     )
     papel: Mapped[str] = mapped_column(String(32), nullable=False, server_default="transportadora")
     pode_exportar: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+    # Operar = iniciar monitoramento e enviar leituras com etiqueta e aparelho da parceira.
+    pode_operar: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     expira_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     criado_por: Mapped[UUID] = mapped_column(
         PgUUID(as_uuid=True), ForeignKey("usuario.id"), nullable=False

@@ -322,7 +322,7 @@ Quadro único do estado atual. Os blocos acima ficam como histórico. "Código p
 | TT-010 versionamento | Feito: remoto no GitHub e CI verde a cada push, o que comprova o "clone limpo compila" | Deixar o repositório **privado** (hoje está público) |
 | TT-011 matriz do app chinês | Aberto | Bancada com etiqueta |
 | TT-012 fechamento × STOP | Código pronto (leitura gravada antes do STOP, confirmação do STOP registrada) | Ensaio físico; TT-057 (reuso da etiqueta) |
-| TT-020 dono, membros, compartilhamento | Feito para consulta e exportação (WEB-10) | Transportadora operar carga do dono: não concedido nesta versão |
+| TT-020 dono, membros, compartilhamento | Feito: consulta, exportação (WEB-10) e operação pela transportadora (API 0.12, 10/11) | Ensaio no ambiente publicado (WEB-04); destinatário sem papel próprio |
 | TT-021 documentos e vínculos | Feito | — |
 | TT-022 login, convite, recuperação, MFA | Feito: convite e redefinição por código (WEB-11), MFA obrigatória para a equipe ThermoTrace, revogação | "Esqueci minha senha" por conta própria depende de e-mail contratado |
 | TT-030 ingestão e catálogo | Parcial: recepção, recibos e cadastro de perfis/produtos/cargas pelo portal | Decodificação canônica do SDK no servidor, validada contra o fabricante (TT-005) |

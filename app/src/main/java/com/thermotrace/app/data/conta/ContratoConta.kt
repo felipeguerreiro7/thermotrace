@@ -34,7 +34,9 @@ interface CofreConta {
 }
 
 data class IdentidadeConta(val id: String, val empresaId: String, val nome: String, val empresa: String, val papel: String)
-data class CargaConta(val id: String, val codigo: String, val destinatario: String, val status: String, val criadaEm: Instant)
+/** [empresaDona] só vem preenchida quando a carga é de outra empresa e foi compartilhada com a do operador. */
+data class CargaConta(val id: String, val codigo: String, val destinatario: String, val status: String, val criadaEm: Instant,
+    val empresaDona: String? = null)
 data class DocumentoConta(val tipo: String, val numero: String)
 data class DetalheCargaConta(val carga: CargaConta, val faixa: String?, val intervaloSegundos: Int,
     val documentos: List<DocumentoConta>, val quantidadeVolumes: Int, val versaoPerfil: Int?)
@@ -73,10 +75,21 @@ object JsonConta {
         a to r
     }
     private fun carga(o: JSONObject, empresa: String): CargaConta {
-        if (uuid(o, "empresa_id") != empresa) throw LoginNecessario("Sua empresa de acesso mudou. Entre novamente.")
+        val compartilhada = compartilhada(o, empresa)
+        if (!compartilhada && uuid(o, "empresa_id") != empresa) throw LoginNecessario("Sua empresa de acesso mudou. Entre novamente.")
         return CargaConta(uuid(o, "id"), texto(o, "codigo", 64), texto(o, "destinatario_nome"),
-            texto(o, "status", 64), Instant.parse(texto(o, "criado_em", 64)))
+            texto(o, "status", 64), Instant.parse(texto(o, "criado_em", 64)),
+            if (!compartilhada) null
+            else if (o.isNull("empresa_dona")) "outra empresa" else texto(o, "empresa_dona", 200))
     }
+    /**
+     * Carga de outra empresa que o servidor declara compartilhada com a do operador.
+     * Só o servidor concede isso; empresa diferente sem essa marca continua sendo erro de conta.
+     */
+    fun compartilhada(o: JSONObject, empresa: String): Boolean =
+        o.optString("acesso") == "compartilhada" && uuid(o, "empresa_id") != empresa
+    fun operavel(o: JSONObject, empresa: String): Boolean =
+        uuid(o, "empresa_id") == empresa || (compartilhada(o, empresa) && o.optBoolean("pode_operar", false))
     fun pagina(raw: String, empresa: String, busca: Boolean): PaginaCargas {
         val obj = if (busca) JSONObject(raw) else null
         val lista = obj?.getJSONArray("candidatas") ?: JSONArray(raw)

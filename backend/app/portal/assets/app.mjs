@@ -305,7 +305,7 @@ async function navigate(key, offset=0, query='') {
     if (!rows.length) results.append(empty('Nenhum registro nesta consulta',key==='cargas'?'Confira o código ou documento. Cargas e leituras que ainda estão só no celular não aparecem aqui.':key==='recebidas'?'Nenhuma empresa compartilhou uma carga com a sua, ou o acesso foi encerrado.':'Não há registros disponíveis nesta página.'));
     else if (key==='recebidas') results.append(table(['Carga','Dono da carga','Situação','Permissão','Prazo','Ações'],rows.map(c=>[
       c.situacao==='ativo'?button(c.remessa_codigo,()=>detail(c.remessa_id,c),'link-button'):c.remessa_codigo,
-      c.empresa_dona,badge(shareStatus[c.situacao]||c.situacao),c.pode_exportar?'Consultar e exportar':'Somente consultar',
+      c.empresa_dona,badge(shareStatus[c.situacao]||c.situacao),sharePermission(c),
       c.expira_em?date(c.expira_em):'Até ser encerrado',shareActions(c,()=>navigate('recebidas'))])));
     else if (key==='cargas') results.append(table(['Carga','Situação','Destinatário','Criada em'],rows.map(r=>[button(r.codigo,()=>detail(r.id),'link-button'),badge(statuses[r.status]||r.status),r.destinatario_nome,date(r.criado_em)])));
     else if (key==='empresas') results.append(table(['Empresa','CNPJ','Atividade','Cadastro','Gestores'],rows.map(r=>{
@@ -422,6 +422,14 @@ function securityPage(target) {
   render();
 }
 
+// Uma frase para o que a transportadora pode fazer na carga.
+function sharePermission(c) {
+  const partes=['Consultar'];
+  if(c.pode_exportar) partes.push('exportar');
+  if(c.pode_operar) partes.push('operar (bipar)');
+  return partes.length===1?'Somente consultar':partes.length===2?partes.join(' e '):`${partes[0]}, ${partes[1]} e ${partes[2]}`;
+}
+
 function shareActions(c, done) {
   const box=el('div',undefined,'controls');
   if(user.papel!=='gestor') return box;
@@ -447,22 +455,23 @@ function shareActions(c, done) {
 async function sharingCard(r, ticket) {
   const card=el('section',undefined,'card result');
   card.append(el('h2','Compartilhamento com transportadora'),
-    el('p','A transportadora só consulta esta carga depois do aceite do gestor dela. Você vê cada consulta na Auditoria e pode encerrar o acesso a qualquer momento.','muted'));
+    el('p','A transportadora só acessa esta carga depois do aceite do gestor dela. Se você permitir operar, os operadores dela iniciam o monitoramento e enviam leituras com etiquetas e celulares da transportadora; documentos e cancelamento continuam só com a sua empresa. Você vê cada consulta e cada leitura na Auditoria e pode encerrar o acesso a qualquer momento.','muted'));
   const list=el('div'), form=el('form',undefined,'search'), msg=el('div');
   const [cnpjLabel,cnpj]=field('CNPJ da transportadora','text','cnpj','off'); cnpj.maxLength=18; cnpj.placeholder='Somente a transportadora cadastrada na ThermoTrace';
   const exp=el('label','Permitir baixar CSV, gráfico e relatório','field'), chk=el('input'); chk.type='checkbox'; chk.name='exportar'; exp.prepend(chk);
+  const opr=el('label','Permitir operar a carga (bipar etiquetas e enviar leituras)','field'), chkOp=el('input'); chkOp.type='checkbox'; chkOp.name='operar'; opr.prepend(chkOp);
   const prazoLabel=el('label','Prazo (opcional)','field'), prazo=el('input'); prazo.type='date'; prazo.name='prazo'; prazoLabel.append(prazo);
   const send=el('button','Compartilhar esta carga','primary'); send.type='submit';
-  form.append(cnpjLabel,exp,prazoLabel,send);
+  form.append(cnpjLabel,exp,opr,prazoLabel,send);
   const load=async()=>{
     const rows=await api.request(`/remessas/${r.id}/compartilhamentos`); if(ticket!==view)return;
-    list.replaceChildren(rows.length?table(['Transportadora','Situação','Permissão','Prazo','Ações'],rows.map(c=>[c.empresa_parceira,badge(shareStatus[c.situacao]||c.situacao),c.pode_exportar?'Consultar e exportar':'Somente consultar',c.expira_em?date(c.expira_em):'Até ser encerrado',shareActions(c,load)])):el('p','Esta carga não foi compartilhada.','muted'));
+    list.replaceChildren(rows.length?table(['Transportadora','Situação','Permissão','Prazo','Ações'],rows.map(c=>[c.empresa_parceira,badge(shareStatus[c.situacao]||c.situacao),sharePermission(c),c.expira_em?date(c.expira_em):'Até ser encerrado',shareActions(c,load)])):el('p','Esta carga não foi compartilhada.','muted'));
   };
   form.addEventListener('submit',async e=>{
     e.preventDefault(); msg.replaceChildren(); send.disabled=true;
     // Fim do dia escolhido no horário local, enviado com fuso.
-    const body={cnpj_parceira:cnpj.value.trim(),pode_exportar:chk.checked,...(prazo.value?{expira_em:new Date(`${prazo.value}T23:59:59`).toISOString()}:{})};
-    try { await api.request(`/remessas/${r.id}/compartilhamentos`,{method:'POST',body}); cnpj.value=''; chk.checked=false; prazo.value=''; await load(); }
+    const body={cnpj_parceira:cnpj.value.trim(),pode_exportar:chk.checked,pode_operar:chkOp.checked,...(prazo.value?{expira_em:new Date(`${prazo.value}T23:59:59`).toISOString()}:{})};
+    try { await api.request(`/remessas/${r.id}/compartilhamentos`,{method:'POST',body}); cnpj.value=''; chk.checked=false; chkOp.checked=false; prazo.value=''; await load(); }
     catch(error){ showError(error,msg); } finally { send.disabled=false; }
   });
   card.append(list,form,msg);
@@ -477,7 +486,7 @@ async function detail(id, share=null) {
   try {
     const r=await api.request(`/remessas/${id}`); if(ticket!==view)return;
     content.replaceChildren(back(),heading(r.codigo,r.descricao_carga||'Detalhes e evidências da carga'));
-    if(share) content.append(notice(`Carga de ${share.empresa_dona}, compartilhada com a sua empresa para ${share.pode_exportar?'consulta e exportação':'consulta, sem exportação'}. O dono vê cada consulta e pode encerrar o acesso a qualquer momento.`));
+    if(share) content.append(notice(`Carga de ${share.empresa_dona}, compartilhada com a sua empresa. Permissão: ${sharePermission(share).toLowerCase()}. ${share.pode_operar?'Os operadores da sua empresa iniciam o monitoramento e enviam leituras pelo aplicativo, com etiquetas e celulares da sua empresa. ':''}O dono vê cada consulta${share.pode_operar?' e cada leitura':''} e pode encerrar o acesso a qualquer momento.`));
     content.append(notice('Escolha uma coleta para consultar o gráfico e baixar os registros recebidos. Cada gráfico mostra o histórico daquele bipe; não soma coletas repetidas. A confirmação de parada da etiqueta ainda permanece no aplicativo.'));
     const grid=el('div',undefined,'grid'), summary=el('section',undefined,'card'), docs=el('section',undefined,'card');
     summary.append(el('h2','Resumo da carga'),values([['Situação',statuses[r.status]||r.status],['Destinatário',r.destinatario_nome],['Criada em',date(r.criado_em)],['Intervalo',`${r.intervalo_segundos} segundos`]]));

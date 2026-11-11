@@ -134,3 +134,7 @@ Envio automático das coletas de sessões vinculadas, pelo mesmo caminho do bot�
 ## Atualização — viagem consolidada, API 0.9, 04/11/2026
 
 Portal mostra a viagem de cada sessão a partir de todas as coletas, sem somar históricos, com excursões e relatório. [[ThermoTrace - Viagem consolidada WEB-12]].
+
+## Atualização — operação entre empresas, API 0.12 e Android 0.8.9, 10/11/2026
+
+A transportadora passa a bipar na carga que o dono compartilhou, quando ele marca a permissão de operar: etiqueta e aparelho dela, autoria registrada em cada leitura e espelhada na auditoria do dono. Corrigido no Android um defeito que deixaria cargas novas sem volume para escolher no envio. Sem ensaio em aparelho. [[ThermoTrace - Operação entre empresas]].

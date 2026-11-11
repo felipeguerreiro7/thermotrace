@@ -94,7 +94,8 @@ def test_criterio_de_aceite_tres_empresas_e_revogacao_imediata(ambiente):
     assert post(s['c'], f"/remessas/{x['id']}/documentos", hop, {'tipo': 'pedido', 'numero': 'INVASAO'}).status_code == 404
     assert post(s['c'], f"/remessas/{x['id']}/cancelar", ht, {'motivo': MOTIVO}).status_code == 404
     corpo = copy.deepcopy(s['body']); corpo['sessao_id'] = str(uuid4()); corpo['evidencia']['evento_id'] = str(uuid4())
-    assert post(s['c'], f"/volumes/{x['volumes'][1]['id']}/sessoes", hop, corpo).status_code == 404
+    # A carga já é visível para ela, então a recusa é explícita: falta a permissão de operar.
+    assert post(s['c'], f"/volumes/{x['volumes'][1]['id']}/sessoes", hop, corpo).status_code == 403
 
     # Dono enxerga quem consultou a sua carga.
     db = s['db']

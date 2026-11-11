@@ -2,12 +2,13 @@
 
 O dono (empresa cadastrante da remessa) convida uma transportadora pelo CNPJ.
 A transportadora só lê depois do aceite do gestor dela. Qualquer parte encerra.
-Escopo desta versão: consultar sempre; exportar só quando o dono permitir.
-Operar a carga (bipar etiqueta na remessa do dono) não é concedido.
+Escopo: consultar sempre; exportar e operar só quando o dono permitir.
+Operar = iniciar o monitoramento de um volume e enviar leituras, com etiqueta e
+aparelho da transportadora. Documentos e cancelamento seguem só com o dono.
 
 Cada filtro aqui é explícito além do RLS: o banco é a segunda barreira, não a única.
 """
-from sqlalchemy import select, or_
+from sqlalchemy import select, or_, text
 
 from app.core.errors import Conflito, NaoEncontrado, RegraDeNegocio, SemPermissao
 from app.core.security import agora
@@ -40,6 +41,17 @@ def vigente_para(db, remessa_id, empresa_id):
         or_(CompartilhamentoRemessa.expira_em.is_(None), CompartilhamentoRemessa.expira_em > agora())))
 
 
+def operaveis_por(empresa_id):
+    """Subconsulta: remessas de outras empresas que esta pode operar agora."""
+    return select(CompartilhamentoRemessa.remessa_id).where(
+        CompartilhamentoRemessa.empresa_parceira_id == empresa_id,
+        CompartilhamentoRemessa.pode_operar.is_(True),
+        CompartilhamentoRemessa.aceito_em.is_not(None),
+        CompartilhamentoRemessa.recusado_em.is_(None),
+        CompartilhamentoRemessa.revogado_em.is_(None),
+        or_(CompartilhamentoRemessa.expira_em.is_(None), CompartilhamentoRemessa.expira_em > agora()))
+
+
 def remessa_legivel(db, acesso, remessa_id, exportar=False):
     """Remessa própria ou concedida. Retorna (remessa, compartilhamento|None).
 
@@ -57,6 +69,36 @@ def remessa_legivel(db, acesso, remessa_id, exportar=False):
     if exportar and not c.pode_exportar:
         raise SemPermissao("O dono da carga não autorizou exportação para a sua empresa.")
     return r, c
+
+
+def remessa_operavel(db, acesso, remessa_id):
+    """Remessa em que a empresa atual pode bipar. Retorna (remessa, compartilhamento|None).
+
+    A fila é a mesma para as duas empresas: uma trava por carga, tomada antes de
+    qualquer linha. A transportadora não tem permissão de UPDATE na remessa, então
+    não consegue travar a linha como o dono faz.
+    """
+    db.execute(text("SELECT pg_advisory_xact_lock(hashtextextended(:c,0))"), {"c": f"remessa:{remessa_id}"})
+    r = db.scalar(select(Remessa).where(Remessa.id == remessa_id))
+    if r is None:
+        raise NaoEncontrado()
+    if r.empresa_embarcador_id == acesso.empresa.id:
+        db.execute(select(Remessa.id).where(Remessa.id == r.id).with_for_update())
+        return r, None
+    c = vigente_para(db, r.id, acesso.empresa.id)
+    if c is None:
+        raise NaoEncontrado()
+    if not c.pode_operar:
+        raise SemPermissao("O dono da carga não autorizou a sua empresa a operar esta carga.")
+    return r, c
+
+
+def marcar_acesso(db, dados, comp):
+    """Diz a quem consulta que a carga é de outra empresa e se pode operá-la."""
+    if comp is not None:
+        dados.update(acesso="compartilhada", pode_operar=comp.pode_operar,
+                     empresa_dona=nomes(db, [comp.empresa_dona_id]).get(comp.empresa_dona_id))
+    return dados
 
 
 def auditar_acesso(db, acao, entidade, entidade_id, acesso, remessa, comp, depois=None):
@@ -80,8 +122,8 @@ def resumo(c, nomes_empresas, acesso, remessa=None):
     out = {"id": c.id, "remessa_id": c.remessa_id, "remessa_codigo": c.remessa_codigo,
            "empresa_dona_id": c.empresa_dona_id, "empresa_dona": nomes_empresas.get(c.empresa_dona_id),
            "empresa_parceira_id": c.empresa_parceira_id, "empresa_parceira": nomes_empresas.get(c.empresa_parceira_id),
-           "papel": c.papel, "escopo": ["consultar"] + (["exportar"] if c.pode_exportar else []),
-           "pode_exportar": c.pode_exportar, "situacao": s, "criado_em": c.criado_em, "expira_em": c.expira_em,
+           "papel": c.papel, "escopo": ["consultar"] + (["exportar"] if c.pode_exportar else []) + (["operar"] if c.pode_operar else []),
+           "pode_exportar": c.pode_exportar, "pode_operar": c.pode_operar, "situacao": s, "criado_em": c.criado_em, "expira_em": c.expira_em,
            "aceito_em": c.aceito_em, "recusado_em": c.recusado_em, "revogado_em": c.revogado_em,
            "motivo_revogacao": c.motivo_revogacao,
            "minha_parte": "dona" if c.empresa_dona_id == acesso.empresa.id else "parceira",
@@ -89,6 +131,9 @@ def resumo(c, nomes_empresas, acesso, remessa=None):
     # A parceira só recebe dados da carga enquanto a concessão vale.
     if remessa is not None and (out["minha_parte"] == "dona" or s == "ativo"):
         out["remessa"] = remessa_resumo(remessa)
+        if out["minha_parte"] == "parceira":
+            out["remessa"].update(acesso="compartilhada", pode_operar=c.pode_operar,
+                                  empresa_dona=out["empresa_dona"])
     return out
 
 
@@ -119,11 +164,13 @@ def convidar(db, acesso, remessa_id, body):
         existente.motivo_revogacao = "Substituído após o prazo."
         db.flush()
     c = CompartilhamentoRemessa(remessa_id=r.id, remessa_codigo=r.codigo, empresa_dona_id=acesso.empresa.id,
-        empresa_parceira_id=parceira.id, pode_exportar=body.pode_exportar, expira_em=body.expira_em,
+        empresa_parceira_id=parceira.id, pode_exportar=body.pode_exportar, pode_operar=body.pode_operar,
+        expira_em=body.expira_em,
         criado_por=acesso.usuario.id)
     db.add(c); db.flush()
     evento = {"remessa_id": str(r.id), "empresa_parceira_id": str(parceira.id),
-              "pode_exportar": c.pode_exportar, "expira_em": c.expira_em.isoformat() if c.expira_em else None}
+              "pode_exportar": c.pode_exportar, "pode_operar": c.pode_operar,
+              "expira_em": c.expira_em.isoformat() if c.expira_em else None}
     auditar(db, "compartilhamento_convidado", "compartilhamento_remessa", c.id, acesso.usuario, depois=evento)
     auditar(db, "compartilhamento_convidado", "compartilhamento_remessa", c.id, acesso.usuario,
             empresa_id=parceira.id, depois=evento)

@@ -107,9 +107,10 @@ fun EnvioScreen(id: String, vm: EnvioViewModel, aoVoltar: () -> Unit) {
                 item { OutlinedTextField(e.busca,vm::busca,label={ Text("Código ou documento da carga online") },enabled=!e.ocupado,modifier=Modifier.fillMaxWidth()) }
                 item { Button(onClick=vm::buscar,enabled=!e.ocupado && e.busca.isNotBlank()) { Text("Buscar carga") } }
                 items(e.cargas,key={it.id}) { c -> OutlinedButton(onClick={vm.escolherCarga(c.id)},enabled=!e.ocupado,modifier=Modifier.fillMaxWidth()) {
-                    Text("${c.codigo} · ${c.destinatario}") } }
+                    Text("${c.codigo} · ${c.destinatario}" + (c.empresaDona?.let { "\nCarga de $it, compartilhada com a sua empresa" } ?: "")) } }
                 e.destino?.let { d ->
                     item { Text("Destino: ${d.codigo}\n${d.minimo} a ${d.maximo} °C · intervalo ${d.intervalo} s") }
+                    if(d.volumes.isEmpty()) item { Text("Todos os volumes desta carga já têm etiqueta em monitoramento. Confira o código da carga ou peça um volume novo a quem a cadastrou.") }
                     items(d.volumes,key={it.id}) { v -> OutlinedButton(onClick={vm.escolherVolume(v)},enabled=!e.ocupado,modifier=Modifier.fillMaxWidth()) {
                         Text("${if(e.volume?.id==v.id) "✓ " else ""}Volume ${v.sequencia} · ${v.identidade ?: "sem código adicional"}") } }
                     item { Button(onClick={confirmar=true},enabled=!e.ocupado && e.volume!=null) { Text("Conferir vínculo") } }

@@ -41,5 +41,5 @@ object DadosEnvioTeste {
     fun destino() = JSONObject().put("id",id(20)).put("empresa_id",id(11)).put("codigo","CARGA-SINTETICA")
         .put("destinatario_nome","Dono fictício").put("status","preparacao").put("intervalo_segundos",600)
         .put("criterio",JSONObject().put("perfil",JSONObject().put("min_c","2.00").put("max_c","8.00")))
-        .put("volumes",JSONArray().put(JSONObject().put("id",id(21)).put("sequencia",1).put("identidade",JSONObject.NULL).put("monitorado",true)))
+        .put("volumes",JSONArray().put(JSONObject().put("id",id(21)).put("sequencia",1).put("identidade",JSONObject.NULL).put("monitorado",false)))
 }

@@ -175,6 +175,8 @@ def adicionar_documento(db, acesso, id_, body):
 
 
 def cancelar_remessa(db, acesso, id_, body):
+    # Mesma trava de quem inicia monitoramento na carga, inclusive a transportadora autorizada.
+    db.execute(text("SELECT pg_advisory_xact_lock(hashtextextended(:c,0))"), {"c": f"remessa:{id_}"})
     r = remessa_por_id(db, acesso.empresa.id, id_, escrita=True)
     if r.status != StatusRemessa.PREPARACAO:
         raise RegraDeNegocio("Somente uma remessa em preparação pode ser cancelada por este fluxo.")

@@ -51,7 +51,7 @@ class EnvioColetas(private val db: ThermoTraceDb, private val conta: Repositorio
     suspend fun pedidos(id: String) = dao.pedidos(id)
     suspend fun cargas(busca: String): List<CargaConta> {
         val eu = conta.autorEnvio(escopo)
-        val raw = conta.consultarEnvio(escopo,"/remessas/localizar?valor=${java.net.URLEncoder.encode(busca.trim(),"UTF-8")}&limite=30&offset=0")
+        val raw = conta.consultarEnvio(escopo,"/remessas/localizar?valor=${java.net.URLEncoder.encode(busca.trim(),"UTF-8")}&limite=30&offset=0&incluir_operaveis=true")
         return JsonConta.pagina(raw,eu.empresaId,true).cargas
     }
     suspend fun destino(id: String): DestinoEnvio {

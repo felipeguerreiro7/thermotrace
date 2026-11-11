@@ -53,3 +53,7 @@ Migração nova `b10411040001`, aplicada pelo `preDeployCommand` do Render (`ale
 ## Publicação no GitHub — 04/11/2026
 
 Código enviado em aa6786a e notas em e18eed2; SHA remoto conferido igual ao local. O envio não comprova deploy bem-sucedido no Render: conferir no painel se a migração b10411040001 rodou e se /api/v1/saude/completa responde.
+
+## Atualização — 10/11/2026
+
+O item 2 dos próximos passos (operação entre empresas) foi entregue na API 0.12: [[ThermoTrace - Operação entre empresas]]. O trecho "Fora do escopo desta versão" acima descreve a API 0.6.

@@ -64,6 +64,26 @@ class EnvioTest {
     @Test fun destinoDeOutraEmpresaRecusado() {
         assertThrows(IllegalArgumentException::class.java) { ContratoEnvio.destino(d.destino().toString(),d.id(999)) }
     }
+    @Test fun cargaCompartilhadaSoEhDestinoQuandoODonoAutorizaOperar() {
+        val minha = d.id(999)
+        fun compartilhada(operar: Boolean) = d.destino().put("acesso","compartilhada").put("pode_operar",operar)
+            .put("empresa_dona","Dono fictício Ltda").toString()
+        assertEquals(d.id(20), ContratoEnvio.destino(compartilhada(true),minha).id)
+        val busca = JSONObject().put("ha_mais",false).put("candidatas",JSONArray()
+            .put(JSONObject(compartilhada(true)).put("criado_em","2026-11-10T12:00:00Z"))).toString()
+        assertEquals("Dono fictício Ltda", JsonConta.pagina(busca,minha,true).cargas.single().empresaDona)
+        val negada = assertThrows(IllegalArgumentException::class.java) { ContratoEnvio.destino(compartilhada(false),minha) }
+        assertTrue(negada.message!!.contains("não autorizou"))
+        // Sem a marca do servidor, empresa diferente continua sendo recusada, com ou sem "pode_operar".
+        assertThrows(IllegalArgumentException::class.java) {
+            ContratoEnvio.destino(d.destino().put("pode_operar",true).toString(),minha) }
+    }
+    @Test fun volumeJaMonitoradoNaoEhOferecidoParaNovaAtivacao() {
+        val carga = d.destino()
+        carga.getJSONArray("volumes").put(JSONObject().put("id",d.id(22)).put("sequencia",2)
+            .put("identidade",JSONObject.NULL).put("monitorado",true))
+        assertEquals(listOf(1), ContratoEnvio.destino(carga.toString(),d.id(11)).volumes.map { it.sequencia })
+    }
     @Test fun cargaFechadaNaoRecebeVinculo() {
         assertThrows(IllegalStateException::class.java) { ContratoEnvio.destino(d.destino().put("status","concluida").toString(),d.id(11)) }
     }

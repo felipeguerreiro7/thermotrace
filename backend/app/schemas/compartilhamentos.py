@@ -12,6 +12,8 @@ class NovoCompartilhamento(Entrada):
     # Localiza a transportadora cadastrada; não valida dígitos porque só serve de chave exata.
     cnpj_parceira: str = Field(pattern=r"^[A-Z0-9]{12}[0-9]{2}$")
     pode_exportar: bool = False
+    # Iniciar monitoramento e enviar leituras na carga, com etiqueta e aparelho da transportadora.
+    pode_operar: bool = False
     expira_em: datetime | None = None
 
     @field_validator("cnpj_parceira", mode="before")
@@ -38,8 +40,9 @@ class CompartilhamentoSaida(BaseModel):
     empresa_parceira_id: UUID
     empresa_parceira: str | None
     papel: str
-    escopo: list[Literal["consultar", "exportar"]]
+    escopo: list[Literal["consultar", "exportar", "operar"]]
     pode_exportar: bool
+    pode_operar: bool
     situacao: Literal["pendente", "ativo", "recusado", "revogado", "expirado"]
     minha_parte: Literal["dona", "parceira"]
     criado_em: datetime

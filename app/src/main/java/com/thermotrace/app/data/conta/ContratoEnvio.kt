@@ -18,14 +18,21 @@ object ContratoEnvio {
     fun eventoInicio(sessao: String) = UUID.nameUUIDFromBytes("tt-start-1:$sessao".toByteArray(Charsets.UTF_8)).toString()
     fun destino(raw: String, empresa: String): DestinoEnvio {
         val o = JSONObject(raw)
-        require(JsonConta.uuid(o,"empresa_id") == empresa) { "Carga de outra empresa." }
+        // Carga própria, ou de outra empresa que autorizou esta a operar (declarado pelo servidor).
+        require(JsonConta.operavel(o, empresa)) {
+            if (JsonConta.compartilhada(o, empresa)) "O dono desta carga não autorizou a sua empresa a operá-la."
+            else "Carga de outra empresa."
+        }
         check(o.getString("status") !in listOf("cancelada", "concluida")) { "Carga online fechada ou cancelada." }
         val p = o.getJSONObject("criterio").getJSONObject("perfil")
         val lista = o.getJSONArray("volumes"); require(lista.length() <= 200)
         return DestinoEnvio(JsonConta.uuid(o,"id"), JsonConta.texto(o,"codigo"),
             JsonConta.texto(o,"destinatario_nome"), o.getInt("intervalo_segundos"),
             p.getString("min_c").toBigDecimal(), p.getString("max_c").toBigDecimal(),
-            (0 until lista.length()).map { lista.getJSONObject(it) }.filter { it.getBoolean("monitorado") }.map {
+            (0 until lista.length()).map { lista.getJSONObject(it) }
+                // Só volumes livres: o servidor marca `monitorado` quando uma etiqueta é ativada nele,
+                // e recusa uma segunda ativação no mesmo volume.
+                .filter { !it.getBoolean("monitorado") }.map {
                 VolumeEnvio(JsonConta.uuid(it,"id"), it.getInt("sequencia"),
                     if(it.isNull("identidade")) null else it.getString("identidade")) })
     }

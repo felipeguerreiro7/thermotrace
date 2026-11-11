@@ -55,6 +55,32 @@ def sessao_por_id(db, empresa, id_, escrita=False):
     return s,r,v
 
 
+def sessao_operavel(db, acesso, id_):
+    """Sessão em que a empresa atual pode gravar: carga própria ou concedida para operar.
+
+    Retorna (sessao, remessa, volume, compartilhamento|None), com volume e sessão travados.
+    """
+    from app.services.compartilhamentos import remessa_operavel
+    s=db.scalar(select(SessaoMonitoramento).where(SessaoMonitoramento.id==id_,SessaoMonitoramento.contrato_ingestao=='1'))
+    if not s: raise NaoEncontrado()
+    r,c=remessa_operavel(db,acesso,s.remessa_id)
+    v=db.scalar(select(Volume).join(VinculoEtiqueta,VinculoEtiqueta.volume_id==Volume.id)
+                .where(VinculoEtiqueta.id==s.vinculo_id,Volume.remessa_id==r.id))
+    if not v: raise NaoEncontrado()
+    db.execute(select(Volume.id).where(Volume.id==v.id).with_for_update())
+    s=db.scalar(select(SessaoMonitoramento).where(SessaoMonitoramento.id==id_).with_for_update().execution_options(populate_existing=True))
+    if not s: raise NaoEncontrado()
+    return s,r,v,c
+
+
+def auditar_operacao(db, acao, entidade, entidade_id, acesso, remessa, comp, depois):
+    """Na empresa de quem bipou e, quando é a transportadora, também na do dono da carga."""
+    auditar(db,acao,entidade,entidade_id,acesso.usuario,depois=depois)
+    if comp is not None:
+        auditar(db,acao,entidade,entidade_id,acesso.usuario,empresa_id=remessa.empresa_embarcador_id,
+                depois={**depois,'via_compartilhamento':str(comp.id),'empresa_acesso_id':str(acesso.empresa.id)})
+
+
 def sessao_legivel(db, acesso, id_, exportar=False):
     """Sessão de carga própria ou concedida (WEB-10). Retorna (sessao, remessa, volume, compartilhamento|None)."""
     from app.services.compartilhamentos import remessa_legivel
@@ -82,7 +108,7 @@ def replay_evento(db, acesso, sid, evento, body):
         return recibo(l)
 
 
-def gravar(db, acesso, s, v, tipo, evidencia, body):
+def gravar(db, acesso, s, v, tipo, evidencia, body, r=None, comp=None):
     anterior=db.scalar(select(LeituraEtiqueta).where(LeituraEtiqueta.sessao_id==s.id)
                        .order_by(LeituraEtiqueta.ordem_recebimento.desc()).limit(1))
     ordem=anterior.ordem_recebimento+1 if anterior else 1
@@ -97,22 +123,24 @@ def gravar(db, acesso, s, v, tipo, evidencia, body):
     l=LeituraEtiqueta(id=uuid4(),sessao_id=s.id,etiqueta_id=s.etiqueta_id,contrato_ingestao='1',
         evento_id=evidencia.evento_id,ordem_recebimento=ordem,envelope_integridade=envelope,
         chave_idempotencia=f'v1:{s.id}:{evidencia.evento_id}',tipo_leitura=TipoLeitura(tipo),
-        dispositivo_id=evidencia.dispositivo_id,lida_por=acesso.usuario.id,
+        dispositivo_id=evidencia.dispositivo_id,lida_por=acesso.usuario.id,empresa_autora_id=acesso.empresa.id,
         lida_em_dispositivo=evidencia.lida_em,recebida_em_servidor=recebido,
         resposta_bruta=evidencia.resposta_bruta,versao_sdk=evidencia.versao_sdk,versao_decodificador=evidencia.versao_decodificador,
         hash_payload=hp,hash_anterior=ha,hash_encadeado=hc,horarios_corrigidos=False)
     db.add(l);db.flush()
-    auditar(db,'evidencia_recebida','leitura_etiqueta',l.id,acesso.usuario,
-        depois={'sessao_id':str(s.id),'evento_id':str(evidencia.evento_id),'tipo':tipo,'origem':evidencia.origem,
-                'ordem':ordem,'hash_encadeado':hc.hex()})
+    auditar_operacao(db,'evidencia_recebida','leitura_etiqueta',l.id,acesso,r,comp,
+        {'sessao_id':str(s.id),'evento_id':str(evidencia.evento_id),'tipo':tipo,'origem':evidencia.origem,
+         'ordem':ordem,'hash_encadeado':hc.hex()})
     return recibo(l)
 
 
 def iniciar(db, acesso, volume_id, body):
     v=db.scalar(select(Volume).where(Volume.id==volume_id))
     if not v: raise NaoEncontrado()
-    r=remessa_por_id(db,acesso.empresa.id,v.remessa_id,escrita=True)
+    from app.services.compartilhamentos import remessa_operavel
+    r,comp=remessa_operavel(db,acesso,v.remessa_id)
     db.execute(select(Volume.id).where(Volume.id==v.id).with_for_update())
+    # A etiqueta é sempre do catálogo de quem bipa: do dono, ou da transportadora autorizada.
     e=db.scalar(select(Etiqueta).where(Etiqueta.id==body.etiqueta_id,Etiqueta.empresa_id==acesso.empresa.id).with_for_update())
     if not e: raise NaoEncontrado('Etiqueta não disponível no catálogo desta empresa.')
     db.execute(text('SELECT pg_advisory_xact_lock(hashtextextended(:c,0))'),{'c':'sessao:'+str(body.sessao_id)})
@@ -148,21 +176,23 @@ def iniciar(db, acesso, volume_id, body):
     db.add(s);db.flush()
     v.monitorado=True;v.status=StatusVolume.MONITORANDO
     e.estado=EstadoEtiqueta.MONITORANDO;e.ciclos_ativacao+=1
-    resultado=gravar(db,acesso,s,v,'ativacao',body.evidencia,body)
-    auditar(db,'sessao_declarada_iniciada','sessao_monitoramento',s.id,acesso.usuario,
-        depois={'volume_id':str(v.id),'origem':body.evidencia.origem,'confirmacao':'declarada_pelo_aparelho'})
+    resultado=gravar(db,acesso,s,v,'ativacao',body.evidencia,body,r,comp)
+    auditar_operacao(db,'sessao_declarada_iniciada','sessao_monitoramento',s.id,acesso,r,comp,
+        {'volume_id':str(v.id),'origem':body.evidencia.origem,'confirmacao':'declarada_pelo_aparelho'})
     db.flush();return resultado
 
 
 def receber(db, acesso, sid, body):
-    s,r,v=sessao_por_id(db,acesso.empresa.id,sid,escrita=True)
+    s,r,v,comp=sessao_operavel(db,acesso,sid)
     repetido=replay_evento(db,acesso,s.id,body.evento_id,body)
     if repetido:return repetido
     aparelho(db,acesso.empresa.id,body.dispositivo_id)
-    e=db.get(Etiqueta,s.etiqueta_id)
-    if body.uid_canonico!=e.nfc_uid or body.epoch_inicio_etiqueta!=s.epoch_inicio_etiqueta or body.intervalo_relatado_s!=s.intervalo_segundos:
-        raise Conflito('Identidade ou configuração declarada não pertence a esta sessão.')
     inicial=db.scalar(select(LeituraEtiqueta).where(LeituraEtiqueta.sessao_id==sid,LeituraEtiqueta.ordem_recebimento==1))
+    # UID conferido com a etiqueta do catálogo na ativação e preservado na evidência dela.
+    # Quem continua a sessão pode ser de outra empresa e não enxerga o catálogo de quem ativou.
+    uid_ativacao=inicial.envelope_integridade['requisicao']['evidencia']['uid_canonico']
+    if body.uid_canonico!=uid_ativacao or body.epoch_inicio_etiqueta!=s.epoch_inicio_etiqueta or body.intervalo_relatado_s!=s.intervalo_segundos:
+        raise Conflito('Identidade ou configuração declarada não pertence a esta sessão.')
     if body.origem!=inicial.envelope_integridade['origem']: raise Conflito('Simulação e declaração de campo não podem se misturar numa sessão.')
     if body.lida_em < s.inicio_dispositivo_em: raise Conflito('Instante declarado anterior à ativação; revisar relógio ou sessão.')
     final=db.scalar(select(LeituraEtiqueta).where(LeituraEtiqueta.sessao_id==sid,LeituraEtiqueta.tipo_leitura==TipoLeitura.FINAL))
@@ -174,7 +204,7 @@ def receber(db, acesso, sid, body):
         if body.lida_em<mais_recente: raise Conflito('Fechamento anterior a uma leitura já recebida; revisar relógio.')
         s.status=StatusSessao.ENCERRADA_NORMAL;s.encerrada_em=body.lida_em;v.status=StatusVolume.ENCERRADO
         # Não liberar vínculo nem inventar STOP físico após recebimento de leitura final.
-    resultado=gravar(db,acesso,s,v,body.tipo,body,body)
+    resultado=gravar(db,acesso,s,v,body.tipo,body,body,r,comp)
     db.flush();return resultado
 
 
@@ -187,7 +217,8 @@ def verificar_integridade(db, empresa, sid):
         quantidade+=1;e=l.envelope_integridade
         try:
             hp=bytes.fromhex(hash_json(e));pedido=e['requisicao'];ev=pedido.get('evidencia',pedido)
-            esperado={'empresa_id':str(empresa),'sessao_id':str(sid),'remessa_id':str(r.id),'volume_id':str(v.id),
+            # Leituras anteriores à operação entre empresas não têm autora: só o dono enviava.
+            esperado={'empresa_id':str(l.empresa_autora_id or empresa),'sessao_id':str(sid),'remessa_id':str(r.id),'volume_id':str(v.id),
                 'usuario_id':str(l.lida_por),'etiqueta_id':str(l.etiqueta_id),'dispositivo_id':str(l.dispositivo_id),
                 'evento_id':str(l.evento_id),'ordem':l.ordem_recebimento,'tipo':l.tipo_leitura.value,
                 'lida_em':iso(l.lida_em_dispositivo),'recebida_em':iso(l.recebida_em_servidor)}
