@@ -59,7 +59,8 @@ app = FastAPI(
         "Versão 0.10: acompanhamento da operação (sessões sem leitura final, fim previsto da memória, envio dos aparelhos). "
         "Versão 0.11: manifesto de integridade para guardar fora do servidor e conferir depois (TT-060). "
         "Versão 0.12: a transportadora opera a carga compartilhada quando o dono autoriza (inicia monitoramento e envia leituras). "
-        "Versão 0.13: andamento da carga deduzido das etiquetas, acompanhamento também das cargas que a empresa opera e origem declarada na viagem."
+        "Versão 0.13: andamento da carga deduzido das etiquetas, acompanhamento também das cargas que a empresa opera e origem declarada na viagem. "
+        "Versão 0.14: entrada na demonstração sem senha, só nas contas fictícias e só com DEMO_PUBLICA fora de produção (/demo)."
     ),
     docs_url="/docs" if not cfg.em_producao else None,
     redoc_url="/redoc" if not cfg.em_producao else None,
