@@ -71,3 +71,28 @@ def test_formato_invalido_e_limite_por_ip(ambiente):  # noqa: F811
     assert c.get(URL, params={"sessao": "nao-e-uuid", "hash": "0" * 64}).status_code == 422
     codigos = [c.get(URL, params={"sessao": str(uuid4()), "hash": "0" * 64}).status_code for _ in range(31)]
     assert codigos[:30] == [200] * 30 and codigos[30] == 429
+
+
+def test_confere_com_papel_minimo_da_api_e_rls(ambiente):  # noqa: F811
+    """Sem empresa logada, a rota pública só lê a carga depois de achar a exportação na auditoria."""
+    from pathlib import Path
+    from sqlalchemy import text
+    d = preparar_ingestao(ambiente); assert iniciar(d).status_code == 201
+    c, db = d[0], d[1]
+    coletar(d, PONTOS, 90, "final")
+    sid, hash_, _ = exportar(d)
+    role = "tt_min_conferencia_" + uuid4().hex
+    db.execute(text(f"CREATE ROLE {role} NOLOGIN NOSUPERUSER NOBYPASSRLS"))
+    for linha in (Path(__file__).parents[1] / "scripts/runtime-permissoes.sql").read_text(encoding="utf-8").splitlines():
+        if linha.startswith("GRANT "):
+            db.execute(text(linha.replace("thermotrace_runtime", role)))
+    db.execute(text(f"SET LOCAL ROLE {role}"))
+    try:
+        # Sem contexto de empresa, o RLS esconde a sessão: a leitura direta não vê nada.
+        db.execute(text("SELECT set_config('app.empresa_id', '', true)"))
+        assert db.execute(text("SELECT id FROM sessao_monitoramento")).all() == []
+        v = c.get(URL, params={"sessao": sid, "hash": hash_}).json()
+        assert v["confere"] and v["versao_atual"] and v["resumo"]["quantidade"] == 9
+        assert c.get(URL, params={"sessao": sid, "hash": "0" * 64}).json()["confere"] is False
+    finally:
+        db.execute(text("RESET ROLE"))
