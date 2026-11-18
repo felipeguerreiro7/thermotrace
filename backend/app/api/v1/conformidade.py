@@ -10,6 +10,7 @@ from app.api.deps import Acesso, operador
 from app.core.security import agora
 from app.db.session import obter_sessao
 from app.services import conformidade
+from app.services.temperaturas import decimal_br
 from app.services.auditoria import auditar
 
 router = APIRouter(tags=['Conformidade térmica'])
@@ -29,11 +30,11 @@ def _csv(p):
     w.writerow(COLUNAS)
     for v in p['viagens']:
         w.writerow([v['remessa_codigo'], v['volume'], v['sessao_id'], v['iniciada_em'], ROTULOS[v['situacao']],
-                    v['percentual_na_faixa'], (v['tempo_fora_nominal_s'] or 0) // 60, v['excursoes'],
-                    v['pior_extremo_c'], v['faixa']['min_c'], v['faixa']['max_c'],
+                    decimal_br(v['percentual_na_faixa']), (v['tempo_fora_nominal_s'] or 0) // 60, v['excursoes'],
+                    decimal_br(v['pior_extremo_c']), decimal_br(v['faixa']['min_c']), decimal_br(v['faixa']['max_c']),
                     'sim' if v['inclui_leitura_final'] else 'nao', v['origem'],
                     'sim' if v['integridade_da_cadeia'] else 'nao', v['hash_projecao']])
-    # BOM: o Excel em português abre acentos e o separador ";" sem importação manual.
+    # BOM e vírgula decimal: o Excel em português abre acentos, colunas e números sem importação manual.
     return '﻿' + s.getvalue()
 
 

@@ -112,6 +112,11 @@ def svg(d):
 <text x="75" y="395">Horários nominais UTC · faixa verde: {faixa['min_c']:g} a {faixa['max_c']:g} °C · sem validação física</text></g></svg>'''
 
 
+def decimal_br(v):
+    """Número com vírgula decimal para os CSVs abertos no Excel em português; texto e inteiro ficam iguais."""
+    return str(v).replace('.', ',') if isinstance(v, float) else ('' if v is None else v)
+
+
 def exportar(d, formato):
     if formato == 'svg': return svg(d), 'image/svg+xml'
     if formato == 'csv':
@@ -121,7 +126,7 @@ def exportar(d, formato):
         w.writerow(['conferencia', d['conferencia']]); w.writerow(['validacao_fisica', 'nao'])
         for aviso in d['avisos']: w.writerow(['aviso', aviso])
         w.writerow(['indice','instante_utc','temperatura_c','indicador','limite_min_c','limite_max_c'])
-        for p in d['pontos']: w.writerow([p['indice'],p['instante'],p['temperatura_c'],p['indicador'],d['faixa']['min_c'],d['faixa']['max_c']])
+        for p in d['pontos']: w.writerow([p['indice'],p['instante'],*map(decimal_br,(p['temperatura_c'],)),p['indicador'],*map(decimal_br,(d['faixa']['min_c'],d['faixa']['max_c']))])
         return '\ufeff'+s.getvalue(), 'text/csv'
     avisos = ''.join('<li>'+escape(a)+'</li>' for a in d['avisos'])
     return f'''<!doctype html><html lang="pt-BR"><meta charset="utf-8"><title>Relatório ThermoTrace</title>

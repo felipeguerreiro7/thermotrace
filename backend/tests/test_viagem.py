@@ -42,7 +42,7 @@ def test_viagem_usa_coleta_mais_completa_sem_somar_e_mede_excursoes(ambiente):
     assert c.get(path, headers=h).json()['hash_projecao'] == v['hash_projecao']  # determinística
     csv = c.get(path + '?formato=csv', headers=h)
     assert csv.status_code == 200 and 'attachment' in csv.headers['content-disposition']
-    assert csv.text.count('\n') >= 9 and csv.text.count(';9.5;') == 1
+    assert csv.text.count('\n') >= 9 and csv.text.count(';9,5;') == 1 and ';9.5;' not in csv.text
     html = c.get(path + '?formato=html', headers=h).text
     assert 'não soma históricos repetidos' in html and 'Excursões' in html
     acoes = {l.acao for l in db.scalars(select(LogAuditoria).where(LogAuditoria.entidade_id == UUID(d[-1]['sessao_id'])))}

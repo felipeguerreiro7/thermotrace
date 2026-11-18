@@ -86,7 +86,7 @@ def test_csv_para_planilha_com_auditoria_do_arquivo(ambiente):  # noqa: F811
     linhas = r.text.lstrip("﻿").splitlines()
     assert linhas[2].split(";")[:5] == ["carga", "volume", "sessao_id", "iniciada_em_utc", "situacao"]
     minha = next(l.split(";") for l in linhas[3:] if d[-1]["sessao_id"] in l)
-    assert minha[4] == "Com excursão" and minha[6] == "30" and minha[8] == "9.5"
+    assert minha[4] == "Com excursão" and minha[6] == "30" and minha[8] == "9,5" and minha[9] == "2,0"
     log = db.scalar(select(LogAuditoria).where(LogAuditoria.acao == "conformidade_exportada"))
     assert log.depois["sha256_arquivo"] == hashlib.sha256(r.text.encode("utf-8")).hexdigest()
     assert d[0].get(URL + "?formato=xlsx", headers=d[3]).status_code == 422

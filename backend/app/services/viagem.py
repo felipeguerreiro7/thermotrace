@@ -15,7 +15,7 @@ import io
 import segno
 
 from app.services.idempotencia import hash_json
-from app.services.temperaturas import resultado, svg
+from app.services.temperaturas import decimal_br, resultado, svg
 
 # 2: a viagem passa a declarar a origem das evidências (simulação ou aplicativo). Regra de consolidação igual à 1.
 VERSAO = 'tt-viagem-2'
@@ -106,9 +106,10 @@ def exportar(d, formato, conferir_em=None):
         for k in ('sessao_id', 'versao', 'hash_projecao', 'base_leitura_id', 'conferencia'): w.writerow([k, d[k]])
         w.writerow(['validacao_fisica', 'nao'])
         for a in d['avisos']: w.writerow(['aviso', a])
-        for e in d['excursoes']: w.writerow(['excursao', e['tipo'], e['inicio'], e['fim'], e['pontos'], e['duracao_nominal_s'], e['extremo_c']])
+        for e in d['excursoes']: w.writerow(['excursao', e['tipo'], e['inicio'], e['fim'], e['pontos'], e['duracao_nominal_s'], decimal_br(e['extremo_c'])])
         w.writerow(['indice', 'instante_utc', 'temperatura_c', 'indicador', 'limite_min_c', 'limite_max_c'])
-        for p in d['pontos']: w.writerow([p['indice'], p['instante'], p['temperatura_c'], p['indicador'], d['faixa']['min_c'], d['faixa']['max_c']])
+        for p in d['pontos']: w.writerow([p['indice'], p['instante'], decimal_br(p['temperatura_c']), p['indicador'],
+                                          decimal_br(d['faixa']['min_c']), decimal_br(d['faixa']['max_c'])])
         return '﻿' + s.getvalue(), 'text/csv'
     r = d['resumo'] or {}
     avisos = ''.join('<li>' + escape(a) + '</li>' for a in d['avisos'])

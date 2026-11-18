@@ -108,3 +108,8 @@ def test_integridade_divergente_bloqueia_serie_e_suporta_envelope_incompleto(amb
         assert data['integridade_cadeia'] is False and data['origem']=='indisponivel'
         assert 'bloqueado' in data['avisos'][0]
         db.expire(l)
+
+
+def test_csv_usa_virgula_decimal_so_em_numero_fracionario():
+    from app.services.temperaturas import decimal_br
+    assert [decimal_br(v) for v in (9.5, 2.0, -0.25, 7, None, '1.2.3')] == ['9,5', '2,0', '-0,25', 7, '', '1.2.3']
