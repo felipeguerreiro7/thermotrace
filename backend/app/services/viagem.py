@@ -96,7 +96,8 @@ def consolidar(sessao, leituras, carga, integra):
     return d
 
 
-def exportar(d, formato):
+def exportar(d, formato, conferir_em=None):
+    """`conferir_em`: endereço público do portal para conferir o relatório (só no HTML)."""
     if formato == 'svg': return svg(d), 'image/svg+xml'
     if formato == 'csv':
         s = io.StringIO(newline=''); w = csv.writer(s, delimiter=';')
@@ -116,11 +117,13 @@ def exportar(d, formato):
     resumo = (f"<p>{r.get('quantidade',0)} medições de {escape(str(r.get('primeiro_instante','')))} a {escape(str(r.get('ultimo_instante','')))}. "
               f"Mínima {r.get('minima_c','—')} °C, máxima {r.get('maxima_c','—')} °C. {r.get('percentual_na_faixa','—')}% na faixa; "
               f"{r.get('excursoes',0)} excursão(ões), {r.get('tempo_fora_nominal_s',0)//60} min fora da faixa.</p>") if r else '<p>Sem série utilizável.</p>'
+    conferir = (f"<p><strong>Conferir este relatório:</strong> abra <code>{escape(conferir_em)}</code> "
+                "e confirme que o servidor emitiu esta sessão com este hash, sem precisar de conta.</p>") if conferir_em else ''
     return f'''<!doctype html><html lang="pt-BR"><meta charset="utf-8"><title>Relatório da viagem ThermoTrace</title>
 <style>body{{font:16px system-ui;max-width:1050px;margin:32px auto;padding:24px;color:#17394b}}svg{{width:100%}}table{{border-collapse:collapse;width:100%;margin:12px 0}}td,th{{border:1px solid #c9d6dc;padding:6px;text-align:left}}code{{overflow-wrap:anywhere}}@media print{{body{{margin:0}}}}</style>
 <h1>ThermoTrace · {escape(d['codigo_carga'])} · viagem</h1>{'<p><strong>SIMULAÇÃO: dados fictícios, sem etiqueta real.</strong></p>' if d.get('origem') == 'simulacao' else ''}<p>Origem: {escape(str(d.get('origem')))}. Conferência: {escape(d['conferencia'])}. Faixa: {d['faixa']['min_c']:g} a {d['faixa']['max_c']:g} °C.</p>
 {resumo}<ul>{avisos}</ul>{svg(d)}
 <h2>Excursões</h2>{f'<table><tr><th>Tipo</th><th>Início</th><th>Fim</th><th>Duração nominal</th><th>Extremo</th></tr>{exc}</table>' if exc else '<p>Nenhuma medição fora da faixa.</p>'}
 <h2>Coletas consideradas</h2><table><tr><th>Ordem</th><th>Tipo</th><th>Lida em</th><th>Medições</th><th>Uso</th></tr>{col}</table>
-<h2>Rastreabilidade</h2><p>Sessão: {d['sessao_id']}<br>Versão: {d['versao']}<br>Coleta base: {d['base_leitura_id']}<br>Hash da projeção: <code>{d['hash_projecao']}</code></p>
+<h2>Rastreabilidade</h2><p>Sessão: {d['sessao_id']}<br>Versão: {d['versao']}<br>Coleta base: {d['base_leitura_id']}<br>Hash da projeção: <code>{d['hash_projecao']}</code></p>{conferir}
 <p>A viagem usa a coleta mais completa e confere as demais nos índices em comum; não soma históricos repetidos. Horários nominais pelo início e intervalo declarados. Sem validação física: não comprova calibração, STOP físico nem libera a carga.</p></html>''', 'text/html'

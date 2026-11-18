@@ -43,7 +43,8 @@ function login(message = '') {
   // Campo do app autenticador aparece só quando o servidor pede, depois da senha correta.
   const [mfaLabel,mfa] = field('Código do app autenticador (6 dígitos)','text','codigo_mfa','one-time-code');
   mfa.inputMode='numeric'; mfa.maxLength=12; mfa.required=false; mfaLabel.hidden=true;
-  form.append(emailLabel,passwordLabel,mfaLabel,error,submit,button('Tenho um código de acesso',()=>activation(email.value.trim()),'link-button'));
+  form.append(emailLabel,passwordLabel,mfaLabel,error,submit,button('Tenho um código de acesso',()=>activation(email.value.trim()),'link-button'),
+    button('Recebeu um relatório? Conferir',()=>{ history.pushState(null,'','/portal/conferir'); verifyPage(); },'link-button'));
   form.addEventListener('submit', async e => {
     e.preventDefault(); error.textContent=''; submit.disabled=true; submit.textContent='Entrando…';
     try {
@@ -59,6 +60,53 @@ function login(message = '') {
     finally { submit.disabled=false; submit.textContent='Entrar'; }
   });
   demoArea(view);
+}
+
+// Conferência pública do relatório: sem login, a partir da sessão e do hash impressos.
+function verifyPage(params = new URLSearchParams()) {
+  view++; user = null;
+  root.innerHTML = `<main class="login-layout" id="content"><section class="login-story"><div><span class="brand">Thermo<span>Trace</span></span><div class="tagline">COLD CHAIN INTELLIGENCE</div></div><div><h1>Recebeu um relatório?</h1><p>Confirme que ele foi emitido pelo ThermoTrace e se ainda é a versão mais recente da viagem. Não precisa de conta.</p></div><p class="hint">A conferência fica registrada para o dono da carga.</p></section><section class="login-panel"><div class="login-card"><p class="eyebrow">Conferência pública</p><h2>Conferir relatório de viagem</h2><p class="muted">Copie a sessão e o hash da seção "Rastreabilidade" do relatório.</p><form id="verify-form"></form><div id="verify-result" aria-live="polite"></div></div></section></main>`;
+  const form = document.querySelector('#verify-form'), out = document.querySelector('#verify-result');
+  const [sLabel, sessao] = field('Sessão', 'text', 'sessao', 'off'), [hLabel, hash] = field('Hash da projeção', 'text', 'hash', 'off');
+  sessao.maxLength = 36; sessao.pattern = '[0-9a-fA-F-]{36}'; hash.maxLength = 64; hash.pattern = '[0-9a-fA-F]{64}';
+  sessao.spellcheck = hash.spellcheck = false;
+  sessao.value = (params.get('sessao') || '').trim(); hash.value = (params.get('hash') || '').trim();
+  const submit = el('button', 'Conferir', 'primary wide'); submit.type = 'submit';
+  form.append(sLabel, hLabel, submit, button('Entrar no portal', () => { history.replaceState(null, '', '/portal/'); login(); }, 'link-button'));
+  async function check() {
+    out.replaceChildren(el('p', 'Conferindo…', 'loading')); submit.disabled = true;
+    const ticket = view;
+    try {
+      const r = await api.conferir(sessao.value.trim(), hash.value.trim().toLowerCase());
+      if (ticket !== view) return;
+      out.replaceChildren(verifyResult(r));
+    } catch (err) { if (ticket === view) { out.replaceChildren(); showError(err, out); } }
+    finally { submit.disabled = false; }
+  }
+  form.addEventListener('submit', e => { e.preventDefault(); check(); });
+  if (sessao.value && hash.value && form.checkValidity()) check();
+}
+
+function verifyResult(r) {
+  const box = el('section', undefined, r.confere ? 'verify-box ok' : 'verify-box fail');
+  box.setAttribute('role', 'status');
+  if (!r.confere) { box.append(el('h3', 'Não confere'), el('p', r.mensagem)); return box; }
+  box.append(el('h3', r.versao_atual ? 'Confere: versão atual' : 'Confere: existe versão mais nova'));
+  box.append(el('p', r.versao_atual
+    ? 'Este relatório foi emitido pelo ThermoTrace e corresponde à viagem como ela está hoje.'
+    : 'Este relatório foi emitido pelo ThermoTrace, mas chegaram coletas depois dele. Peça a versão atual ao remetente.'));
+  const res = r.resumo, num = v => Number(v).toLocaleString('pt-BR');
+  box.append(values([
+    ['Carga', r.codigo_carga], ['Emitido em', date(r.emitido_em)],
+    ...(res ? [['Período', `${date(res.primeiro_instante)} a ${date(res.ultimo_instante)}`],
+               ['Temperaturas', `mínima ${num(res.minima_c)} °C, máxima ${num(res.maxima_c)} °C`],
+               ['Na faixa', `${num(res.percentual_na_faixa)}% · ${res.excursoes} excursão(ões)`],
+               ['Leitura final', res.inclui_leitura_final ? 'recebida' : 'ainda não recebida'],
+               ['Origem', r.origem === 'simulacao' ? 'SIMULAÇÃO (dados fictícios)' : r.origem]] : []),
+    ['Cadeia de evidências', r.integridade_da_cadeia ? 'íntegra' : 'com problema: fale com o remetente'],
+  ]));
+  box.append(el('p', r.aviso, 'hint'));
+  return box;
 }
 
 // Área de demonstração: aparece só quando o servidor a liga (nunca em produção).
@@ -634,4 +682,4 @@ function temperatures(session,id,target,trigger,ticket) {
   });
 }
 
-login();
+if (/\/portal\/conferir\/?$/.test(location.pathname)) verifyPage(new URLSearchParams(location.search)); else login();

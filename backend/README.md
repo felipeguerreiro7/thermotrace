@@ -128,6 +128,17 @@ uvicorn app.main:app --reload
 Em produção `/docs`, `/redoc` e `/openapi.json` são desligados
 automaticamente — mapa da API é informação de reconhecimento.
 
+### Conferência pública do relatório
+
+Quem recebe um relatório de viagem confere em http://127.0.0.1:8000/portal/conferir
+(ou pelo endereço impresso no próprio relatório HTML), sem conta. A API
+(`GET /api/v1/conferencia/viagem?sessao=…&hash=…`) procura na auditoria uma
+exportação com aquela sessão e aquele hash: se houver, diz quando foi emitida e
+se ainda é a versão atual da viagem (coletas novas mudam o hash). Sem
+exportação, a resposta é só "não confere", igual para sessão inexistente e hash
+errado. Limite de 30 conferências por IP a cada 5 minutos; cada conferência
+fica na auditoria do dono da carga.
+
 ### Demonstração do portal
 
 ```powershell

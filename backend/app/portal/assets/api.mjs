@@ -99,6 +99,10 @@ export function createApi(fetcher = globalThis.fetch.bind(globalThis)) {
         return await request('/auth/me');
       } catch (error) { if (current === generation) clear(); throw error; }
     },
+    async conferir(sessao, hash) {
+      // Público: não usa nem cria sessão.
+      return send(`/conferencia/viagem?sessao=${encodeURIComponent(sessao)}&hash=${encodeURIComponent(hash)}`);
+    },
     async demo() {
       // Só diz se a área de demonstração aparece; falha vira "não aparece".
       try { return await send('/demo'); } catch { return {habilitada:false, perfis:[]}; }

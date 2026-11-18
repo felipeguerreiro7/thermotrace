@@ -19,7 +19,11 @@ from app.services.auditoria import auditar
 def limitar_login(db, email, ip):
     # Contabiliza também sucessos. Chaves HMAC não expõem e-mails na tabela.
     # IP primeiro: cliente já bloqueado não pode criar infinitas chaves de e-mail.
-    buckets = [("ip:" + ip, 50), ("email:" + email, 10)]
+    limitar(db, [("ip:" + ip, 50), ("email:" + email, 10)])
+
+
+def limitar(db, buckets):
+    """Janela de 5 minutos por chave, no Postgres (vale para todas as instâncias)."""
     for chave, limite in buckets:
         digest = hmac.new(obter_config().SECRET_KEY.encode(), chave.encode(), hashlib.sha256).hexdigest()
         qtd = db.execute(text("""

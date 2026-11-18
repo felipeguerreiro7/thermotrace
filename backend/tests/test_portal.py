@@ -15,7 +15,7 @@ def test_raiz_abre_site_no_navegador_e_preserva_resposta_api(cliente):
     assert r.status_code == 200 and r.json()['portal'] == '/portal'
 
 
-@pytest.mark.parametrize('path', ['/portal', '/portal/'])
+@pytest.mark.parametrize('path', ['/portal', '/portal/', '/portal/conferir'])
 def test_portal_entrega_shell_com_protecoes(cliente, path):
     r = cliente.get(path)
     assert r.status_code == 200

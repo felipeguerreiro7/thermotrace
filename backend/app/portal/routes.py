@@ -11,6 +11,7 @@ router = APIRouter(include_in_schema=False)
 
 @router.get("/portal")
 @router.get("/portal/")
+@router.get("/portal/conferir")
 def portal():
     return FileResponse(PASTA / "index.html", media_type="text/html")
 

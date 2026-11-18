@@ -1,5 +1,5 @@
 from uuid import UUID
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy import select, and_
 from sqlalchemy.orm import Session
 from app.api.deps import Acesso, operador
@@ -45,7 +45,7 @@ def temperaturas_da_coleta(sessao_id:UUID, leitura_id:UUID,
 
 
 @router.get('/sessoes/{sessao_id}/viagem')
-def viagem_da_sessao(sessao_id:UUID, formato:Literal['json','csv','svg','html']='json',
+def viagem_da_sessao(sessao_id:UUID, request:Request, formato:Literal['json','csv','svg','html']='json',
         acesso:Acesso=Depends(operador), db:Session=Depends(obter_sessao)):
     """WEB-12: viagem consolidada a partir de todas as coletas recebidas da sessão."""
     s,r,v,comp=ingestao.sessao_legivel(db,acesso,sessao_id,exportar=formato!='json')
@@ -58,7 +58,8 @@ def viagem_da_sessao(sessao_id:UUID, formato:Literal['json','csv','svg','html']=
     if formato=='json':
         auditar_acesso(db,'viagem_consultada','sessao_monitoramento',sessao_id,acesso,r,comp,evento)
         return dados
-    conteudo,mime=viagem.exportar(dados,formato)
+    conferir_em=f"{str(request.base_url).rstrip('/')}/portal/conferir?sessao={sessao_id}&hash={dados['hash_projecao']}"
+    conteudo,mime=viagem.exportar(dados,formato,conferir_em)
     evento['sha256_arquivo']=hashlib.sha256(conteudo.encode('utf-8')).hexdigest()
     auditar_acesso(db,'viagem_exportada','sessao_monitoramento',sessao_id,acesso,r,comp,evento)
     return Response(conteudo,media_type=mime,headers={
