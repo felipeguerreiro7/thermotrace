@@ -20,6 +20,9 @@ pyjwt==2.13.0
 # Laudo em Excel — reaproveita tools/exportar_excel.py
 xlsxwriter==3.2.9
 
+# QR code de conferência no relatório (SVG, Python puro, sem dependências)
+segno==1.6.6
+
 # Logs estruturados
 structlog==26.1.0
 

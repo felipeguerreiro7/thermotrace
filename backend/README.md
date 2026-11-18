@@ -131,7 +131,7 @@ automaticamente — mapa da API é informação de reconhecimento.
 ### Conferência pública do relatório
 
 Quem recebe um relatório de viagem confere em http://127.0.0.1:8000/portal/conferir
-(ou pelo endereço impresso no próprio relatório HTML), sem conta. A API
+(ou pelo QR code e pelo endereço impressos no relatório HTML), sem conta. A API
 (`GET /api/v1/conferencia/viagem?sessao=…&hash=…`) procura na auditoria uma
 exportação com aquela sessão e aquele hash: se houver, diz quando foi emitida e
 se ainda é a versão atual da viagem (coletas novas mudam o hash). Sem

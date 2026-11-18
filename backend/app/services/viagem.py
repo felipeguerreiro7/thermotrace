@@ -12,6 +12,8 @@ from html import escape
 import csv
 import io
 
+import segno
+
 from app.services.idempotencia import hash_json
 from app.services.temperaturas import resultado, svg
 
@@ -117,8 +119,15 @@ def exportar(d, formato, conferir_em=None):
     resumo = (f"<p>{r.get('quantidade',0)} medições de {escape(str(r.get('primeiro_instante','')))} a {escape(str(r.get('ultimo_instante','')))}. "
               f"Mínima {r.get('minima_c','—')} °C, máxima {r.get('maxima_c','—')} °C. {r.get('percentual_na_faixa','—')}% na faixa; "
               f"{r.get('excursoes',0)} excursão(ões), {r.get('tempo_fora_nominal_s',0)//60} min fora da faixa.</p>") if r else '<p>Sem série utilizável.</p>'
-    conferir = (f"<p><strong>Conferir este relatório:</strong> abra <code>{escape(conferir_em)}</code> "
-                "e confirme que o servidor emitiu esta sessão com este hash, sem precisar de conta.</p>") if conferir_em else ''
+    conferir = ''
+    if conferir_em:
+        # QR em SVG embutido: o relatório continua um arquivo só, sem imagem externa (CSP default-src 'none').
+        qr = segno.make(conferir_em, error='m').svg_inline(scale=3, border=4, dark='#082535', light='#ffffff',
+                                                            title='Conferir este relatório')
+        conferir = (f"<div style=\"display:flex;gap:16px;align-items:center;margin:12px 0\"><div>{qr}</div>"
+                    f"<p><strong>Conferir este relatório:</strong> aponte a câmera para o código ou abra "
+                    f"<code>{escape(conferir_em)}</code> e confirme que o servidor emitiu esta sessão com este hash, "
+                    "sem precisar de conta.</p></div>")
     return f'''<!doctype html><html lang="pt-BR"><meta charset="utf-8"><title>Relatório da viagem ThermoTrace</title>
 <style>body{{font:16px system-ui;max-width:1050px;margin:32px auto;padding:24px;color:#17394b}}svg{{width:100%}}table{{border-collapse:collapse;width:100%;margin:12px 0}}td,th{{border:1px solid #c9d6dc;padding:6px;text-align:left}}code{{overflow-wrap:anywhere}}@media print{{body{{margin:0}}}}</style>
 <h1>ThermoTrace · {escape(d['codigo_carga'])} · viagem</h1>{'<p><strong>SIMULAÇÃO: dados fictícios, sem etiqueta real.</strong></p>' if d.get('origem') == 'simulacao' else ''}<p>Origem: {escape(str(d.get('origem')))}. Conferência: {escape(d['conferencia'])}. Faixa: {d['faixa']['min_c']:g} a {d['faixa']['max_c']:g} °C.</p>

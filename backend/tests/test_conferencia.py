@@ -25,6 +25,7 @@ def test_relatorio_exportado_confere_sem_login_e_fica_na_auditoria_do_dono(ambie
     coletar(d, PONTOS[:6], 60); coletar(d, PONTOS, 90, "final")
     sid, hash_, html = exportar(d)
     assert f"/portal/conferir?sessao={sid}&amp;hash={hash_}" in html
+    assert html.count("<svg") == 2 and "Conferir este relatório</title>" in html  # gráfico + QR
     r = c.get(URL, params={"sessao": sid, "hash": hash_.upper()})
     assert r.status_code == 200 and r.headers["cache-control"] == "no-store"
     v = r.json()
