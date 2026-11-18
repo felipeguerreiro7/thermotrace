@@ -142,3 +142,7 @@ A transportadora passa a bipar na carga que o dono compartilhou, quando ele marc
 ## Atualização — API 0.13, 11/11/2026
 
 Empresas de demonstração por comando, acompanhamento também para a transportadora, andamento da carga visível nas listas e viagem simulada identificada como simulação. Detalhes na seção de 11/11 de [[ThermoTrace - Operação entre empresas]].
+
+## Atualização — demonstração do portal, API 0.14, 18/11/2026
+
+Tela de login com "Conhecer o portal": entrada sem senha como dono da carga ou transportadora fictícios, só com `DEMO_PUBLICA` e nunca em produção, sessão de 2 horas e auditoria. Sem mudança no Android. Detalhes em [[ThermoTrace - Demonstração do portal 0.14]].
