@@ -359,7 +359,7 @@ function shell() {
   }));
   const nav=document.querySelector('nav');
   const recebe = area==='contratante' || area==='ambos';
-  const items=[...(area==='staff' ? [['empresas','Empresas cadastradas']] : [['cargas','Minhas cargas'], ['acompanhamento','Acompanhamento'], ...(recebe ? [['recebidas','Compartilhadas comigo']] : []), ...(user.papel==='gestor' ? [['catalogo','Produtos e perfis'],['equipe','Equipe da empresa'],['integridade','Integridade'],['auditoria','Auditoria']] : [])]), ['seguranca','Segurança da conta']];
+  const items=[...(area==='staff' ? [['empresas','Empresas cadastradas']] : [['cargas','Minhas cargas'], ['conformidade','Conformidade térmica'], ['acompanhamento','Acompanhamento'], ...(recebe ? [['recebidas','Compartilhadas comigo']] : []), ...(user.papel==='gestor' ? [['catalogo','Produtos e perfis'],['equipe','Equipe da empresa'],['integridade','Integridade'],['auditoria','Auditoria']] : [])]), ['seguranca','Segurança da conta']];
   items.forEach(([key,label]) => { const b=button(label,()=>navigate(key),'nav-button'); b.dataset.page=key; nav.append(b); });
   // Equipe ThermoTrace sem MFA cai direto na ativação: o servidor recusa a área dela até lá.
   content=document.querySelector('#content'); navigate(user.mfa_obrigatorio && !user.mfa_ativo ? 'seguranca' : (demoStart && items.some(([k]) => k===demoStart) ? demoStart : items[0][0]));
@@ -368,7 +368,7 @@ function shell() {
 async function navigate(key, offset=0, query='') {
   page=key; const ticket=++view;
   document.querySelectorAll('[data-page]').forEach(n => n.setAttribute('aria-current',n.dataset.page===key?'page':'false'));
-  const titles={cargas:['Minhas cargas',area==='contratante'?'Consulte as cargas cadastradas na sua transportadora.':'Localize a carga e acompanhe os registros recebidos.'],recebidas:['Compartilhadas comigo','Cargas que outras empresas autorizaram sua empresa a consultar.'],catalogo:['Produtos e perfis','Critérios térmicos aprovados pela sua empresa e os produtos que os usam.'],seguranca:['Segurança da conta','Verificação em duas etapas com app autenticador.'],empresas:['Empresas cadastradas','Visão administrativa da equipe ThermoTrace.'],equipe:['Equipe da empresa','Pessoas com acesso ao ambiente da sua empresa.'],auditoria:['Auditoria','Eventos registrados pelo servidor, do mais antigo ao mais recente.'],acompanhamento:['Acompanhamento','Etiquetas em campo sem leitura final e celulares que pararam de enviar.'],integridade:['Integridade das evidências','Manifesto para guardar fora da ThermoTrace e conferir depois.']};
+  const titles={cargas:['Minhas cargas',area==='contratante'?'Consulte as cargas cadastradas na sua transportadora.':'Localize a carga e acompanhe os registros recebidos.'],recebidas:['Compartilhadas comigo','Cargas que outras empresas autorizaram sua empresa a consultar.'],catalogo:['Produtos e perfis','Critérios térmicos aprovados pela sua empresa e os produtos que os usam.'],seguranca:['Segurança da conta','Verificação em duas etapas com app autenticador.'],empresas:['Empresas cadastradas','Visão administrativa da equipe ThermoTrace.'],equipe:['Equipe da empresa','Pessoas com acesso ao ambiente da sua empresa.'],auditoria:['Auditoria','Eventos registrados pelo servidor, do mais antigo ao mais recente.'],conformidade:['Conformidade térmica','Viagens recentes das suas cargas: dentro da faixa, com excursão ou em andamento.'],acompanhamento:['Acompanhamento','Etiquetas em campo sem leitura final e celulares que pararam de enviar.'],integridade:['Integridade das evidências','Manifesto para guardar fora da ThermoTrace e conferir depois.']};
   content.replaceChildren(heading(...titles[key]));
   if (key==='cargas') {
     content.append(notice(area==='contratante'
@@ -383,6 +383,7 @@ async function navigate(key, offset=0, query='') {
   if (key==='catalogo') { try { await catalogPage(content,ticket); } catch(error){ if(ticket===view) showError(error,content); } return; }
   if (key==='seguranca') { securityPage(content); return; }
   if (key==='integridade') { integrityPage(content,ticket); return; }
+  if (key==='conformidade') { try { await compliancePage(content,ticket); } catch(error){ if(ticket===view) showError(error,content); } return; }
   if (key==='acompanhamento') { try { await monitorPage(content,ticket); } catch(error){ if(ticket===view) showError(error,content); } return; }
   // Atualiza só a lista: o cartão com o código recém-gerado precisa continuar na tela.
   const codes=el('div',undefined,'stack'); let reload=()=>{};
@@ -430,6 +431,30 @@ async function navigate(key, offset=0, query='') {
 
 const monitorStatus={registro_encerrado:'Memória programada acabou',sem_coleta_recente:'Sem coleta recente',em_andamento:'Em andamento'};
 const hours=s=>s==null?'—':s<3600?`${Math.round(s/60)} min`:`${(s/3600).toLocaleString('pt-BR',{maximumFractionDigits:1})} h`;
+const complianceStatus={conforme:'Conforme',excursao:'Com excursão',divergente:'Coletas divergentes',em_andamento:'Em andamento',sem_dados:'Sem dados'};
+async function compliancePage(target, ticket, filtro='') {
+  // Mesma viagem consolidada do relatório; nada recalculado de outro jeito.
+  const box=el('section',undefined,'stack'); target.append(box); box.append(el('p','Carregando…','loading'));
+  const p=await api.request('/conformidade'); if(ticket!==view) return;
+  const t=p.totais, num=v=>Number(v).toLocaleString('pt-BR'); box.replaceChildren();
+  const kpis=el('div',undefined,'kpi-row');
+  const tile=(chave,rotulo,valor,cls='')=>{ const b=button('',()=>{ target.replaceChildren(target.firstChild); compliancePage(target,++view,filtro===chave?'':chave); },`kpi ${cls}${filtro===chave?' active':''}`);
+    b.setAttribute('aria-pressed',String(filtro===chave)); b.append(el('strong',valor),el('span',rotulo)); return b; };
+  kpis.append(tile('', 'Taxa de conformidade', t.taxa_conformidade==null?'—':`${num(t.taxa_conformidade)}%`,'lead'),
+    tile('conforme','Conformes',String(t.conforme),'ok'), tile('excursao','Com excursão',String(t.excursao),'bad'),
+    tile('divergente','Coletas divergentes',String(t.divergente),'warn'), tile('em_andamento','Em andamento',String(t.em_andamento)));
+  box.append(kpis, el('p','A taxa considera só viagens concluídas ou que já tiveram excursão; as em andamento ainda podem mudar. Clique num indicador para filtrar.','muted'));
+  const rows=p.viagens.filter(v=>!filtro||v.situacao===filtro);
+  const card=el('section',undefined,'card result'); card.append(el('h2',filtro?complianceStatus[filtro]:'Viagens recentes'));
+  card.append(rows.length?table(['Situação','Carga','Volume','Início','Na faixa','Tempo fora','Pior extremo','Origem'],rows.map(v=>[
+    badge(complianceStatus[v.situacao]||v.situacao), button(v.remessa_codigo,()=>detail(v.remessa_id),'link-button'), v.volume, date(v.iniciada_em),
+    v.percentual_na_faixa==null?'—':`${num(v.percentual_na_faixa)}%`, v.tempo_fora_nominal_s?hours(v.tempo_fora_nominal_s):'—',
+    v.pior_extremo_c==null?'—':`${num(v.pior_extremo_c)} °C (faixa ${num(v.faixa.min_c)} a ${num(v.faixa.max_c)})`,
+    v.origem==='simulacao'?'Simulação':(v.origem||'—')])):el('p',filtro?'Nenhuma viagem nesta situação.':'Nenhuma viagem registrada ainda.','muted'));
+  if(p.ha_mais) card.append(el('p','Há mais viagens além das 100 mais recentes.','muted'));
+  box.append(card, el('p',`Regra ${p.versao} sobre ${p.regra_viagem}. ${p.limites[1]}`,'muted'));
+}
+
 function monitorCargo(s) {
   const link=button(s.remessa_codigo,()=>detail(s.remessa_id),'link-button');
   if(s.acesso!=='compartilhada') return link;

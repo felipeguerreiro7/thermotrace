@@ -128,6 +128,14 @@ uvicorn app.main:app --reload
 Em produção `/docs`, `/redoc` e `/openapi.json` são desligados
 automaticamente — mapa da API é informação de reconhecimento.
 
+### Conformidade térmica
+
+No portal, **Conformidade térmica** (API `GET /api/v1/conformidade`) mostra as 100
+viagens mais recentes das cargas da empresa com a situação de cada uma: conforme,
+com excursão, coletas divergentes, em andamento ou sem dados. Cada linha é a mesma
+viagem consolidada do relatório (mesmo hash). A taxa de conformidade conta só
+viagens concluídas ou que já tiveram excursão. Cada consulta fica na auditoria.
+
 ### Conferência pública do relatório
 
 Quem recebe um relatório de viagem confere em http://127.0.0.1:8000/portal/conferir
