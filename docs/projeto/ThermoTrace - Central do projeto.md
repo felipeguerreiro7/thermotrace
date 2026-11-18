@@ -146,3 +146,7 @@ Empresas de demonstração por comando, acompanhamento também para a transporta
 ## Atualização — demonstração do portal, API 0.14, 18/11/2026
 
 Tela de login com "Conhecer o portal": entrada sem senha como dono da carga ou transportadora fictícios, só com `DEMO_PUBLICA` e nunca em produção, sessão de 2 horas e auditoria. Sem mudança no Android. Detalhes em [[ThermoTrace - Demonstração do portal 0.14]].
+
+## Atualização — conferência pública e conformidade, API 0.15 e 0.16, 18/11/2026
+
+Quem recebe o relatório confere sem login (endereço e QR code impressos), com a auditoria como prova. Painel de conformidade térmica com as viagens recentes, exportação CSV e vírgula decimal nos três CSVs. Detalhes em [[ThermoTrace - Conferência pública e conformidade 0.15-0.16]].
