@@ -11,7 +11,7 @@ subir e falhar meia hora depois numa requisição qualquer.
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, PostgresDsn, field_validator
+from pydantic import Field, PostgresDsn, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -61,6 +61,18 @@ class Config(BaseSettings):
     # ---- logs ------------------------------------------------------
     NIVEL_LOG: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
     LOG_JSON: bool = True
+
+    # ---- demonstração ----------------------------------------------
+    # Liga o botão "Entrar na demonstração" do portal: abre sessão nas contas
+    # fictícias criadas por `python -m app.demo_cli`, sem senha. Desligado por
+    # padrão e recusado em produção, onde não pode existir acesso sem senha.
+    DEMO_PUBLICA: bool = False
+
+    @model_validator(mode="after")
+    def _demo_nunca_em_producao(self) -> "Config":
+        if self.DEMO_PUBLICA and self.AMBIENTE == "producao":
+            raise ValueError("DEMO_PUBLICA não pode ser ligada em produção.")
+        return self
 
     @field_validator("SECRET_KEY")
     @classmethod

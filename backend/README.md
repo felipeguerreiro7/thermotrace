@@ -128,6 +128,19 @@ uvicorn app.main:app --reload
 Em produção `/docs`, `/redoc` e `/openapi.json` são desligados
 automaticamente — mapa da API é informação de reconhecimento.
 
+### Demonstração do portal
+
+```powershell
+python -m app.demo_cli          # cria as empresas e cargas fictícias (uma vez por banco)
+```
+
+Com `DEMO_PUBLICA=true` no `.env`, a tela de login do portal
+(http://127.0.0.1:8000/portal/) mostra **Conhecer o portal**: entra sem senha
+como dono da carga ou como transportadora fictícios, com sessão de até 2 horas
+e uma faixa avisando que os dados são simulados. A rota só abre essas contas
+(e-mail e CNPJ de demonstração, sem MFA), registra `login_demonstracao` na
+auditoria e é recusada em produção pela própria configuração.
+
 ---
 
 ## Testes

@@ -11,7 +11,7 @@ const cargoStatus = r => progress[r.andamento] || statuses[r.status] || r.status
 const volumeStatus = {sem_etiqueta:'Sem etiqueta', vinculado:'Etiqueta vinculada', monitorando:'Em monitoramento', encerrado:'Leitura final recebida'};
 const sessionStatus = {ativa:'em andamento', encerrada_normal:'leitura final recebida', encerrada_anormal:'encerrada com problema', abandonada:'abandonada'};
 const shareStatus = {pendente:'Aguardando aceite', ativo:'Ativo', recusado:'Recusado', revogado:'Encerrado', expirado:'Prazo vencido'};
-let user, area, content, page = 'cargas', view = 0, shared = null;
+let user, area, content, page = 'cargas', view = 0, shared = null, demoMode = false;
 const date = value => value ? new Intl.DateTimeFormat('pt-BR', {dateStyle:'short', timeStyle:'short'}).format(new Date(value)) : 'Não informado';
 function el(tag, text, cls) { const n = document.createElement(tag); if (text !== undefined) n.textContent = text; if (cls) n.className = cls; return n; }
 function button(text, action, cls = 'secondary') { const b = el('button', text, cls); b.type = 'button'; b.addEventListener('click', action); return b; }
@@ -51,13 +51,43 @@ function login(message = '') {
       password.value=''; mfa.value='';
       const nextArea = audience(signed);
       if (!nextArea) { await api.logout(); throw new Error('Este cadastro ainda não tem uma área disponível. Fale com o responsável pela ThermoTrace.'); }
-      user=signed; area=nextArea; shell();
+      user=signed; area=nextArea; demoMode=false; shell();
     } catch (err) {
       if (err.codigo==='mfa_necessario' && mfaLabel.hidden) { mfaLabel.hidden=false; mfa.required=true; error.textContent=err.message; mfa.focus(); return; }
       password.value=''; mfa.value=''; error.textContent=err.message;
     }
     finally { submit.disabled=false; submit.textContent='Entrar'; }
   });
+  demoArea(view);
+}
+
+// Área de demonstração: aparece só quando o servidor a liga (nunca em produção).
+async function demoArea(ticket) {
+  const info = await api.demo();
+  if (ticket !== view || !info.habilitada || !info.perfis?.length) return;
+  const card = document.querySelector('.login-card');
+  if (!card) return;
+  const box = el('section', undefined, 'demo-box'); box.setAttribute('aria-labelledby','demo-title');
+  const title = el('h3', 'Conhecer o portal'); title.id='demo-title';
+  const error = el('p', '', 'error'); error.setAttribute('role','alert');
+  box.append(el('p','Demonstração','eyebrow'), title,
+    el('p','Entre sem senha em uma empresa fictícia, com cargas e viagens simuladas. Nada aqui é dado real.','muted'));
+  const choices = el('div', undefined, 'demo-choices');
+  for (const p of info.perfis) {
+    const b = button('', async () => {
+      choices.querySelectorAll('button').forEach(x => x.disabled=true); error.textContent='';
+      try {
+        const signed = await api.entrarDemo(p.perfil);
+        const nextArea = audience(signed);
+        if (!nextArea) { await api.logout(); throw new Error('A conta de demonstração não tem uma área disponível.'); }
+        user=signed; area=nextArea; demoMode=true; shell();
+      } catch (err) { error.textContent=err.message; choices.querySelectorAll('button').forEach(x => x.disabled=false); }
+    }, 'secondary demo-choice');
+    b.append(el('strong', `Ver como ${p.rotulo.toLowerCase()}`), el('span', p.descricao));
+    choices.append(b);
+  }
+  box.append(choices, error);
+  card.append(box);
 }
 
 function activation(prefill='') {
@@ -260,6 +290,11 @@ async function catalogPage(target, ticket) {
 function shell() {
   root.innerHTML = `<div class="shell"><aside class="sidebar"><div><span class="brand">Thermo<span>Trace</span></span><div class="tagline">COLD CHAIN INTELLIGENCE</div></div><nav aria-label="Navegação principal"></nav><div class="sidebar-bottom">Homologação<br>Histórico com origem e autoria.<br>Acesso limitado à sua permissão.</div></aside><div class="main"><header class="topbar"><span id="area" class="eyebrow"></span><div class="top-actions"><div class="identity" id="identity"></div><div id="exit"></div></div></header><main id="content" class="content" tabindex="-1" aria-live="polite"></main></div></div>`;
   document.querySelector('#area').textContent=labels[area];
+  if (demoMode) {
+    const bar = el('div', undefined, 'demo-banner'); bar.setAttribute('role','status');
+    bar.append(el('strong','Demonstração'), document.createTextNode(' · Empresa e cargas fictícias, evidências simuladas. A sessão encerra em até 2 horas.'));
+    document.querySelector('.topbar').before(bar);
+  }
   document.querySelector('#identity').append(el('strong',user.nome),el('span',user.empresa));
   document.querySelector('#exit').append(button('Sair', async e => {
     e.currentTarget.disabled=true; view++;

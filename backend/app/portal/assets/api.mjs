@@ -99,6 +99,21 @@ export function createApi(fetcher = globalThis.fetch.bind(globalThis)) {
         return await request('/auth/me');
       } catch (error) { if (current === generation) clear(); throw error; }
     },
+    async demo() {
+      // Só diz se a área de demonstração aparece; falha vira "não aparece".
+      try { return await send('/demo'); } catch { return {habilitada:false, perfis:[]}; }
+    },
+    async entrarDemo(perfil) {
+      // Contas fictícias escolhidas pelo servidor; o navegador manda só o perfil.
+      clear();
+      const current = generation;
+      try {
+        const data = await send('/demo/entrar', {method:'POST', body:{perfil}});
+        if (current !== generation) throw expired();
+        access = data.access_token; refresh = data.refresh_token;
+        return await request('/auth/me');
+      } catch (error) { if (current === generation) clear(); throw error; }
+    },
     async ativar(email, codigo, novaSenha) {
       // Primeiro acesso ou redefinição; não abre sessão. A pessoa entra depois com a senha nova.
       clear();
