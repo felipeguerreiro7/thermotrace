@@ -11,7 +11,7 @@ const cargoStatus = r => progress[r.andamento] || statuses[r.status] || r.status
 const volumeStatus = {sem_etiqueta:'Sem etiqueta', vinculado:'Etiqueta vinculada', monitorando:'Em monitoramento', encerrado:'Leitura final recebida'};
 const sessionStatus = {ativa:'em andamento', encerrada_normal:'leitura final recebida', encerrada_anormal:'encerrada com problema', abandonada:'abandonada'};
 const shareStatus = {pendente:'Aguardando aceite', ativo:'Ativo', recusado:'Recusado', revogado:'Encerrado', expirado:'Prazo vencido'};
-let user, area, content, page = 'cargas', view = 0, shared = null, demoMode = false;
+let user, area, content, page = 'cargas', view = 0, shared = null, demoMode = false, demoStart = null;
 const date = value => value ? new Intl.DateTimeFormat('pt-BR', {dateStyle:'short', timeStyle:'short'}).format(new Date(value)) : 'Não informado';
 function el(tag, text, cls) { const n = document.createElement(tag); if (text !== undefined) n.textContent = text; if (cls) n.className = cls; return n; }
 function button(text, action, cls = 'secondary') { const b = el('button', text, cls); b.type = 'button'; b.addEventListener('click', action); return b; }
@@ -51,7 +51,7 @@ function login(message = '') {
       password.value=''; mfa.value='';
       const nextArea = audience(signed);
       if (!nextArea) { await api.logout(); throw new Error('Este cadastro ainda não tem uma área disponível. Fale com o responsável pela ThermoTrace.'); }
-      user=signed; area=nextArea; demoMode=false; shell();
+      user=signed; area=nextArea; demoMode=false; demoStart=null; shell();
     } catch (err) {
       if (err.codigo==='mfa_necessario' && mfaLabel.hidden) { mfaLabel.hidden=false; mfa.required=true; error.textContent=err.message; mfa.focus(); return; }
       password.value=''; mfa.value=''; error.textContent=err.message;
@@ -80,7 +80,8 @@ async function demoArea(ticket) {
         const signed = await api.entrarDemo(p.perfil);
         const nextArea = audience(signed);
         if (!nextArea) { await api.logout(); throw new Error('A conta de demonstração não tem uma área disponível.'); }
-        user=signed; area=nextArea; demoMode=true; shell();
+        // A transportadora fictícia não tem carga própria: começa pela carga que recebeu.
+        user=signed; area=nextArea; demoMode=true; demoStart=p.perfil==='transportadora'?'recebidas':null; shell();
       } catch (err) { error.textContent=err.message; choices.querySelectorAll('button').forEach(x => x.disabled=false); }
     }, 'secondary demo-choice');
     b.append(el('strong', `Ver como ${p.rotulo.toLowerCase()}`), el('span', p.descricao));
@@ -88,6 +89,11 @@ async function demoArea(ticket) {
   }
   box.append(choices, error);
   card.append(box);
+  // Atalho no topo: em tela baixa ou no celular a área fica abaixo do formulário.
+  const shortcut = button('Só quer conhecer? Ver a demonstração ↓', () => {
+    box.scrollIntoView({behavior:'smooth', block:'start'}); choices.querySelector('button')?.focus({preventScroll:true});
+  }, 'link-button demo-shortcut');
+  card.querySelector('h2')?.after(shortcut);
 }
 
 function activation(prefill='') {
@@ -308,7 +314,7 @@ function shell() {
   const items=[...(area==='staff' ? [['empresas','Empresas cadastradas']] : [['cargas','Minhas cargas'], ['acompanhamento','Acompanhamento'], ...(recebe ? [['recebidas','Compartilhadas comigo']] : []), ...(user.papel==='gestor' ? [['catalogo','Produtos e perfis'],['equipe','Equipe da empresa'],['integridade','Integridade'],['auditoria','Auditoria']] : [])]), ['seguranca','Segurança da conta']];
   items.forEach(([key,label]) => { const b=button(label,()=>navigate(key),'nav-button'); b.dataset.page=key; nav.append(b); });
   // Equipe ThermoTrace sem MFA cai direto na ativação: o servidor recusa a área dela até lá.
-  content=document.querySelector('#content'); navigate(user.mfa_obrigatorio && !user.mfa_ativo ? 'seguranca' : items[0][0]);
+  content=document.querySelector('#content'); navigate(user.mfa_obrigatorio && !user.mfa_ativo ? 'seguranca' : (demoStart && items.some(([k]) => k===demoStart) ? demoStart : items[0][0]));
 }
 
 async function navigate(key, offset=0, query='') {
