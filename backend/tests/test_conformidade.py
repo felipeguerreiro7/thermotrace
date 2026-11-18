@@ -72,3 +72,21 @@ def test_isolamento_acesso_e_auditoria(ambiente):  # noqa: F811
     log = db.scalar(select(LogAuditoria).where(LogAuditoria.acao == "conformidade_consultada",
                                                LogAuditoria.empresa_id == users["a"].empresa_id))
     assert log and log.depois["versao"] == "tt-conformidade-1"
+
+
+def test_csv_para_planilha_com_auditoria_do_arquivo(ambiente):  # noqa: F811
+    import hashlib
+    d = preparar_ingestao(ambiente); assert iniciar(d).status_code == 201
+    db = d[1]
+    coletar(d, PONTOS, 90, "final")
+    r = d[0].get(URL + "?formato=csv", headers=d[3])
+    assert r.status_code == 200 and r.headers["content-type"].startswith("text/csv")
+    assert "attachment" in r.headers["content-disposition"] and r.headers["cache-control"] == "no-store"
+    assert r.text.startswith("﻿")
+    linhas = r.text.lstrip("﻿").splitlines()
+    assert linhas[2].split(";")[:5] == ["carga", "volume", "sessao_id", "iniciada_em_utc", "situacao"]
+    minha = next(l.split(";") for l in linhas[3:] if d[-1]["sessao_id"] in l)
+    assert minha[4] == "Com excursão" and minha[6] == "30" and minha[8] == "9.5"
+    log = db.scalar(select(LogAuditoria).where(LogAuditoria.acao == "conformidade_exportada"))
+    assert log.depois["sha256_arquivo"] == hashlib.sha256(r.text.encode("utf-8")).hexdigest()
+    assert d[0].get(URL + "?formato=xlsx", headers=d[3]).status_code == 422

@@ -443,7 +443,16 @@ async function compliancePage(target, ticket, filtro='') {
   kpis.append(tile('', 'Taxa de conformidade', t.taxa_conformidade==null?'—':`${num(t.taxa_conformidade)}%`,'lead'),
     tile('conforme','Conformes',String(t.conforme),'ok'), tile('excursao','Com excursão',String(t.excursao),'bad'),
     tile('divergente','Coletas divergentes',String(t.divergente),'warn'), tile('em_andamento','Em andamento',String(t.em_andamento)));
-  box.append(kpis, el('p','A taxa considera só viagens concluídas ou que já tiveram excursão; as em andamento ainda podem mudar. Clique num indicador para filtrar.','muted'));
+  const baixar=button('Baixar CSV',async e=>{
+    const b=e.currentTarget, erro=el('p','','error'); b.disabled=true;
+    try {
+      const blob=await api.request('/conformidade?formato=csv',{download:true}); if(ticket!==view) return;
+      const url=URL.createObjectURL(blob),a=document.createElement('a');
+      a.href=url; a.download=`ThermoTrace-conformidade.csv`; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000);
+    } catch(err) { if(ticket===view){ b.after(erro); showError(err,erro); } }
+    finally { b.disabled=false; }
+  },'secondary');
+  box.append(kpis, el('p','A taxa considera só viagens concluídas ou que já tiveram excursão; as em andamento ainda podem mudar. Clique num indicador para filtrar.','muted'), baixar);
   const rows=p.viagens.filter(v=>!filtro||v.situacao===filtro);
   const card=el('section',undefined,'card result'); card.append(el('h2',filtro?complianceStatus[filtro]:'Viagens recentes'));
   card.append(rows.length?table(['Situação','Carga','Volume','Início','Na faixa','Tempo fora','Pior extremo','Origem'],rows.map(v=>[
