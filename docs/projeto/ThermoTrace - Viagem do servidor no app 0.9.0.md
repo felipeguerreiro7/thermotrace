@@ -21,6 +21,7 @@ O celular só mostrava o gráfico da própria coleta. Quando outro aparelho bipa
 - Destaques: viagem de **simulação**, cadeia de integridade quebrada ("não use em laudo") e coletas que discordam.
 - Rodapé: "Sem validação física: esta tela não libera a carga" e o começo do hash da viagem.
 - A consulta é separada do envio: se falhar (sem rede, 404 porque a sessão ainda não chegou), as coletas e os recibos não são afetados.
+- Tela da **remessa** (mesmo dia, segundo commit): cada volume com coleta já recebida mostra o cartão compacto, com a situação e a % na faixa. "Ver detalhes" abre o resto. Simulação e integridade quebrada aparecem mesmo fechado. A consulta é feita uma vez por abertura da tela, e não a cada volta da leitura, porque cada consulta vira registro na auditoria do servidor. Fora de conta vinculada, a tela segue só com a evidência local.
 
 ## Contrato
 
@@ -29,11 +30,11 @@ O celular só mostrava o gráfico da própria coleta. Quando outro aparelho bipa
 
 ## Evidências
 
-- 159 testes JVM (7 novos em `ViagemServidorTest`), lint e APK debug sem erro.
+- 160 testes JVM (8 novos em `ViagemServidorTest`, inclusive as mensagens de falha), lint e APK debug sem erro.
 - 4 testes de viagem na API, em PostgreSQL 17 descartável.
 
 ## O que falta
 
 - [ ] Ver o cartão em aparelho, com conta real no Render (não foi visto em tela, nem em emulador).
 - [ ] Repetir a conferência e a conformidade no Render com login: precisa de conta de gestor ou de ligar `DEMO_PUBLICA` na homologação (decisão do usuário).
-- [ ] TT-040 ainda não fecha: a tela da remessa continua mostrando só o gráfico local; a viagem do servidor aparece na tela de envio.
+- [ ] TT-040 fecha no código com as duas telas; falta o ensaio em aparelho com dois celulares na mesma carga.

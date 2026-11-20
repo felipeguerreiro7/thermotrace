@@ -76,14 +76,7 @@ class EnvioViewModel(private val envio: EnvioColetas, private val db: ThermoTrac
         viewModelScope.launch {
             val erro = try { _estado.value = _estado.value.copy(viagem=envio.viagem(id)); null }
             catch(e: CancellationException) { throw e }
-            catch(e: Exception) { when(e) {
-                is LoginNecessario -> e.message
-                is FalhaHttpConta -> if(e.status==404) "O servidor ainda não tem esta sessão. Envie as coletas primeiro."
-                    else "Não foi possível consultar a viagem (HTTP ${e.status})."
-                is IllegalStateException -> e.message
-                is IllegalArgumentException, is org.json.JSONException -> "Resposta do servidor fora do esperado por esta versão do app. Atualize o aplicativo."
-                else -> "Sem conexão com o servidor. A viagem pode ser consultada depois; as coletas continuam no celular."
-            } }
+            catch(e: Exception) { ContratoViagem.mensagemDeFalha(e) }
             _estado.value = _estado.value.copy(viagemCarregando=false,viagemErro=erro)
         }
     }

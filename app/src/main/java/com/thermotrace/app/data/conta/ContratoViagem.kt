@@ -35,6 +35,16 @@ data class ViagemServidor(
 object ContratoViagem {
     private const val MAX_PONTOS = 20_000
 
+    /** Mesma tradução de falha nas duas telas que consultam a viagem. */
+    fun mensagemDeFalha(e: Exception): String = when (e) {
+        is LoginNecessario -> e.message ?: "Entre novamente para acessar sua conta."
+        is FalhaHttpConta -> if (e.status == 404) "O servidor ainda não tem esta sessão. Envie as coletas primeiro."
+            else "Não foi possível consultar a viagem (HTTP ${e.status})."
+        is IllegalStateException -> e.message ?: "Não foi possível consultar a viagem."
+        is IllegalArgumentException, is org.json.JSONException -> "Resposta do servidor fora do esperado por esta versão do app. Atualize o aplicativo."
+        else -> "Sem conexão com o servidor. A viagem pode ser consultada depois; as coletas continuam no celular."
+    }
+
     fun situacao(resumo: ResumoViagem?, divergente: Boolean): SituacaoViagem = when {
         resumo == null -> SituacaoViagem.SEM_DADOS
         divergente -> SituacaoViagem.DIVERGENTE

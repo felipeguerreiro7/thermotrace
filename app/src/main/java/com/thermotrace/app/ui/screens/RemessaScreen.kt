@@ -66,6 +66,10 @@ import com.thermotrace.app.domain.ResumoTermico
 import com.thermotrace.app.domain.StatusVolume
 import com.thermotrace.app.domain.TipoLeitura
 import com.thermotrace.app.ui.components.LinhaInfo
+import com.thermotrace.app.ui.components.EstadoViagemServidor
+import com.thermotrace.app.ui.components.ViagemServidorCard
+import com.thermotrace.app.data.conta.ContratoViagem
+import com.thermotrace.app.data.conta.EnvioColetas
 import com.thermotrace.app.ui.components.Secao
 import com.thermotrace.app.ui.components.SeloGravidade
 import com.thermotrace.app.ui.components.SeloResultado
@@ -93,11 +97,15 @@ data class RemessaUiState(
     val estados: Map<String, EstadoEtiqueta> = emptyMap(),
     val ocorrencias: List<OcorrenciaComAcoes> = emptyList(),
     val mensagem: String? = null,
+    /** TT-040: viagem do servidor por sessão, só das que já têm recibo nesta conta. */
+    val viagens: Map<String, EstadoViagemServidor> = emptyMap(),
 )
 
 class RemessaViewModel(
     private val repo: Repositorio,
     private val alertas: RepositorioAlertas,
+    /** Nulo fora de uma conta vinculada: a tela continua só com a evidência local. */
+    private val envio: EnvioColetas? = null,
 ) : ViewModel() {
     private val _estado = MutableStateFlow(RemessaUiState())
     val estado = _estado.asStateFlow()
@@ -134,6 +142,24 @@ class RemessaViewModel(
                 },
                 ocorrencias = alertas.ocorrenciasDaRemessa(remessaId),
             )
+        }
+        // Uma consulta por sessão enquanto a tela existe: voltar da leitura não repete a consulta
+        // (cada uma vira registro de auditoria no servidor). "Atualizar" pede de novo.
+        for (s in sessoes) if (s.sessao.id !in _estado.value.viagens) consultarViagem(s.sessao.id, automatica = true)
+    }
+
+    fun consultarViagem(sessaoId: String, automatica: Boolean = false) {
+        val envio = envio ?: return
+        if (_estado.value.viagens[sessaoId]?.carregando == true) return
+        viewModelScope.launch {
+            val recebida = runCatching { envio.temRecibo(sessaoId) }.getOrDefault(false)
+            if (automatica && !recebida) return@launch
+            val anterior = _estado.value.viagens[sessaoId] ?: EstadoViagemServidor()
+            _estado.update { it.copy(viagens = it.viagens + (sessaoId to anterior.copy(carregando = true, erro = null))) }
+            val novo = try { anterior.copy(viagem = envio.viagem(sessaoId), carregando = false, erro = null) }
+                catch (e: kotlinx.coroutines.CancellationException) { throw e }
+                catch (e: Exception) { anterior.copy(carregando = false, erro = ContratoViagem.mensagemDeFalha(e)) }
+            _estado.update { it.copy(viagens = it.viagens + (sessaoId to novo)) }
         }
     }
 }
@@ -231,6 +257,10 @@ fun RemessaScreen(
                     estado = sessao?.let { e.estados[it.sessao.id] } ?: EstadoEtiqueta.NAO_ATIVADA,
                     aoLer = { tipo -> aoLer(volume.id, tipo) },
                 )
+                sessao?.sessao?.id?.let { id -> e.viagens[id]?.let { v ->
+                    ViagemServidorCard(v.viagem, v.carregando, v.erro, compacto = true,
+                        aoAtualizar = { vm.consultarViagem(id) })
+                } }
                 if(sessao != null && aoEnviar != null) OutlinedButton(onClick={aoEnviar(sessao.sessao.id)},modifier=Modifier.fillMaxWidth()) {
                     Text("Enviar coletas do volume ${volume.sequencia}")
                 }

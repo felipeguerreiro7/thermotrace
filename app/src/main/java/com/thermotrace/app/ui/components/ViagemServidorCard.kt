@@ -4,7 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
@@ -37,35 +38,61 @@ private fun cores(s: SituacaoViagem): Pair<Color, Color> = when (s) {
  * Pode diferir do gráfico local quando outro aparelho coletou depois; por isso o cartão
  * diz de onde vem e quantas coletas considerou.
  */
+/** Estado de uma consulta da viagem; a tela da remessa guarda um por sessão. */
+data class EstadoViagemServidor(val viagem: ViagemServidor? = null, val carregando: Boolean = false, val erro: String? = null)
+
+/**
+ * [compacto]: na tela da remessa, mostra só a situação e os alertas graves até o operador
+ * pedir os detalhes. Simulação e integridade quebrada nunca ficam escondidas.
+ */
 @Composable
-fun ViagemServidorCard(viagem: ViagemServidor?, carregando: Boolean, erro: String?, aoAtualizar: () -> Unit) {
+fun ViagemServidorCard(viagem: ViagemServidor?, carregando: Boolean, erro: String?, aoAtualizar: () -> Unit,
+                       compacto: Boolean = false) {
+    var aberto by rememberSaveable { mutableStateOf(!compacto) }
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Viagem no servidor", style = MaterialTheme.typography.titleMedium)
-            Text("Consolidada com as coletas recebidas de todos os celulares desta carga.",
+            Text("Viagem no servidor", style = if (compacto) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium)
+            if (aberto) Text("Consolidada com as coletas recebidas de todos os celulares desta carga.",
                 style = MaterialTheme.typography.bodySmall)
             if (carregando) LinearProgressIndicator(Modifier.fillMaxWidth())
             erro?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-            viagem?.let { Conteudo(it) }
-            OutlinedButton(onClick = aoAtualizar, enabled = !carregando) {
-                Text(if (viagem == null) "Consultar viagem" else "Atualizar viagem")
+            viagem?.let { v ->
+                Selo(v)
+                if (aberto) Detalhes(v)
+                else v.resumo?.let { r ->
+                    Text("${"%.1f".format(ptBR, r.percentualNaFaixa)}% na faixa · " +
+                        if (r.incluiLeituraFinal) "com leitura final" else "sem leitura final",
+                        style = MaterialTheme.typography.bodySmall)
+                }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (compacto && viagem != null) TextButton(onClick = { aberto = !aberto }) {
+                    Text(if (aberto) "Ocultar detalhes" else "Ver detalhes")
+                }
+                OutlinedButton(onClick = aoAtualizar, enabled = !carregando) {
+                    Text(if (viagem == null) "Consultar viagem" else "Atualizar")
+                }
             }
         }
     }
 }
 
 @Composable
-private fun Conteudo(v: ViagemServidor) {
+private fun Selo(v: ViagemServidor) {
     val (fundo, texto) = cores(v.situacao)
     Box(Modifier.background(fundo, RoundedCornerShape(8.dp)).padding(horizontal = 10.dp, vertical = 4.dp)
-        .semantics { contentDescription = "Situação: ${v.situacao.rotulo}" }) {
+        .semantics { contentDescription = "Situação no servidor: ${v.situacao.rotulo}" }) {
         Text(v.situacao.rotulo, color = texto, fontWeight = FontWeight.Bold)
     }
-    Text(v.situacao.explicacao, style = MaterialTheme.typography.bodyMedium)
     if (v.simulacao) Text("Viagem de SIMULAÇÃO: dados de demonstração, não de uma etiqueta real.",
         color = AmbarAlerta, fontWeight = FontWeight.Bold)
     if (!v.integridadeCadeia) Text("A conferência de integridade das coletas falhou no servidor. Não use esta viagem em laudo; avise o suporte.",
         color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+}
+
+@Composable
+private fun Detalhes(v: ViagemServidor) {
+    Text(v.situacao.explicacao, style = MaterialTheme.typography.bodyMedium)
 
     val r = v.resumo
     if (r != null) {

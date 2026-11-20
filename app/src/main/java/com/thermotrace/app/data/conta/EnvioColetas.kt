@@ -52,6 +52,8 @@ class EnvioColetas(private val db: ThermoTraceDb, private val conta: Repositorio
         val id = UUID.fromString(sessaoId).toString()
         return ContratoViagem.ler(conta.consultarEnvio(escopo, "/sessoes/$id/viagem"), id)
     }
+    /** Só vale consultar a viagem de sessão que o servidor já confirmou ter recebido. */
+    suspend fun temRecibo(sessaoId: String) = dao.pedidos(sessaoId).any { it.recibo != null }
     suspend fun vinculo(id: String) = dao.vinculo(id)
     suspend fun pedidos(id: String) = dao.pedidos(id)
     suspend fun cargas(busca: String): List<CargaConta> {

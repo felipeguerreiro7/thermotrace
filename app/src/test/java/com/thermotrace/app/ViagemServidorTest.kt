@@ -72,4 +72,14 @@ class ViagemServidorTest {
         assertEquals(SituacaoViagem.EM_ANDAMENTO, ContratoViagem.situacao(resumo(0, false), divergente = false))
         assertEquals(SituacaoViagem.CONFORME, ContratoViagem.situacao(resumo(0, true), divergente = false))
     }
+
+    @Test fun `falhas da consulta viram mensagens que nao assustam sobre as coletas`() {
+        val m = ContratoViagem::mensagemDeFalha
+        assertTrue(m(com.thermotrace.app.data.conta.FalhaHttpConta(404)).contains("Envie as coletas"))
+        assertTrue(m(com.thermotrace.app.data.conta.FalhaHttpConta(500)).contains("HTTP 500"))
+        assertTrue(m(java.io.IOException("rede")).contains("continuam no celular"))
+        assertTrue(m(IllegalArgumentException()).contains("Atualize o aplicativo"))
+        assertEquals("Entre na conta original desta coleta.", m(IllegalStateException("Entre na conta original desta coleta.")))
+        assertTrue(m(com.thermotrace.app.data.conta.LoginNecessario()).contains("Entre novamente"))
+    }
 }
