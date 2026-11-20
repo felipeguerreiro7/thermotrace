@@ -150,3 +150,7 @@ Tela de login com "Conhecer o portal": entrada sem senha como dono da carga ou t
 ## Atualização — conferência pública e conformidade, API 0.15 e 0.16, 18/11/2026
 
 Quem recebe o relatório confere sem login (endereço e QR code impressos), com a auditoria como prova. Painel de conformidade térmica com as viagens recentes, exportação CSV e vírgula decimal nos três CSVs. Detalhes em [[ThermoTrace - Conferência pública e conformidade 0.15-0.16]].
+
+## Atualização — merge 0.14–0.16 e viagem do servidor no app, Android 0.9.0, 20/11/2026
+
+API 0.16 no `main` e no Render (PRs #1 a #3). No celular, a tela de envio passa a mostrar a viagem consolidada do servidor, com a situação igual à do painel de conformidade (TT-040, PR #4). Sem ensaio em aparelho. Detalhes em [[ThermoTrace - Viagem do servidor no app 0.9.0]].
