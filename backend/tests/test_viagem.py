@@ -1,4 +1,7 @@
 """WEB-12: viagem consolidada não soma coletas, confere as anteriores e mede excursões."""
+import json
+import os
+from pathlib import Path
 from uuid import UUID
 
 from sqlalchemy import select
@@ -69,3 +72,36 @@ def test_sem_serie_e_isolamento(ambiente):
     assert c.get(path, headers=headers(ambiente[3]('b'))).status_code == 404
     assert c.get(path, headers=headers(ambiente[3]('staff'))).status_code == 403
     assert c.get(path).status_code == 401
+
+
+FIXTURE_ANDROID = Path(__file__).resolve().parents[1] / 'docs/viagem-android-0.16.json'
+
+
+def _forma(v):
+    """Estrutura sem valores: chaves e tipos, para o contrato não depender de UUIDs e horários."""
+    if isinstance(v, dict):
+        return {k: _forma(x) for k, x in sorted(v.items())}
+    if isinstance(v, list):
+        return [_forma(v[0])] if v else []
+    if isinstance(v, bool) or v is None:
+        return type(v).__name__
+    return 'numero' if isinstance(v, (int, float)) else type(v).__name__
+
+
+def test_contrato_android_da_viagem(ambiente):
+    """TT-040: o app lê a viagem desta resposta. Mudou a forma, o Android precisa mudar junto.
+
+    Regenerar a fixture: THERMOTRACE_GRAVAR_FIXTURE=1 (só com dados sintéticos do banco descartável).
+    """
+    d = preparar_ingestao(ambiente, codigo='CONTRATO-VIAGEM-SINTETICO'); assert iniciar(d).status_code == 201
+    c, h = d[0], d[3]
+    coletar(d, PONTOS[:3], 30); coletar(d, PONTOS, 90, 'final')
+    v = c.get(f"/api/v1/sessoes/{d[-1]['sessao_id']}/viagem", headers=h).json()
+    assert v['excursoes'] and v['divergencias'] == [] and v['resumo']['inclui_leitura_final']
+    if os.environ.get('THERMOTRACE_GRAVAR_FIXTURE') == '1':
+        gravar = {'origem_fixture': 'API 0.16 / PostgreSQL 17 / dados sintéticos de tests/test_viagem.py', **v}
+        FIXTURE_ANDROID.write_text(json.dumps(gravar, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    gravada = json.loads(FIXTURE_ANDROID.read_text(encoding='utf-8'))
+    gravada.pop('origem_fixture')
+    # Divergência é lista vazia na fixture; a forma do item vem do teste de coletas que discordam.
+    assert _forma(v) == _forma(gravada)

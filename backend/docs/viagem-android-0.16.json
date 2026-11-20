@@ -1,0 +1,129 @@
+{
+  "origem_fixture": "API 0.16 / PostgreSQL 17 / dados sintéticos de tests/test_viagem.py",
+  "versao": "tt-viagem-2",
+  "sessao_id": "de387116-325a-4d2f-b6a2-a06badaeb881",
+  "remessa_id": "01838c7a-5738-4a54-838e-e24952bae7d8",
+  "codigo_carga": "CONTRATO-VIAGEM-SINTETICO",
+  "tipo": "viagem",
+  "origem": "simulacao",
+  "faixa": {
+    "min_c": 2.0,
+    "max_c": 8.0
+  },
+  "intervalo_segundos": 600,
+  "integridade_cadeia": true,
+  "validacao_fisica": false,
+  "stop_fisico": "nao_confirmado_pelo_servidor",
+  "coletas": [
+    {
+      "leitura_id": "106a9a57-d7e5-4f1c-8549-66b2d875a72c",
+      "tipo": "checkpoint",
+      "ordem_recebimento": 2,
+      "lida_em": "2026-09-12T12:30:00+00:00",
+      "medicoes": 3,
+      "conferencia": "coerente",
+      "utilizavel": true
+    },
+    {
+      "leitura_id": "05611318-60ac-44d2-9589-0962aa0ae0d2",
+      "tipo": "final",
+      "ordem_recebimento": 3,
+      "lida_em": "2026-09-12T13:30:00+00:00",
+      "medicoes": 9,
+      "conferencia": "coerente",
+      "utilizavel": true
+    }
+  ],
+  "base_leitura_id": "05611318-60ac-44d2-9589-0962aa0ae0d2",
+  "pontos": [
+    {
+      "indice": 0,
+      "instante": "2026-09-12T12:00:00+00:00",
+      "temperatura_c": 4.0,
+      "indicador": null
+    },
+    {
+      "indice": 1,
+      "instante": "2026-09-12T12:10:00+00:00",
+      "temperatura_c": 5.0,
+      "indicador": null
+    },
+    {
+      "indice": 2,
+      "instante": "2026-09-12T12:20:00+00:00",
+      "temperatura_c": 9.0,
+      "indicador": null
+    },
+    {
+      "indice": 3,
+      "instante": "2026-09-12T12:30:00+00:00",
+      "temperatura_c": 9.5,
+      "indicador": null
+    },
+    {
+      "indice": 4,
+      "instante": "2026-09-12T12:40:00+00:00",
+      "temperatura_c": 6.0,
+      "indicador": null
+    },
+    {
+      "indice": 5,
+      "instante": "2026-09-12T12:50:00+00:00",
+      "temperatura_c": 1.5,
+      "indicador": null
+    },
+    {
+      "indice": 6,
+      "instante": "2026-09-12T13:00:00+00:00",
+      "temperatura_c": 5.0,
+      "indicador": null
+    },
+    {
+      "indice": 7,
+      "instante": "2026-09-12T13:10:00+00:00",
+      "temperatura_c": 5.0,
+      "indicador": null
+    },
+    {
+      "indice": 8,
+      "instante": "2026-09-12T13:20:00+00:00",
+      "temperatura_c": 5.0,
+      "indicador": null
+    }
+  ],
+  "excursoes": [
+    {
+      "tipo": "acima",
+      "inicio": "2026-09-12T12:20:00+00:00",
+      "fim": "2026-09-12T12:30:00+00:00",
+      "pontos": 2,
+      "extremo_c": 9.5,
+      "duracao_nominal_s": 1200
+    },
+    {
+      "tipo": "abaixo",
+      "inicio": "2026-09-12T12:50:00+00:00",
+      "fim": "2026-09-12T12:50:00+00:00",
+      "pontos": 1,
+      "extremo_c": 1.5,
+      "duracao_nominal_s": 600
+    }
+  ],
+  "divergencias": [],
+  "resumo": {
+    "quantidade": 9,
+    "minima_c": 1.5,
+    "maxima_c": 9.5,
+    "primeiro_instante": "2026-09-12T12:00:00+00:00",
+    "ultimo_instante": "2026-09-12T13:20:00+00:00",
+    "pontos_fora_da_faixa": 3,
+    "tempo_fora_nominal_s": 1800,
+    "percentual_na_faixa": 66.67,
+    "excursoes": 2,
+    "coletas_consideradas": 2,
+    "inclui_leitura_final": true
+  },
+  "conferencia": "coerente",
+  "avisos": [],
+  "hash_projecao": "4f2c0769d8f57d789566c02bb42e89321ed4f43607d3c59279cd0dee739ed62b"
+}

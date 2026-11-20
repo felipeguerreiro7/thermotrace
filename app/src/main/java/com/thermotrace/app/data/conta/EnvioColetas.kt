@@ -47,6 +47,11 @@ class EnvioColetas(private val db: ThermoTraceDb, private val conta: Repositorio
         }
         return ResultadoFila(enviados, falhas, loginNecessario = false)
     }
+    /** TT-040: viagem consolidada no servidor, com as coletas de todos os celulares. Só leitura. */
+    suspend fun viagem(sessaoId: String): ViagemServidor {
+        val id = UUID.fromString(sessaoId).toString()
+        return ContratoViagem.ler(conta.consultarEnvio(escopo, "/sessoes/$id/viagem"), id)
+    }
     suspend fun vinculo(id: String) = dao.vinculo(id)
     suspend fun pedidos(id: String) = dao.pedidos(id)
     suspend fun cargas(busca: String): List<CargaConta> {
