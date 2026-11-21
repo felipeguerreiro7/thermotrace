@@ -9,10 +9,41 @@ from tests.test_cargas import preparar, remessa
 
 def test_raiz_abre_site_no_navegador_e_preserva_resposta_api(cliente):
     r = cliente.get('/', headers={'Accept':'text/html'}, follow_redirects=False)
-    assert r.status_code == 307 and r.headers['location'] == '/portal'
+    assert r.status_code == 200 and 'text/html' in r.headers['content-type']
+    assert 'href="/portal"' in r.text and 'href="/privacidade"' in r.text
     assert r.headers['Vary'] == 'Accept' and r.headers['Cache-Control'] == 'no-store'
     r = cliente.get('/', headers={'Accept':'application/json'})
     assert r.status_code == 200 and r.json()['portal'] == '/portal'
+
+
+@pytest.mark.parametrize('path', ['/privacidade', '/termos'])
+def test_site_publico_sem_script_e_com_protecoes(cliente, path):
+    r = cliente.get(path)
+    assert r.status_code == 200 and 'lang="pt-BR"' in r.text
+    assert '<script' not in r.text and '/site/site.css' in r.text
+    csp = r.headers['Content-Security-Policy']
+    assert "default-src 'none'" in csp and "frame-ancestors 'none'" in csp and 'script-src' not in csp
+    assert r.headers['X-Content-Type-Options'] == 'nosniff'
+
+
+def test_raiz_html_tambem_sem_script(cliente):
+    r = cliente.get('/', headers={'Accept':'text/html'})
+    assert '<script' not in r.text
+    assert "default-src 'none'" in r.headers['Content-Security-Policy']
+
+
+def test_politica_declara_localizacao_e_ainda_e_rascunho(cliente):
+    texto = cliente.get('/privacidade').text
+    # Enquanto houver campo a completar, a faixa de rascunho não pode sumir.
+    assert ('class="pendente"' in texto) == ('id="rascunho"' in texto)
+    assert 'Localização' in texto and 'não é enviada ao servidor' in texto
+
+
+def test_css_do_site_e_nada_mais(cliente):
+    r = cliente.get('/site/site.css')
+    assert r.status_code == 200 and 'text/css' in r.headers['content-type']
+    for path in ['/site/index.html', '/site/privacidade.html', '/site/../routes.py', '/site/']:
+        assert cliente.get(path).status_code == 404
 
 
 @pytest.mark.parametrize('path', ['/portal', '/portal/', '/portal/conferir'])

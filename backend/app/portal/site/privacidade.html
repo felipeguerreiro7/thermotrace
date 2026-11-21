@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Política de privacidade — ThermoTrace</title>
+<meta name="description" content="Quais dados pessoais o ThermoTrace trata no aplicativo e no portal, para quê, por quanto tempo e como exercer seus direitos.">
+<link rel="stylesheet" href="/site/site.css">
+</head>
+<body>
+<a class="skip" href="#conteudo">Ir para o conteúdo</a>
+<header class="topo">
+  <div class="wrap">
+    <a class="marca" href="/">Thermo<span>Trace</span></a>
+    <nav aria-label="Principal">
+      <a href="/">Início</a>
+      <a href="/portal/conferir">Conferir relatório</a>
+      <a href="/privacidade" aria-current="page">Privacidade</a>
+      <a class="entrar" href="/portal">Entrar no portal</a>
+    </nav>
+  </div>
+</header>
+
+<main id="conteudo" class="wrap">
+<article class="doc">
+  <h1>Política de privacidade</h1>
+  <p class="vigencia">Versão 0.1 de 21/11/2026, para o piloto em homologação.</p>
+  <p class="aviso" id="rascunho"><strong>Rascunho em revisão.</strong> Este texto descreve o funcionamento real do aplicativo e do portal, mas ainda não passou por revisão jurídica e tem campos a completar (marcados em destaque). Ele passa a valer quando esta faixa for retirada.</p>
+
+  <h2>1. Quem somos</h2>
+  <p>O ThermoTrace é um serviço de registro de temperatura de cargas por etiqueta NFC, formado por um aplicativo Android e um portal web. Controlador dos dados tratados para operar o serviço: <span class="pendente">razão social e CNPJ a completar</span>. Encarregado (DPO) e canal de privacidade: <span class="pendente">e-mail a completar</span>.</p>
+  <p>Os dados das cargas pertencem à empresa cliente que contratou o serviço. Para esses dados, o ThermoTrace atua como operador, seguindo as instruções da empresa cliente, que é a controladora.</p>
+
+  <h2>2. Quais dados tratamos</h2>
+  <div class="tabela">
+  <table>
+    <thead><tr><th>Dado</th><th>De onde vem</th><th>Para quê</th></tr></thead>
+    <tbody>
+      <tr><td>Nome e e-mail de quem usa o portal ou o aplicativo; empresa e papel (gestor ou operador)</td><td>Cadastro feito pelo gestor da empresa ou pela equipe ThermoTrace</td><td>Dar acesso, identificar quem fez cada leitura e cada alteração</td></tr>
+      <tr><td>Senha (guardada só como resumo criptográfico) e, para a equipe ThermoTrace, segredo da verificação em duas etapas</td><td>A própria pessoa, ao ativar o acesso</td><td>Autenticação</td></tr>
+      <tr><td>Endereço IP, navegador ou versão do aplicativo e identificador de instalação do aplicativo</td><td>Gerados automaticamente a cada acesso</td><td>Segurança da conta, limite de tentativas, investigação de falhas e registro de auditoria</td></tr>
+      <tr><td>Localização do celular no momento da leitura (latitude, longitude, precisão e horário do registro)</td><td>Aparelho do operador, somente com a permissão concedida</td><td>Mostrar onde o celular estava em cada leitura, no aparelho e no laudo exportado por ele</td></tr>
+      <tr><td>Registro de quem consultou, exportou ou alterou cada carga</td><td>Uso do portal e do aplicativo</td><td>Trilha de auditoria exigida para que o relatório tenha valor de evidência</td></tr>
+      <tr><td>Dados da carga: documento fiscal (chave de NF-e/CT-e), CNPJ das empresas envolvidas, leituras de temperatura</td><td>Empresa cliente e etiqueta</td><td>Prestar o serviço contratado. Não são dados pessoais em si, mas podem identificar empresas e pessoas</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p><strong>Localização:</strong> é onde estava o celular quando a leitura foi feita, não um rastreamento contínuo da carga nem do operador. O aplicativo não acompanha a localização em segundo plano. Sem a permissão, ou sem sinal de GPS, a leitura é feita normalmente e fica registrada como "sem localização". Nesta versão, a localização fica no aparelho e no laudo que o próprio aplicativo exporta; ela não é enviada ao servidor.</p>
+  <p>Não coletamos documentos pessoais, dados de pagamento nem dados sensíveis.</p>
+
+  <h2>3. Bases legais (LGPD, art. 7º)</h2>
+  <ul>
+    <li><strong>Execução de contrato:</strong> acesso, operação das cargas e emissão de relatórios para a empresa cliente.</li>
+    <li><strong>Legítimo interesse:</strong> segurança, prevenção de fraude, limite de tentativas e registro de auditoria.</li>
+    <li><strong>Cumprimento de obrigação legal ou regulatória:</strong> guarda de registros de acesso (Marco Civil da Internet) e evidências que a empresa cliente precise apresentar a órgãos de fiscalização.</li>
+    <li><strong>Localização:</strong> legítimo interesse da empresa cliente em documentar onde cada leitura ocorreu, com a permissão do sistema Android, que pode ser negada ou revogada a qualquer momento nas configurações do aparelho.</li>
+  </ul>
+
+  <h2>4. Com quem compartilhamos</h2>
+  <ul>
+    <li><strong>Empresas da mesma carga:</strong> quando o dono da carga a compartilha com uma transportadora, ela passa a ver a viagem e o nome de quem fez cada leitura, no limite da permissão concedida.</li>
+    <li><strong>Quem recebe um relatório:</strong> a conferência pública mostra apenas se o arquivo foi emitido pelo servidor e se é a versão atual. Não exige login e não revela outros dados.</li>
+    <li><strong>Fornecedores de infraestrutura:</strong> hospedagem do servidor e do banco de dados (Render Services, Inc.), em servidores nos Estados Unidos. Isso é uma transferência internacional de dados, feita com base nas garantias contratuais do fornecedor (LGPD, art. 33).</li>
+    <li><strong>Google:</strong> o aplicativo usa o Google Play Services para obter a localização do celular, conforme a política do próprio Google.</li>
+    <li><strong>Autoridades:</strong> quando houver ordem judicial ou obrigação legal.</li>
+  </ul>
+  <p>Não vendemos dados e não usamos dados para publicidade.</p>
+
+  <h2>5. Por quanto tempo guardamos</h2>
+  <ul>
+    <li>Dados de acesso (nome, e-mail, papel): enquanto a conta existir. Ao revogar o acesso, o cadastro é desativado, mas o nome continua associado às leituras e alterações que a pessoa fez, porque apagar o autor invalidaria a auditoria da carga.</li>
+    <li>Registros de acesso à aplicação (IP, data e hora): pelo menos 6 meses, como exige o art. 15 do Marco Civil da Internet.</li>
+    <li>Dados das cargas e trilha de auditoria: pelo prazo definido no contrato com a empresa cliente, que normalmente segue o prazo de guarda exigido pela regulação do setor dela. <span class="pendente">Prazo padrão a definir</span>.</li>
+    <li>Dados no celular: até o aplicativo ser desinstalado ou os dados serem apagados nas configurações do Android.</li>
+  </ul>
+
+  <h2>6. Segurança</h2>
+  <p>Conexão sempre por HTTPS, senha guardada só como resumo criptográfico, verificação em duas etapas obrigatória para a equipe ThermoTrace, isolamento por empresa no banco de dados, limite de tentativas de login, cadeia de integridade nas evidências e registro de cada consulta e exportação. A equipe ThermoTrace não vê o conteúdo das cargas dos clientes.</p>
+  <p>O portal não usa cookies de rastreamento nem ferramentas de análise de terceiros.</p>
+
+  <h2>7. Seus direitos</h2>
+  <p>Você pode pedir confirmação de tratamento, acesso, correção, anonimização ou eliminação do que não for necessário, portabilidade, informação sobre compartilhamento e revisão de decisões. Quando o dado fizer parte de uma carga, o pedido é encaminhado à empresa cliente, que é a controladora. Algumas informações não podem ser apagadas enquanto houver obrigação legal ou contratual de guarda, como a autoria de uma leitura na trilha de auditoria. Canal: <span class="pendente">e-mail a completar</span>. Você também pode reclamar à Autoridade Nacional de Proteção de Dados (ANPD).</p>
+
+  <h2>8. Crianças</h2>
+  <p>O serviço é profissional e não se destina a menores de 18 anos.</p>
+
+  <h2>9. Mudanças</h2>
+  <p>Mudanças nesta política serão publicadas nesta página com nova data e número de versão. Mudanças relevantes também serão avisadas no portal.</p>
+</article>
+</main>
+
+<footer class="rodape">
+  <div class="wrap">
+    <span>ThermoTrace</span>
+    <nav aria-label="Rodapé">
+      <a href="/privacidade">Política de privacidade</a>
+      <a href="/termos">Termos de uso</a>
+      <a href="/portal">Portal</a>
+    </nav>
+  </div>
+</footer>
+</body>
+</html>
