@@ -80,6 +80,7 @@ class EnvioViewModel(private val envio: EnvioColetas, private val db: ThermoTrac
             _estado.value = _estado.value.copy(viagemCarregando=false,viagemErro=erro)
         }
     }
+    suspend fun relatorio(): RelatorioViagem = envio.relatorioViagem(_estado.value.sessaoId)
     fun busca(s: String) { _estado.value = _estado.value.copy(busca=s.take(96)) }
     fun buscar() = executar {
         check(_estado.value.busca.isNotBlank()) { "Informe o código ou documento da carga online." }
@@ -136,7 +137,7 @@ fun EnvioScreen(id: String, vm: EnvioViewModel, aoVoltar: () -> Unit) {
                 item { Button(onClick=vm::enviar,enabled=!e.ocupado,modifier=Modifier.fillMaxWidth()) { Text("Enviar coletas / tentar novamente") } }
                 item { Text("${e.pedidos.count{it.recibo!=null}} recibo(s) salvo(s). Novas coletas são incluídas ao tocar em Enviar.") }
                 if(e.pedidos.any { it.recibo != null }) item {
-                    ViagemServidorCard(e.viagem,e.viagemCarregando,e.viagemErro,aoAtualizar=vm::carregarViagem)
+                    ViagemServidorCard(e.viagem,e.viagemCarregando,e.viagemErro,aoAtualizar=vm::carregarViagem,aoBaixarRelatorio=vm::relatorio)
                 }
                 items(e.pedidos,key={it.eventoId}) { p -> Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(12.dp)) {
                     Text("${p.tipo.replaceFirstChar { it.uppercase() }} · ${if(p.recibo==null) "Pendente" else "Recebida pelo servidor"}")

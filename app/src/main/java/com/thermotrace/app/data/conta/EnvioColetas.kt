@@ -52,6 +52,11 @@ class EnvioColetas(private val db: ThermoTraceDb, private val conta: Repositorio
         val id = UUID.fromString(sessaoId).toString()
         return ContratoViagem.ler(conta.consultarEnvio(escopo, "/sessoes/$id/viagem"), id)
     }
+    /** Relatório HTML da viagem. O servidor registra a exportação, que é o que a conferência pública reconhece. */
+    suspend fun relatorioViagem(sessaoId: String): RelatorioViagem {
+        val id = UUID.fromString(sessaoId).toString()
+        return ContratoViagem.lerRelatorio(conta.consultarEnvio(escopo, "/sessoes/$id/viagem?formato=html"), id)
+    }
     /** Só vale consultar a viagem de sessão que o servidor já confirmou ter recebido. */
     suspend fun temRecibo(sessaoId: String) = dao.pedidos(sessaoId).any { it.recibo != null }
     suspend fun vinculo(id: String) = dao.vinculo(id)

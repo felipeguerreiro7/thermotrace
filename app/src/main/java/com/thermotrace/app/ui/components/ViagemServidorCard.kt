@@ -12,7 +12,15 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.thermotrace.app.data.conta.ContratoViagem
+import com.thermotrace.app.data.conta.RelatorioViagem
 import com.thermotrace.app.data.conta.SituacaoViagem
+import com.thermotrace.app.data.export.CompartilharViagem
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import com.thermotrace.app.data.conta.ViagemServidor
 import com.thermotrace.app.domain.RegrasTermicas
 import com.thermotrace.app.ui.theme.*
@@ -47,8 +55,12 @@ data class EstadoViagemServidor(val viagem: ViagemServidor? = null, val carregan
  */
 @Composable
 fun ViagemServidorCard(viagem: ViagemServidor?, carregando: Boolean, erro: String?, aoAtualizar: () -> Unit,
-                       compacto: Boolean = false) {
+                       compacto: Boolean = false, aoBaixarRelatorio: (suspend () -> RelatorioViagem)? = null) {
     var aberto by rememberSaveable { mutableStateOf(!compacto) }
+    val contexto = LocalContext.current
+    val escopo = rememberCoroutineScope()
+    var compartilhando by remember { mutableStateOf(false) }
+    var erroRelatorio by remember { mutableStateOf<String?>(null) }
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("Viagem no servidor", style = if (compacto) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium)
@@ -64,6 +76,21 @@ fun ViagemServidorCard(viagem: ViagemServidor?, carregando: Boolean, erro: Strin
                         if (r.incluiLeituraFinal) "com leitura final" else "sem leitura final",
                         style = MaterialTheme.typography.bodySmall)
                 }
+            }
+            erroRelatorio?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            if (aoBaixarRelatorio != null && viagem?.resumo != null && aberto) {
+                Button(enabled = !compartilhando && !carregando, modifier = Modifier.fillMaxWidth(), onClick = {
+                    compartilhando = true; erroRelatorio = null
+                    escopo.launch {
+                        try {
+                            val r = aoBaixarRelatorio()
+                            val i = withContext(Dispatchers.IO) { CompartilharViagem.intent(contexto, r, viagem.codigoCarga) }
+                            contexto.startActivity(i)
+                        } catch (e: CancellationException) { throw e }
+                        catch (e: Exception) { erroRelatorio = ContratoViagem.mensagemDeFalha(e) }
+                        finally { compartilhando = false }
+                    }
+                }) { Text(if (compartilhando) "Preparando relatório…" else "Compartilhar relatório com QR de conferência") }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (compacto && viagem != null) TextButton(onClick = { aberto = !aberto }) {

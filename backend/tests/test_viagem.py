@@ -101,6 +101,11 @@ def test_contrato_android_da_viagem(ambiente):
     if os.environ.get('THERMOTRACE_GRAVAR_FIXTURE') == '1':
         gravar = {'origem_fixture': 'API 0.16 / PostgreSQL 17 / dados sintéticos de tests/test_viagem.py', **v}
         FIXTURE_ANDROID.write_text(json.dumps(gravar, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    # O app compartilha este HTML e tira dele o endereço de conferência (com &amp; escapado).
+    html = c.get(f"/api/v1/sessoes/{d[-1]['sessao_id']}/viagem?formato=html", headers=h).text
+    assert f"/portal/conferir?sessao={v['sessao_id']}&amp;hash={v['hash_projecao']}" in html
+    if os.environ.get('THERMOTRACE_GRAVAR_FIXTURE') == '1':
+        FIXTURE_ANDROID.with_suffix('.html').write_text(html, encoding='utf-8', newline='\n')
     gravada = json.loads(FIXTURE_ANDROID.read_text(encoding='utf-8'))
     gravada.pop('origem_fixture')
     # Divergência é lista vazia na fixture; a forma do item vem do teste de coletas que discordam.

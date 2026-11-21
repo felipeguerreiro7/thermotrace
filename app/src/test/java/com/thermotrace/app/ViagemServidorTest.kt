@@ -82,4 +82,37 @@ class ViagemServidorTest {
         assertEquals("Entre na conta original desta coleta.", m(IllegalStateException("Entre na conta original desta coleta.")))
         assertTrue(m(com.thermotrace.app.data.conta.LoginNecessario()).contains("Entre novamente"))
     }
+
+    private val html = java.io.File("../backend/docs/viagem-android-0.16.html").readText(Charsets.UTF_8)
+    private val sessaoHtml = Regex("sessao=([0-9a-f-]{36})").find(html)!!.groupValues[1]
+
+    @Test fun `transporte aceita so as rotas da viagem que o app usa`() {
+        val ok = com.thermotrace.app.data.conta.TransporteHttpsConta::caminhoPermitido
+        val id = "6244e531-5081-47d8-8f94-ee1b8548d267"
+        assertTrue(ok("/sessoes/$id/viagem"))
+        assertTrue(ok("/sessoes/$id/viagem?formato=html"))
+        assertFalse(ok("/sessoes/$id/viagem?formato=csv"))
+        assertFalse(ok("/sessoes/$id/integridade"))
+        assertTrue(ok("/sessoes/$id/leituras"))  // rota antiga continua
+    }
+
+    @Test fun `relatorio real traz o endereco de conferencia desta sessao`() {
+        val r = ContratoViagem.lerRelatorio(html, sessaoHtml)
+        val link = r.linkConferencia!!
+        assertTrue(link.contains("/portal/conferir?sessao=$sessaoHtml&hash="))
+        assertFalse(link.contains("&amp;"))
+        assertTrue(com.thermotrace.app.data.export.CompartilharViagem.mensagem("CARGA-1", link).contains(link))
+    }
+
+    @Test fun `relatorio de outra sessao e recusado`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            ContratoViagem.lerRelatorio(html, "00000000-0000-0000-0000-000000000001")
+        }
+    }
+
+    @Test fun `endereco de conferencia de outra sessao nao vai para a mensagem`() {
+        val outra = "11111111-1111-1111-1111-111111111111"
+        val adulterado = html.replace("conferir?sessao=$sessaoHtml", "conferir?sessao=$outra")
+        assertNull(ContratoViagem.lerRelatorio(adulterado, sessaoHtml).linkConferencia)
+    }
 }

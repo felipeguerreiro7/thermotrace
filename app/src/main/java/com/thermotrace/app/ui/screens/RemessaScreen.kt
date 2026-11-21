@@ -148,6 +148,9 @@ class RemessaViewModel(
         for (s in sessoes) if (s.sessao.id !in _estado.value.viagens) consultarViagem(s.sessao.id, automatica = true)
     }
 
+    suspend fun relatorio(sessaoId: String): com.thermotrace.app.data.conta.RelatorioViagem =
+        checkNotNull(envio) { "Entre na conta para baixar o relatório." }.relatorioViagem(sessaoId)
+
     fun consultarViagem(sessaoId: String, automatica: Boolean = false) {
         val envio = envio ?: return
         if (_estado.value.viagens[sessaoId]?.carregando == true) return
@@ -259,7 +262,7 @@ fun RemessaScreen(
                 )
                 sessao?.sessao?.id?.let { id -> e.viagens[id]?.let { v ->
                     ViagemServidorCard(v.viagem, v.carregando, v.erro, compacto = true,
-                        aoAtualizar = { vm.consultarViagem(id) })
+                        aoAtualizar = { vm.consultarViagem(id) }, aoBaixarRelatorio = { vm.relatorio(id) })
                 } }
                 if(sessao != null && aoEnviar != null) OutlinedButton(onClick={aoEnviar(sessao.sessao.id)},modifier=Modifier.fillMaxWidth()) {
                     Text("Enviar coletas do volume ${volume.sequencia}")

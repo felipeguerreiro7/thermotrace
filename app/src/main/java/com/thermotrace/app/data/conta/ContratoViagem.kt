@@ -32,14 +32,20 @@ data class ViagemServidor(
     val divergencias: Int, val avisos: List<String>, val hashProjecao: String,
 )
 
+/** Relatório HTML emitido pelo servidor (com QR) e o endereço de conferência impresso nele. */
+data class RelatorioViagem(val html: String, val linkConferencia: String?)
+
 object ContratoViagem {
     private const val MAX_PONTOS = 20_000
 
     /** Mesma tradução de falha nas duas telas que consultam a viagem. */
     fun mensagemDeFalha(e: Exception): String = when (e) {
         is LoginNecessario -> e.message ?: "Entre novamente para acessar sua conta."
-        is FalhaHttpConta -> if (e.status == 404) "O servidor ainda não tem esta sessão. Envie as coletas primeiro."
-            else "Não foi possível consultar a viagem (HTTP ${e.status})."
+        is FalhaHttpConta -> when (e.status) {
+            404 -> "O servidor ainda não tem esta sessão. Envie as coletas primeiro."
+            403 -> "Sua conta não tem permissão para isto nesta carga. Peça a quem cadastrou a carga."
+            else -> "Não foi possível consultar a viagem (HTTP ${e.status})."
+        }
         is IllegalStateException -> e.message ?: "Não foi possível consultar a viagem."
         is IllegalArgumentException, is org.json.JSONException -> "Resposta do servidor fora do esperado por esta versão do app. Atualize o aplicativo."
         else -> "Sem conexão com o servidor. A viagem pode ser consultada depois; as coletas continuam no celular."
@@ -104,6 +110,20 @@ object ContratoViagem {
             avisos = (0 until minOf(avisos.length(), 20)).map { avisos.getString(it).take(500) },
             hashProjecao = hash,
         )
+    }
+
+    /**
+     * Confere que o HTML é um relatório desta sessão e extrai o endereço de conferência,
+     * só se ele apontar para esta mesma sessão. O endereço vai no texto da mensagem para
+     * quem recebe conferir mesmo sem abrir o anexo.
+     */
+    fun lerRelatorio(html: String, sessaoEsperada: String): RelatorioViagem {
+        require(html.length in 1..8_000_000 && html.contains("<html", ignoreCase = true)) { "Relatório inválido." }
+        require(html.contains(sessaoEsperada)) { "Relatório não corresponde a esta sessão." }
+        val link = Regex("https?://[A-Za-z0-9.:-]+/portal/conferir\\?sessao=([0-9a-f-]{36})&(?:amp;)?hash=([0-9a-f]{64})")
+            .find(html)?.takeIf { it.groupValues[1] == sessaoEsperada }
+            ?.let { it.value.replace("&amp;", "&") }
+        return RelatorioViagem(html, link)
     }
 
     private fun numero(o: JSONObject, campo: String): Double {

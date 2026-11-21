@@ -22,6 +22,12 @@ fun interface TransporteConta {
 }
 
 class TransporteHttpsConta : TransporteConta {
+    companion object {
+        /** Lista fechada: o token só vai para rotas que o app de fato usa. TT-040 acrescentou a viagem. */
+        private val CAMINHOS = Regex("/(auth/[a-z]+|remessas[^#]*|dispositivos|etiquetas/localizar\\?uid=[0-9A-F]+|" +
+            "volumes/[0-9a-f-]{36}/sessoes|sessoes/[0-9a-f-]{36}/leituras|sessoes/[0-9a-f-]{36}/viagem(\\?formato=html)?)")
+        fun caminhoPermitido(caminho: String) = caminho.matches(CAMINHOS)
+    }
     override fun enviar(endereco: String, caminho: String, metodo: String, token: String?, corpo: String?): RespostaConta {
         return executar(endereco, caminho, metodo, token, corpo, null)
     }
@@ -30,7 +36,7 @@ class TransporteHttpsConta : TransporteConta {
 
     private fun executar(endereco: String, caminho: String, metodo: String, token: String?, corpo: String?, chave: String?): RespostaConta {
         val base = EnderecoConta.normalizar(endereco)
-        require(caminho.matches(Regex("/(auth/[a-z]+|remessas[^#]*|dispositivos|etiquetas/localizar\\?uid=[0-9A-F]+|volumes/[0-9a-f-]{36}/sessoes|sessoes/[0-9a-f-]{36}/leituras)")))
+        require(caminhoPermitido(caminho)) { "Caminho fora da lista do aplicativo." }
         chave?.let { require(it.matches(Regex("[A-Za-z0-9:_-]{1,128}"))) }
         val conexao = URL("$base/api/v1$caminho").openConnection() as HttpURLConnection
         try {
