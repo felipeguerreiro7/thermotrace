@@ -48,6 +48,15 @@ services:
         value: "[]"
       - key: TAMANHO_MAXIMO_MB
         value: "25"
+      # O serviço só é alcançado pela Cloudflare (resposta traz Server: cloudflare e
+      # CF-RAY), que sobrescreve CF-Connecting-IP com o IP real. Sem isto, todos os
+      # clientes contam como o IP do proxy interno nos limites de tentativas.
+      - key: IP_CLIENTE_CABECALHO
+        value: CF-Connecting-IP
+      # Link e QR de conferência impressos no relatório; atrás do proxy, a URL da
+      # requisição sai como http://.
+      - key: URL_PUBLICA
+        value: https://thermotrace-api.onrender.com
 
 # Sem bloco `databases:` de propósito. O banco thermotrace-homologacao-db já
 # foi criado à mão em Oregon com PostgreSQL 17; declarar um aqui faria o Render

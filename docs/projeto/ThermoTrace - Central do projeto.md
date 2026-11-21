@@ -150,3 +150,7 @@ Tela de login com "Conhecer o portal": entrada sem senha como dono da carga ou t
 ## Atualização — conferência pública e conformidade, API 0.15 e 0.16, 18/11/2026
 
 Quem recebe o relatório confere sem login (endereço e QR code impressos), com a auditoria como prova. Painel de conformidade térmica com as viagens recentes, exportação CSV e vírgula decimal nos três CSVs. Detalhes em [[ThermoTrace - Conferência pública e conformidade 0.15-0.16]].
+
+## Atualização — IP do cliente atrás do proxy, API 0.16.1, 21/11/2026
+
+No Render, os limites de tentativas (login, conferência, demonstração) contavam o IP do proxy interno, que varia e é dividido entre pessoas; confirmado por fora. Agora contam o IP real que a Cloudflare informa, sem confiar no X-Forwarded-For forjável, e o link do relatório sai em https. Detalhes em [[ThermoTrace - IP do cliente atrás do proxy 0.16.1]].
