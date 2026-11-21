@@ -154,3 +154,7 @@ Quem recebe o relatório confere sem login (endereço e QR code impressos), com 
 ## Atualização — merge 0.14–0.16 e viagem do servidor no app, Android 0.9.0, 20/11/2026
 
 API 0.16 no `main` e no Render (PRs #1 a #3). No celular, a tela de envio passa a mostrar a viagem consolidada do servidor, com a situação igual à do painel de conformidade (TT-040, PR #4). Sem ensaio em aparelho. Detalhes em [[ThermoTrace - Viagem do servidor no app 0.9.0]].
+
+## Atualização — IP do cliente atrás do proxy, API 0.16.1, 21/11/2026
+
+No Render, os limites de tentativas (login, conferência, demonstração) contavam o IP do proxy interno, que varia e é dividido entre pessoas; confirmado por fora. Agora contam o IP real que a Cloudflare informa, sem confiar no X-Forwarded-For forjável, e o link do relatório sai em https. Detalhes em [[ThermoTrace - IP do cliente atrás do proxy 0.16.1]].

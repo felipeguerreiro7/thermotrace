@@ -24,6 +24,7 @@ from app.models import Empresa, Usuario
 from app.models.enums import PapelUsuario
 from app.services import autenticacao as service
 from app.services.auditoria import auditar
+from app.core.rede import ip_do_cliente
 
 router = APIRouter(prefix="/demo", tags=["Demonstração"])
 
@@ -69,7 +70,7 @@ def entrar(body: EntrarDemo, request: Request, response: Response, db: Session =
     response.headers["Cache-Control"] = "no-store"
     if not _ligada():
         raise NaoEncontrado("Demonstração indisponível neste ambiente.")
-    ip = request.client.host if request.client else "desconhecido"
+    ip = ip_do_cliente(request)
     service.limitar_login(db, "demo:" + body.perfil, ip)
     user = _conta(db, body.perfil, bloquear=True)
     if not user:

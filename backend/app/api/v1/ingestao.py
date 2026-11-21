@@ -14,6 +14,7 @@ from app.services.compartilhamentos import remessa_legivel, auditar_acesso
 from typing import Literal
 from fastapi import Response
 from app.services import temperaturas, viagem
+from app.core.rede import url_publica
 import hashlib
 
 router=APIRouter(tags=['Recepção de evidências'])
@@ -58,7 +59,7 @@ def viagem_da_sessao(sessao_id:UUID, request:Request, formato:Literal['json','cs
     if formato=='json':
         auditar_acesso(db,'viagem_consultada','sessao_monitoramento',sessao_id,acesso,r,comp,evento)
         return dados
-    conferir_em=f"{str(request.base_url).rstrip('/')}/portal/conferir?sessao={sessao_id}&hash={dados['hash_projecao']}"
+    conferir_em=f"{url_publica(request)}/portal/conferir?sessao={sessao_id}&hash={dados['hash_projecao']}"
     conteudo,mime=viagem.exportar(dados,formato,conferir_em)
     evento['sha256_arquivo']=hashlib.sha256(conteudo.encode('utf-8')).hexdigest()
     auditar_acesso(db,'viagem_exportada','sessao_monitoramento',sessao_id,acesso,r,comp,evento)

@@ -25,7 +25,7 @@ class Config(BaseSettings):
 
     # ---- aplicação -------------------------------------------------
     NOME_APP: str = "ThermoTrace API"
-    VERSAO: str = "0.16.0"
+    VERSAO: str = "0.16.1"
     AMBIENTE: Literal["local", "homologacao", "producao"] = "local"
     DEBUG: bool = False
 
@@ -67,6 +67,26 @@ class Config(BaseSettings):
     # fictícias criadas por `python -m app.demo_cli`, sem senha. Desligado por
     # padrão e recusado em produção, onde não pode existir acesso sem senha.
     DEMO_PUBLICA: bool = False
+
+    # ---- rede atrás de proxy -----------------------------------------
+    # De onde vem o IP do cliente usado nos limites de tentativas (login,
+    # conferência pública, demonstração). Vazio: o endereço da conexão, certo
+    # quando não há proxy. No Render a conexão é sempre de um proxy interno, que
+    # varia, e o X-Forwarded-For aceita o que o cliente mandar; a borda é a
+    # Cloudflare, que sobrescreve CF-Connecting-IP com o IP real. Só ligar onde o
+    # serviço não for alcançável sem passar pela Cloudflare.
+    IP_CLIENTE_CABECALHO: Literal["", "CF-Connecting-IP"] = ""
+    # Endereço público HTTPS impresso no relatório (link e QR de conferência).
+    # Vazio: o endereço da requisição, que atrás do proxy sai como http://.
+    URL_PUBLICA: str = ""
+
+    @field_validator("URL_PUBLICA")
+    @classmethod
+    def _url_publica_https(cls, v: str) -> str:
+        v = v.strip().rstrip("/")
+        if v and (not v.startswith("https://") or "/" in v[len("https://"):] or "?" in v or "@" in v):
+            raise ValueError("URL_PUBLICA deve ser só https://dominio, sem caminho, usuário ou parâmetros.")
+        return v
 
     @model_validator(mode="after")
     def _demo_nunca_em_producao(self) -> "Config":

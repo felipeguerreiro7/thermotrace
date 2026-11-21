@@ -11,6 +11,7 @@ from app.models.enums import TipoEmpresa
 from app.schemas.acesso import AtivarAcesso, CodigoMfa, Login, Renovacao
 from app.services import autenticacao as service, codigo_acesso, mfa
 from app.services.auditoria import auditar
+from app.core.rede import ip_do_cliente
 
 router = APIRouter(prefix="/auth", tags=["Acesso"])
 
@@ -18,9 +19,9 @@ router = APIRouter(prefix="/auth", tags=["Acesso"])
 @router.post("/login")
 def login(body: Login, request: Request, response: Response, db: Session = Depends(obter_sessao)):
     response.headers["Cache-Control"] = "no-store"
-    # Não confiar em X-Forwarded-For arbitrário; proxy confiável configura request.client.
+    # IP do cliente de verdade, também atrás do proxy do Render (app.core.rede).
     return service.login(db, body.email, body.senha.get_secret_value(),
-                         request.client.host if request.client else "desconhecido",
+                         ip_do_cliente(request),
                          body.codigo_mfa.get_secret_value() if body.codigo_mfa else None)
 
 
@@ -80,7 +81,7 @@ def ativar(body: AtivarAcesso, request: Request, response: Response, db: Session
     """Primeiro acesso ou redefinição: e-mail + código de uso único + nova senha (WEB-11)."""
     response.headers["Cache-Control"] = "no-store"
     codigo_acesso.ativar(db, body.email, body.codigo.get_secret_value(), body.nova_senha.get_secret_value(),
-                         request.client.host if request.client else "desconhecido")
+                         ip_do_cliente(request))
 
 
 @router.post("/logout", status_code=204)
