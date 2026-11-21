@@ -33,6 +33,8 @@ A API limita tentativas por IP: login (50 a cada 5 min por IP, 10 por e-mail), a
 
 ## O que falta
 
-- [ ] Depois do merge, conferir por fora no Render: `/saude` em 0.16.1; 31 conferências seguidas deste computador dão 429 na 31ª; de outra máquina, a conferência continua 200. Se não der 429, o serviço não pegou as variáveis do `render.yaml` (serviço criado à mão, não por Blueprint) e elas precisam ser cadastradas no painel.
+- [x] Merge em 21/11 (PR #5) e deploy: `/saude` responde 0.16.1. `CF-Connecting-IP` forjado pelo cliente é recusado pela própria Cloudflare (403), o que confirma que o cabeçalho escolhido não é forjável de fora.
+- [ ] **Pendente do usuário:** a 31ª conferência seguida ainda deu 200, porque o serviço não lê o `render.yaml` (foi criado à mão). Cadastrar no painel do Render, em thermotrace-api → Environment: `IP_CLIENTE_CABECALHO` = `CF-Connecting-IP` e `URL_PUBLICA` = `https://thermotrace-api.onrender.com`, e salvar com novo deploy. Até lá a correção está no código, mas sem efeito na homologação.
+- [ ] Depois do cadastro, repetir: 31 conferências seguidas deste computador devem dar 429 na 31ª.
 - [ ] Quando o domínio `thermotrace.com.br` entrar, trocar `URL_PUBLICA` e conferir que continua passando pela Cloudflare.
 - [ ] Não liberar acesso direto ao serviço sem a Cloudflare enquanto `IP_CLIENTE_CABECALHO` estiver ligado.
