@@ -15,6 +15,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.thermotrace.app.data.conta.*
 import com.thermotrace.app.data.db.*
+import com.thermotrace.app.ui.components.ViagemServidorCard
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,7 +25,8 @@ import org.json.JSONObject
 data class EstadoEnvio(val sessaoId: String = "", val resumo: String = "", val busca: String = "",
     val cargas: List<CargaConta> = emptyList(), val destino: DestinoEnvio? = null,
     val volume: VolumeEnvio? = null, val vinculo: VinculoEnvio? = null,
-    val pedidos: List<PedidoEnvio> = emptyList(), val ocupado: Boolean = false, val mensagem: String? = null)
+    val pedidos: List<PedidoEnvio> = emptyList(), val ocupado: Boolean = false, val mensagem: String? = null,
+    val viagem: ViagemServidor? = null, val viagemCarregando: Boolean = false, val viagemErro: String? = null)
 
 class EnvioViewModel(private val envio: EnvioColetas, private val db: ThermoTraceDb): ViewModel() {
     private val _estado = MutableStateFlow(EstadoEnvio())
@@ -64,7 +66,21 @@ class EnvioViewModel(private val envio: EnvioColetas, private val db: ThermoTrac
         _estado.value = EstadoEnvio(sessaoId=id,ocupado=true,
             resumo="${r.codigo} · volume ${v.sequencia}\n${etiqueta.serial} · UID ${etiqueta.uidNfc}\n${s.minConfiguradoC} a ${s.maxConfiguradoC} °C · intervalo ${s.intervaloSegundos} s")
         atualizar()
+        if(_estado.value.pedidos.any { it.recibo != null }) carregarViagem()
     }
+    /** Consulta separada do envio: falhar aqui nunca afeta coletas nem recibos guardados no celular. */
+    fun carregarViagem() {
+        val id = _estado.value.sessaoId
+        if(id.isEmpty() || _estado.value.viagemCarregando) return
+        _estado.value = _estado.value.copy(viagemCarregando=true,viagemErro=null)
+        viewModelScope.launch {
+            val erro = try { _estado.value = _estado.value.copy(viagem=envio.viagem(id)); null }
+            catch(e: CancellationException) { throw e }
+            catch(e: Exception) { ContratoViagem.mensagemDeFalha(e) }
+            _estado.value = _estado.value.copy(viagemCarregando=false,viagemErro=erro)
+        }
+    }
+    suspend fun relatorio(): RelatorioViagem = envio.relatorioViagem(_estado.value.sessaoId)
     fun busca(s: String) { _estado.value = _estado.value.copy(busca=s.take(96)) }
     fun buscar() = executar {
         check(_estado.value.busca.isNotBlank()) { "Informe o código ou documento da carga online." }
@@ -81,6 +97,7 @@ class EnvioViewModel(private val envio: EnvioColetas, private val db: ThermoTrac
     fun enviar() = executar {
         val n = envio.enviar(_estado.value.sessaoId)
         _estado.value = _estado.value.copy(mensagem=if(n==0) "Nenhuma coleta nova para enviar." else "$n coleta(s) com recibo salvo neste celular.")
+        if(n>0 || _estado.value.viagem==null) carregarViagem()
     }
 }
 
@@ -119,6 +136,9 @@ fun EnvioScreen(id: String, vm: EnvioViewModel, aoVoltar: () -> Unit) {
                 item { Text("Destino registrado: ${vinculo.codigoCarga} · volume ${vinculo.sequenciaVolume}") }
                 item { Button(onClick=vm::enviar,enabled=!e.ocupado,modifier=Modifier.fillMaxWidth()) { Text("Enviar coletas / tentar novamente") } }
                 item { Text("${e.pedidos.count{it.recibo!=null}} recibo(s) salvo(s). Novas coletas são incluídas ao tocar em Enviar.") }
+                if(e.pedidos.any { it.recibo != null }) item {
+                    ViagemServidorCard(e.viagem,e.viagemCarregando,e.viagemErro,aoAtualizar=vm::carregarViagem,aoBaixarRelatorio=vm::relatorio)
+                }
                 items(e.pedidos,key={it.eventoId}) { p -> Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(12.dp)) {
                     Text("${p.tipo.replaceFirstChar { it.uppercase() }} · ${if(p.recibo==null) "Pendente" else "Recebida pelo servidor"}")
                     p.erro?.let { Text(it) }

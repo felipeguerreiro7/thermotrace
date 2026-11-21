@@ -328,7 +328,7 @@ Quadro único do estado atual. Os blocos acima ficam como histórico. "Código p
 | TT-030 ingestão e catálogo | Parcial: recepção, recibos e cadastro de perfis/produtos/cargas pelo portal | Decodificação canônica do SDK no servidor, validada contra o fabricante (TT-005) |
 | TT-031 fila offline e reenvio | Código pronto: envio automático Android 0.8.8 | Teste instrumentado no aparelho; modo avião do roteiro físico |
 | TT-032 concorrência e conflito | Parcial: recepção concorrente testada; viagem mostra coletas que discordam | Continuidade da sessão entre dois celulares |
-| TT-040 série e gráfico no app | Parcial: gráfico local no app; viagem consolidada no servidor | Integrar a viagem do servidor no app |
+| TT-040 série e gráfico no app | Código pronto: viagem do servidor nas telas de envio e da remessa (Android 0.9.0, 20/11) | Ensaio em aparelho com dois celulares na mesma carga |
 | TT-041 exportações | Parcial: CSV, SVG e relatório HTML com hash, por coleta e por viagem; XLSX no app | PDF/PNG; laudo assinado |
 | TT-050 portal do cliente | Feito: cargas, busca, detalhe, viagem, equipe, auditoria, acompanhamento, integridade | WEB-09 no ambiente publicado |
 | TT-051 portal da equipe ThermoTrace | Parcial: cadastrar empresa e entregar acesso do gestor | Acesso de suporte autorizado e auditado ao conteúdo; a equipe segue sem ver cargas |
