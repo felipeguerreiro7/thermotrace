@@ -31,6 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -334,6 +335,23 @@ fun AjustesScreen(
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                    Spacer(Modifier.height(8.dp))
+                    val abrirLink = LocalUriHandler.current
+                    Text(
+                        "A localização é pedida só no momento da leitura, fica neste " +
+                            "aparelho e no laudo que ele exporta. Negar a permissão não " +
+                            "impede nenhuma leitura.",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Row {
+                        TextButton(onClick = { abrirLink.openUri(URL_PRIVACIDADE) }) {
+                            Text("Política de privacidade")
+                        }
+                        TextButton(onClick = { abrirLink.openUri(URL_TERMOS) }) {
+                            Text("Termos de uso")
+                        }
+                    }
                 }
             }
 
@@ -341,6 +359,11 @@ fun AjustesScreen(
         }
     }
 }
+
+/** Site público servido pela API. Troca para o domínio quando thermotrace.com.br tiver DNS. */
+internal const val URL_SITE = "https://thermotrace-api.onrender.com"
+internal const val URL_PRIVACIDADE = "$URL_SITE/privacidade"
+internal const val URL_TERMOS = "$URL_SITE/termos"
 
 @Composable
 private fun Interruptor(

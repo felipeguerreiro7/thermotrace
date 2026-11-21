@@ -8,7 +8,6 @@ import time
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
-from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1 import router_v1
@@ -64,7 +63,8 @@ app = FastAPI(
         "Versão 0.15: conferência pública do relatório de viagem (/conferencia/viagem): sem login, confirma pela "
         "auditoria que o servidor emitiu aquela sessão e hash e se ainda é a versão atual; não confere não revela nada. "
         "Versão 0.16: conformidade térmica (/conformidade): viagens recentes das cargas da empresa classificadas em "
-        "conforme, com excursão, coletas divergentes, em andamento ou sem dados, a partir da mesma viagem do relatório."
+        "conforme, com excursão, coletas divergentes, em andamento ou sem dados, a partir da mesma viagem do relatório. "
+        "Versão 0.17: site público na raiz (/), política de privacidade (/privacidade) e termos de uso (/termos), sem script."
     ),
     docs_url="/docs" if not cfg.em_producao else None,
     redoc_url="/redoc" if not cfg.em_producao else None,
@@ -83,6 +83,9 @@ if cfg.ORIGENS_PERMITIDAS:
         allow_headers=["Authorization", "Content-Type", "Idempotency-Key",
                        "X-Install-Id", "X-App-Version"],
     )
+
+
+PAGINAS_PUBLICAS = {"/", "/privacidade", "/termos"}
 
 
 @app.middleware("http")
@@ -111,6 +114,14 @@ async def rastrear_requisicao(request: Request, proximo):
     if request.url.path == "/":
         resposta.headers["Vary"] = "Accept"
         resposta.headers["Cache-Control"] = "no-store"
+    if request.url.path in PAGINAS_PUBLICAS or request.url.path.startswith("/site/"):
+        # Site institucional: só HTML e CSS próprios, sem script nenhum.
+        if resposta.headers.get("content-type", "").startswith(("text/html", "text/css")):
+            resposta.headers["Content-Security-Policy"] = (
+                "default-src 'none'; style-src 'self'; img-src 'self'; "
+                "frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
+            )
+            resposta.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
     if request.url.path.startswith("/portal"):
         resposta.headers["Content-Security-Policy"] = (
             "default-src 'self'; script-src 'self'; style-src 'self'; "
@@ -138,14 +149,14 @@ registrar_tratadores(app)
 from app.core.limite_corpo import LimitarCorpo
 app.add_middleware(LimitarCorpo)
 app.include_router(router_v1, prefix=cfg.PREFIXO_API)
-from app.portal.routes import registrar_portal
+from app.portal.routes import registrar_portal, pagina_site
 registrar_portal(app)
 
 
 @app.get("/", include_in_schema=False)
 def raiz(request: Request):
     if "text/html" in request.headers.get("accept", ""):
-        return RedirectResponse("/portal", status_code=307)
+        return pagina_site("index.html")
     return {
         "nome": cfg.NOME_APP,
         "versao": cfg.VERSAO,
