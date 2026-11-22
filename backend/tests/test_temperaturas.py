@@ -62,7 +62,7 @@ def test_grafico_exportacoes_auditoria_e_isolamento(ambiente):
         assert out.status_code==200 and mime in out.headers['content-type']
         assert 'attachment' in out.headers['content-disposition']
         assert c.get(path+'?formato='+formato,headers=headers(ambiente[3]('b'))).status_code==404
-        assert c.get(path+'?formato='+formato,headers=headers(ambiente[3]('staff'))).status_code==403
+        assert c.get(path+'?formato='+formato,headers=headers(ambiente[3]('staff'))).status_code==404  # sem liberação de suporte
         assert c.get(path+'?formato='+formato).status_code==401
     logs=list(db.scalars(select(LogAuditoria).where(LogAuditoria.acao=='temperaturas_exportadas',LogAuditoria.entidade_id==UUID(recibo['leitura_id']))))
     assert len(logs)==3

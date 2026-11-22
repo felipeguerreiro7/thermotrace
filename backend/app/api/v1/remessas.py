@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select, or_
 from sqlalchemy.orm import Session
 
-from app.api.deps import Acesso, operador, gestor
+from app.api.deps import Acesso, operador, gestor, leitor
 from app.api.v1.produtos import Chave
 from app.db.session import obter_sessao
 from app.models import Remessa, Documento
@@ -63,7 +63,7 @@ def localizar(valor: str = Query(min_length=1, max_length=96),
 
 
 @router.get("/{remessa_id}", response_model=DetalheRemessa)
-def obter(remessa_id: UUID, acesso: Acesso = Depends(operador), db: Session = Depends(obter_sessao)):
+def obter(remessa_id: UUID, acesso: Acesso = Depends(leitor), db: Session = Depends(obter_sessao)):
     r, comp = compartilhamentos.remessa_legivel(db, acesso, remessa_id)
     if comp is not None:
         # Consulta da própria empresa segue sem registro, como antes; a da parceira fica visível ao dono.

@@ -204,6 +204,8 @@ class CompartilhamentoRemessa(Base, IdMixin, CriadoMixin):
     revogado_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     revogado_por: Mapped[UUID | None] = mapped_column(PgUUID(as_uuid=True), ForeignKey("usuario.id"))
     motivo_revogacao: Mapped[str | None] = mapped_column(Text)
+    # TT-051: chamado que justifica o suporte da equipe ThermoTrace; só no papel "suporte".
+    motivo_concessao: Mapped[str | None] = mapped_column(Text)
 
     __table_args__ = (
         Index("uq_compartilhamento_vigente", "remessa_id", "empresa_parceira_id", unique=True,
@@ -211,7 +213,12 @@ class CompartilhamentoRemessa(Base, IdMixin, CriadoMixin):
         Index("ix_compartilhamento_parceira", "empresa_parceira_id", "criado_em"),
         Index("ix_compartilhamento_remessa", "remessa_id"),
         CheckConstraint("empresa_dona_id <> empresa_parceira_id", name="partes_distintas"),
-        CheckConstraint("papel = 'transportadora'", name="papel_conhecido"),
+        CheckConstraint("papel IN ('transportadora', 'suporte')", name="papel_conhecido"),
+        # Suporte só consulta, sempre com prazo curto e motivo; a API repete a regra, o banco garante.
+        CheckConstraint("""papel <> 'suporte' OR (
+        NOT pode_exportar AND NOT pode_operar
+        AND expira_em IS NOT NULL AND expira_em <= criado_em + interval '72 hours'
+        AND length(btrim(coalesce(motivo_concessao, ''))) >= 10)""", name="suporte_limitado"),
         CheckConstraint("(aceito_em IS NULL) = (aceito_por IS NULL)", name="aceite_com_autor"),
         CheckConstraint("(recusado_em IS NULL) = (recusado_por IS NULL)", name="recusa_com_autor"),
         CheckConstraint("(revogado_em IS NULL) = (revogado_por IS NULL)", name="revogacao_com_autor"),

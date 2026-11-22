@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from app.api.v1 import saude, auth, clientes, perfis, produtos, remessas, ingestao, compartilhamentos, acompanhamento, integridade, demo, conferencia, conformidade
+from app.api.v1 import saude, auth, clientes, perfis, produtos, remessas, ingestao, compartilhamentos, acompanhamento, integridade, demo, conferencia, conformidade, suporte
 
 router_v1 = APIRouter()
 router_v1.include_router(saude.router)
@@ -18,5 +18,6 @@ router_v1.include_router(integridade.router)
 router_v1.include_router(demo.router)
 router_v1.include_router(conferencia.router)
 router_v1.include_router(conformidade.router)
+router_v1.include_router(suporte.router)
 
 __all__ = ["router_v1"]
