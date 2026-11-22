@@ -143,3 +143,21 @@ def test_rls_equipe_sem_liberacao_nao_ve_carga_e_com_liberacao_ve_so_ela(ambient
             db.execute(text("INSERT INTO documento (remessa_id,tipo,numero) VALUES (:id,'pedido','SUPORTE')"),
                        {'id': s['x']['id']})
     db.execute(text('RESET ROLE'))
+
+
+def test_auditoria_recente_primeiro_com_nome_e_empresa_de_quem_consultou(ambiente):  # noqa: F811
+    s = cenario(ambiente)
+    hs = staff(ambiente)
+    pid = liberar(s).json()['id']
+    assert post(s['c'], f"/plataforma/suporte/{pid}/assumir", hs, {}).status_code == 200
+    assert get(s, f"/remessas/{s['x']['id']}", hs).status_code == 200
+    eventos = get(s, '/auditoria?ordem=recentes&limite=5', s['ha']).json()
+    assert [e['id'] for e in eventos] == sorted((e['id'] for e in eventos), reverse=True)
+    consulta = next(e for e in eventos if e['acao'] == 'remessa_consultada')
+    assert consulta['usuario_nome'] == s['users']['staff'].nome and consulta['usuario_empresa'] == 'Teste staff'
+    proprio = next(e for e in get(s, '/auditoria?ordem=recentes&limite=100', s['ha']).json() if e['acao'] == 'suporte_concedido')
+    assert proprio['usuario_nome'] == s['users']['a'].nome and proprio['usuario_empresa'] is None
+    assert 'email' not in str(proprio).lower()
+    # Cursor: a página seguinte começa antes do último id visto, sem repetir.
+    seguinte = get(s, f"/auditoria?ordem=recentes&limite=5&antes_id={eventos[-1]['id']}", s['ha']).json()
+    assert seguinte and max(e['id'] for e in seguinte) < eventos[-1]['id']

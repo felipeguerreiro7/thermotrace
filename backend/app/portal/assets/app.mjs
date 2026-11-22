@@ -365,10 +365,46 @@ function shell() {
   content=document.querySelector('#content'); navigate(user.mfa_obrigatorio && !user.mfa_ativo ? 'seguranca' : (demoStart && items.some(([k]) => k===demoStart) ? demoStart : items[0][0]));
 }
 
+// Auditoria em português. Ação sem tradução aparece legível a partir do nome técnico.
+const auditActions={
+  login:'Entrou no portal ou no app',login_demonstracao:'Entrou na demonstração',login_recusado:'Tentativa de login recusada',login_recusado_mfa:'Código do autenticador recusado',logout:'Saiu',
+  refresh_rotacionado:'Sessão renovada',refresh_recusado_familia_revogada:'Sessão recusada (possível reuso de token)',
+  mfa_configuracao_iniciada:'Começou a configurar a verificação em duas etapas',mfa_ativada:'Ativou a verificação em duas etapas',mfa_desativada:'Desativou a verificação em duas etapas',mfa_redefinida_pelo_suporte:'Verificação em duas etapas redefinida pelo suporte',
+  codigo_acesso_convite_gerado:'Gerou código de convite',codigo_acesso_redefinicao_gerado:'Gerou código para nova senha',codigo_acesso_convite_usado:'Usou o convite e criou a senha',codigo_acesso_redefinicao_usado:'Usou o código e criou nova senha',codigo_acesso_recusado:'Código de acesso recusado',
+  cliente_cadastrado:'Empresa cadastrada',bootstrap_plataforma:'Equipe ThermoTrace criada',usuario_criado:'Pessoa cadastrada',usuario_convidado:'Pessoa convidada',usuario_desativado:'Pessoa desativada',
+  perfil_rascunho_criado:'Perfil térmico criado (rascunho)',perfil_aprovado_internamente:'Perfil térmico aprovado',perfil_retirado_de_uso:'Perfil térmico retirado de uso',produto_configurado:'Produto configurado',
+  remessa_criada:'Carga cadastrada',remessa_cancelada:'Carga cancelada',documento_vinculado:'Documento vinculado à carga',remessa_consultada:'Consultou a carga',remessa_localizada:'Localizou a carga na busca',
+  aparelho_registrado:'Celular registrado',etiqueta_cadastrada_localmente:'Etiqueta cadastrada',sessao_declarada_iniciada:'Monitoramento iniciado',evidencia_recebida:'Coleta recebida do celular',evidencia_consultada:'Consultou a evidência bruta',
+  sessoes_consultadas:'Consultou as coletas do volume',leituras_consultadas:'Consultou os comprovantes',integridade_verificada:'Verificou a integridade',
+  temperaturas_consultadas:'Consultou o gráfico da coleta',temperaturas_exportadas:'Baixou o relatório da coleta',viagem_consultada:'Consultou a viagem',viagem_exportada:'Baixou o relatório da viagem',viagem_conferida_publicamente:'Relatório conferido publicamente (sem login)',
+  conformidade_consultada:'Consultou a conformidade térmica',conformidade_exportada:'Baixou a conformidade térmica',acompanhamento_consultado:'Consultou o acompanhamento',
+  manifesto_integridade_emitido:'Emitiu o manifesto de integridade',manifesto_integridade_conferido:'Conferiu o manifesto de integridade',
+  compartilhamento_convidado:'Convidou empresa para a carga',compartilhamento_aceito:'Aceitou o acesso à carga',compartilhamento_recusado:'Recusou o acesso à carga',compartilhamento_revogado:'Encerrou o acesso à carga',
+  suporte_concedido:'Liberou a carga para o suporte ThermoTrace'};
+function auditLabel(acao){ if(auditActions[acao]) return auditActions[acao]; const t=String(acao).replaceAll('_',' '); return t.charAt(0).toUpperCase()+t.slice(1); }
+function auditWho(r){
+  if(!r.usuario_id) return el('span','Sistema ou visitante sem login','muted');
+  const box=el('div'); box.append(el('strong',r.usuario_nome||'Pessoa sem cadastro visível'));
+  if(r.usuario_empresa) box.append(el('div',r.usuario_empresa,'muted'));
+  return box;
+}
+function auditDetail(r){
+  const d=r.depois||{}, partes=[];
+  if(d.remessa_codigo) partes.push(`Carga ${d.remessa_codigo}`);
+  if(d.formato && d.formato!=='json') partes.push(`Formato ${String(d.formato).toUpperCase()}`);
+  if(d.motivo) partes.push(`Motivo: ${d.motivo}`);
+  if(d.expira_em) partes.push(`Até ${date(d.expira_em)}`);
+  if(d.via_compartilhamento) partes.push('Acesso de outra empresa');
+  if(d.por) partes.push(d.por==='dona'?'Pelo dono da carga':'Pela empresa convidada');
+  return partes.length?partes.join(' · '):'—';
+}
+
 async function navigate(key, offset=0, query='') {
   page=key; const ticket=++view;
   document.querySelectorAll('[data-page]').forEach(n => n.setAttribute('aria-current',n.dataset.page===key?'page':'false'));
-  const titles={cargas:['Minhas cargas',area==='contratante'?'Consulte as cargas cadastradas na sua transportadora.':'Localize a carga e acompanhe os registros recebidos.'],recebidas:['Compartilhadas comigo','Cargas que outras empresas autorizaram sua empresa a consultar.'],catalogo:['Produtos e perfis','Critérios térmicos aprovados pela sua empresa e os produtos que os usam.'],seguranca:['Segurança da conta','Verificação em duas etapas com app autenticador.'],empresas:['Empresas cadastradas','Visão administrativa da equipe ThermoTrace.'],suporte:['Pedidos de suporte','Cargas que o cliente liberou para a equipe ThermoTrace consultar, por prazo.'],equipe:['Equipe da empresa','Pessoas com acesso ao ambiente da sua empresa.'],auditoria:['Auditoria','Eventos registrados pelo servidor, do mais antigo ao mais recente.'],conformidade:['Conformidade térmica','Viagens recentes das suas cargas: dentro da faixa, com excursão ou em andamento.'],acompanhamento:['Acompanhamento','Etiquetas em campo sem leitura final e celulares que pararam de enviar.'],integridade:['Integridade das evidências','Manifesto para guardar fora da ThermoTrace e conferir depois.']};
+  // No celular o menu rola de lado: mantém a página atual à vista.
+  document.querySelector(`[data-page="${key}"]`)?.scrollIntoView({block:'nearest',inline:'center'});
+  const titles={cargas:['Minhas cargas',area==='contratante'?'Consulte as cargas cadastradas na sua transportadora.':'Localize a carga e acompanhe os registros recebidos.'],recebidas:['Compartilhadas comigo','Cargas que outras empresas autorizaram sua empresa a consultar.'],catalogo:['Produtos e perfis','Critérios térmicos aprovados pela sua empresa e os produtos que os usam.'],seguranca:['Segurança da conta','Verificação em duas etapas com app autenticador.'],empresas:['Empresas cadastradas','Visão administrativa da equipe ThermoTrace.'],suporte:['Pedidos de suporte','Cargas que o cliente liberou para a equipe ThermoTrace consultar, por prazo.'],equipe:['Equipe da empresa','Pessoas com acesso ao ambiente da sua empresa.'],auditoria:['Auditoria','Quem fez o quê na sua empresa e nas suas cargas, do mais recente para trás.'],conformidade:['Conformidade térmica','Viagens recentes das suas cargas: dentro da faixa, com excursão ou em andamento.'],acompanhamento:['Acompanhamento','Etiquetas em campo sem leitura final e celulares que pararam de enviar.'],integridade:['Integridade das evidências','Manifesto para guardar fora da ThermoTrace e conferir depois.']};
   content.replaceChildren(heading(...titles[key]));
   if (key==='cargas') {
     content.append(notice(area==='contratante'
@@ -395,7 +431,7 @@ async function navigate(key, offset=0, query='') {
   if (key==='suporte') content.append(notice('Assuma só o pedido que você vai atender: seu nome fica registrado. A carga abre somente para consulta, até o prazo ou até alguém encerrar, e cada consulta aparece na auditoria do cliente.'));
   const results=el('section'); results.setAttribute('aria-label','Resultados'); results.append(el('p','Carregando…','loading')); content.append(results);
   reload=async()=>{ try {
-    const path= key==='suporte'?`/plataforma/suporte?situacao=pendente&situacao=ativo&limite=20&offset=${offset}`:key==='recebidas'?`/compartilhamentos/recebidos?situacao=pendente&situacao=ativo&limite=20&offset=${offset}`:key==='empresas'?`/plataforma/clientes?limite=20&offset=${offset}`:key==='equipe'?`/usuarios?limite=20&offset=${offset}`:key==='auditoria'?`/auditoria?limite=20&depois_id=${offset}`:query?`/remessas/localizar?valor=${encodeURIComponent(query)}&limite=20&offset=${offset}`:`/remessas?limite=20&offset=${offset}`;
+    const path= key==='suporte'?`/plataforma/suporte?situacao=pendente&situacao=ativo&limite=20&offset=${offset}`:key==='recebidas'?`/compartilhamentos/recebidos?situacao=pendente&situacao=ativo&limite=20&offset=${offset}`:key==='empresas'?`/plataforma/clientes?limite=20&offset=${offset}`:key==='equipe'?`/usuarios?limite=20&offset=${offset}`:key==='auditoria'?`/auditoria?ordem=recentes&limite=20${offset?`&antes_id=${offset}`:''}`:query?`/remessas/localizar?valor=${encodeURIComponent(query)}&limite=20&offset=${offset}`:`/remessas?limite=20&offset=${offset}`;
     const data=await api.request(path); if (ticket!==view) return;
     const rows=query&&key==='cargas'?data.candidatas:data; results.replaceChildren();
     if (!rows.length) results.append(empty('Nenhum registro nesta consulta',key==='suporte'?'Nenhum cliente liberou carga para suporte, ou as liberações já terminaram.':key==='cargas'?'Confira o código ou documento. Cargas e leituras que ainda estão só no celular não aparecem aqui.':key==='recebidas'?'Nenhuma empresa compartilhou uma carga com a sua, ou o acesso foi encerrado.':'Não há registros disponíveis nesta página.'));
@@ -422,12 +458,12 @@ async function navigate(key, offset=0, query='') {
         acts.append(rowAction('Desativar',`/usuarios/${r.id}/desativar`,codes,()=>reload(),r.nome,`Desativar ${r.nome}? As sessões abertas são encerradas na hora.`));
       return [r.nome,r.email,r.papel==='gestor'?'Gestor':'Operador',badge(accessLabel[r.acesso]||(r.ativo?'Ativo':'Desativado')),acts];
     })));
-    else results.append(table(['Registro','Data e hora','Ação','Entidade','Responsável'],rows.map(r=>[String(r.id),date(r.em),r.acao,r.entidade,r.usuario_id||'Sistema'])));
+    else results.append(table(['Quando','O que aconteceu','Quem','Detalhe'],rows.map(r=>[date(r.em),auditLabel(r.acao),auditWho(r),auditDetail(r)])));
     const pager=el('div',undefined,'pager'), controls=el('div',undefined,'controls');
     pager.append(el('span',`${rows.length} registro(s) nesta página`));
     if(offset>0) controls.append(button(key==='auditoria'?'Voltar ao início':'Anterior',()=>navigate(key,key==='auditoria'?0:Math.max(0,offset-20),query)));
     const more=query&&key==='cargas'?data.ha_mais:rows.length===20;
-    if(more) controls.append(button('Próxima',()=>navigate(key,key==='auditoria'?rows.at(-1).id:offset+20,query)));
+    if(more) controls.append(button(key==='auditoria'?'Mais antigos':'Próxima',()=>navigate(key,key==='auditoria'?rows.at(-1).id:offset+20,query)));
     pager.append(controls); results.append(pager);
   } catch(error) { if(ticket===view) { results.replaceChildren(); showError(error,results); } } };
   await reload();
@@ -699,7 +735,7 @@ function sessions(id,target,trigger,ticket,offset=0) {
     const rows=await api.request(`/volumes/${id}/sessoes?limite=20&offset=${offset}`), list=el('div',undefined,'stack');
     if(!rows.length)list.append(empty('Sem sessões nesta página','Só aparecem as evidências que já chegaram ao servidor.'));
     for(const s of rows){
-      const box=el('section',undefined,'card');box.append(el('h3',`Sessão · ${sessionStatus[s.estado_logico]||s.estado_logico}`),values([['Identificação',s.id],['Origem',s.origem==='simulacao'?'Simulação':'Declaração do Android'],['Faixa configurada',`${s.min_configurado_c} a ${s.max_configurado_c} °C`],['Intervalo',`${s.intervalo_segundos} segundos`]]));
+      const box=el('section',undefined,'card');box.append(el('h3',`Sessão · ${sessionStatus[s.estado_logico]||s.estado_logico}`),values([['Identificação',s.id],['Origem',s.origem==='simulacao'?'Simulação':'Declaração do Android'],['Faixa configurada',`${Number(s.min_configurado_c).toLocaleString('pt-BR')} a ${Number(s.max_configurado_c).toLocaleString('pt-BR')} °C`],['Intervalo',`${s.intervalo_segundos} segundos`]]));
       const readings=el('div',undefined,'result'), integrity=el('div',undefined,'result');
       box.append(button('Viagem consolidada',e=>trip(s.id,readings,e.currentTarget,ticket),'primary'),button('Ver comprovantes',e=>receipts(s.id,readings,e.currentTarget,ticket)),button('Verificar integridade',e=>action(integrity,e.currentTarget,ticket,async()=>{
         const data=await api.request(`/sessoes/${s.id}/integridade`); const panel=el('div'); panel.append(notice(data.integra?'Cadeia de evidências íntegra. Isso não certifica a temperatura nem o sensor.':'A cadeia de evidências apresenta divergência. Encaminhe para conferência.'),json(data));return panel;
@@ -729,7 +765,7 @@ function trip(session,target,trigger,ticket) {
   return action(target,trigger,ticket,async()=>{
     const v=await api.request(path), r=v.resumo;
     const base=v.coletas.find(c=>c.leitura_id===v.base_leitura_id);
-    const dados={...v,tipo:r?(r.inclui_leitura_final?'Viagem completa':'Viagem parcial'):'Viagem',lida_em:base?.lida_em,origem:'declaracao',
+    const dados={...v,tipo:r?(r.inclui_leitura_final?'Viagem completa':'Viagem parcial'):'Viagem',lida_em:base?.lida_em,origem:v.origem,
       leitura_id:v.base_leitura_id||'—',hash_evidencia:'ver coletas abaixo',resumo:r?{minima_c:r.minima_c,maxima_c:r.maxima_c,abaixo:r.pontos_fora_da_faixa,acima:0}:null};
     const panel=temperaturePanel(dados,async(format,control,error)=>{
       control.disabled=true; error.textContent='';
