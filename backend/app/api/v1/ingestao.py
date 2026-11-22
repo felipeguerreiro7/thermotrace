@@ -2,7 +2,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy import select, and_
 from sqlalchemy.orm import Session
-from app.api.deps import Acesso, operador
+from app.api.deps import Acesso, operador, leitor
 from app.api.v1.produtos import Chave
 from app.db.session import obter_sessao
 from app.models import Etiqueta, LeituraEtiqueta, Volume, VinculoEtiqueta, SessaoMonitoramento
@@ -23,7 +23,7 @@ router=APIRouter(tags=['Recepção de evidências'])
 @router.get('/sessoes/{sessao_id}/leituras/{leitura_id}/temperaturas')
 def temperaturas_da_coleta(sessao_id:UUID, leitura_id:UUID,
         formato:Literal['json','csv','svg','html']='json',
-        acesso:Acesso=Depends(operador), db:Session=Depends(obter_sessao)):
+        acesso:Acesso=Depends(leitor), db:Session=Depends(obter_sessao)):
     # Consulta basta para o JSON; CSV/SVG/HTML exigem escopo de exportação na concessão.
     s,r,v,comp=ingestao.sessao_legivel(db,acesso,sessao_id,exportar=formato!='json')
     l=db.scalar(select(LeituraEtiqueta).where(LeituraEtiqueta.id==leitura_id,
@@ -47,7 +47,7 @@ def temperaturas_da_coleta(sessao_id:UUID, leitura_id:UUID,
 
 @router.get('/sessoes/{sessao_id}/viagem')
 def viagem_da_sessao(sessao_id:UUID, request:Request, formato:Literal['json','csv','svg','html']='json',
-        acesso:Acesso=Depends(operador), db:Session=Depends(obter_sessao)):
+        acesso:Acesso=Depends(leitor), db:Session=Depends(obter_sessao)):
     """WEB-12: viagem consolidada a partir de todas as coletas recebidas da sessão."""
     s,r,v,comp=ingestao.sessao_legivel(db,acesso,sessao_id,exportar=formato!='json')
     ls=list(db.scalars(select(LeituraEtiqueta).where(LeituraEtiqueta.sessao_id==sessao_id,
@@ -71,7 +71,7 @@ def viagem_da_sessao(sessao_id:UUID, request:Request, formato:Literal['json','cs
 
 @router.get('/volumes/{volume_id}/sessoes')
 def sessoes_do_volume(volume_id:UUID,limite:int=Query(50,ge=1,le=100),offset:int=Query(0,ge=0),
-                      acesso:Acesso=Depends(operador),db:Session=Depends(obter_sessao)):
+                      acesso:Acesso=Depends(leitor),db:Session=Depends(obter_sessao)):
     v=db.scalar(select(Volume).where(Volume.id==volume_id))
     if not v:raise NaoEncontrado()
     r,comp=remessa_legivel(db,acesso,v.remessa_id)
@@ -115,7 +115,7 @@ def leitura(sessao_id:UUID,body:ReceberLeitura,chave:Chave,acesso:Acesso=Depends
 
 @router.get('/sessoes/{sessao_id}/leituras',response_model=list[ReciboLeitura])
 def listar(sessao_id:UUID,apos_ordem:int=Query(0,ge=0),limite:int=Query(50,ge=1,le=100),
-           acesso:Acesso=Depends(operador),db:Session=Depends(obter_sessao)):
+           acesso:Acesso=Depends(leitor),db:Session=Depends(obter_sessao)):
     _,r,_,comp=ingestao.sessao_legivel(db,acesso,sessao_id)
     ls=db.scalars(select(LeituraEtiqueta).where(LeituraEtiqueta.sessao_id==sessao_id,
         LeituraEtiqueta.ordem_recebimento>apos_ordem).order_by(LeituraEtiqueta.ordem_recebimento).limit(limite))
@@ -126,7 +126,7 @@ def listar(sessao_id:UUID,apos_ordem:int=Query(0,ge=0),limite:int=Query(50,ge=1,
 
 
 @router.get('/sessoes/{sessao_id}/integridade')
-def integridade(sessao_id:UUID,acesso:Acesso=Depends(operador),db:Session=Depends(obter_sessao)):
+def integridade(sessao_id:UUID,acesso:Acesso=Depends(leitor),db:Session=Depends(obter_sessao)):
     _,r,_,comp=ingestao.sessao_legivel(db,acesso,sessao_id)
     resultado=ingestao.verificar_integridade(db,r.empresa_embarcador_id,sessao_id)
     auditar_acesso(db,'integridade_verificada','sessao_monitoramento',sessao_id,acesso,r,comp,

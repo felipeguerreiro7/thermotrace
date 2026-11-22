@@ -70,7 +70,7 @@ def test_sem_serie_e_isolamento(ambiente):
     v = c.get(path, headers=h).json()
     assert v['pontos'] == [] and v['conferencia'] == 'nao_avaliavel' and v['resumo'] is None
     assert c.get(path, headers=headers(ambiente[3]('b'))).status_code == 404
-    assert c.get(path, headers=headers(ambiente[3]('staff'))).status_code == 403
+    assert c.get(path, headers=headers(ambiente[3]('staff'))).status_code == 404  # sem liberação de suporte
     assert c.get(path).status_code == 401
 
 

@@ -131,8 +131,11 @@ def test_dois_clientes_e_plataforma_nao_leem_nem_enviam(ambiente):
     d=preparar_ingestao(ambiente);a=iniciar(d);c=d[0];sid=d[-1]['sessao_id']
     other=headers(ambiente[3]('b'));staff=headers(ambiente[3]('staff'))
     for h,status in [(other,404),(staff,403)]:
-        for path in [f'/sessoes/{sid}/leituras',f'/sessoes/{sid}/integridade',f"/sessoes/{sid}/leituras/{a.json()['leitura_id']}"]:
-            assert c.get('/api/v1'+path,headers=h).status_code==status
+        # Leitura de carga: a equipe sem liberação de suporte (TT-051) recebe 404, como outra empresa.
+        for path in [f'/sessoes/{sid}/leituras',f'/sessoes/{sid}/integridade']:
+            assert c.get('/api/v1'+path,headers=h).status_code==404
+        # Evidência bruta e envio continuam fechados para a equipe.
+        assert c.get('/api/v1'+f"/sessoes/{sid}/leituras/{a.json()['leitura_id']}",headers=h).status_code==status
         assert enviar(d,leitura(d[-1]),h=h).status_code==status
     assert c.get('/api/v1/etiquetas/localizar',params={'uid':d[5].nfc_uid},headers=other).status_code==404
 

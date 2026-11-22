@@ -65,3 +65,14 @@ def plataforma(acesso: Acesso = Depends(autenticado)) -> Acesso:
     if not acesso.usuario.mfa_ativado_em:
         raise MfaObrigatorio()
     return acesso
+
+
+def leitor(acesso: Acesso = Depends(autenticado)) -> Acesso:
+    """Rotas só de leitura de carga: operador/gestor do cliente, ou equipe ThermoTrace com MFA.
+
+    A equipe não tem carga própria; só alcança a que o dono liberou para suporte
+    (TT-051), e cada consulta entra na auditoria do dono.
+    """
+    if acesso.empresa.tipo == TipoEmpresa.PLATAFORMA:
+        return plataforma(acesso)
+    return operador(acesso)

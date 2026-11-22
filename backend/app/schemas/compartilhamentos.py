@@ -51,8 +51,15 @@ class CompartilhamentoSaida(BaseModel):
     recusado_em: datetime | None
     revogado_em: datetime | None
     motivo_revogacao: str | None
+    motivo_concessao: str | None = None
     remessa: RemessaSaida | None
 
 
 class Decisao(Entrada):
     """Corpo vazio explícito: a chave de idempotência protege o reenvio."""
+
+
+class NovoSuporte(Entrada):
+    """TT-051: o dono libera uma carga para a equipe ThermoTrace, só para consulta."""
+    motivo: str = Field(min_length=10, max_length=500, description="Chamado ou motivo; fica na auditoria das duas empresas.")
+    horas: int = Field(24, ge=1, le=72, description="Prazo da liberação; no máximo 72 horas.")

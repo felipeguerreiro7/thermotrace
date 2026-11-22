@@ -66,7 +66,9 @@ app = FastAPI(
         "Versão 0.16: conformidade térmica (/conformidade): viagens recentes das cargas da empresa classificadas em "
         "conforme, com excursão, coletas divergentes, em andamento ou sem dados, a partir da mesma viagem do relatório. "
         "Versão 0.17: site público na raiz (/), política de privacidade (/privacidade) e termos de uso (/termos), sem script. "
-        "Versão 0.17.1: registro de acesso (Marco Civil, art. 15): IP gravado na sessão de login e em cada evento da auditoria."
+        "Versão 0.17.1: registro de acesso (Marco Civil, art. 15): IP gravado na sessão de login e em cada evento da auditoria. "
+        "Versão 0.18: suporte autorizado (TT-051): o gestor libera uma carga para a equipe ThermoTrace com motivo e prazo "
+        "de até 72 h (/remessas/{id}/suporte); a equipe assume e só consulta, e cada consulta vai para a auditoria do dono."
     ),
     docs_url="/docs" if not cfg.em_producao else None,
     redoc_url="/redoc" if not cfg.em_producao else None,

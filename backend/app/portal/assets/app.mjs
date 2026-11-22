@@ -359,7 +359,7 @@ function shell() {
   }));
   const nav=document.querySelector('nav');
   const recebe = area==='contratante' || area==='ambos';
-  const items=[...(area==='staff' ? [['empresas','Empresas cadastradas']] : [['cargas','Minhas cargas'], ['conformidade','Conformidade térmica'], ['acompanhamento','Acompanhamento'], ...(recebe ? [['recebidas','Compartilhadas comigo']] : []), ...(user.papel==='gestor' ? [['catalogo','Produtos e perfis'],['equipe','Equipe da empresa'],['integridade','Integridade'],['auditoria','Auditoria']] : [])]), ['seguranca','Segurança da conta']];
+  const items=[...(area==='staff' ? [['empresas','Empresas cadastradas'],['suporte','Pedidos de suporte']] : [['cargas','Minhas cargas'], ['conformidade','Conformidade térmica'], ['acompanhamento','Acompanhamento'], ...(recebe ? [['recebidas','Compartilhadas comigo']] : []), ...(user.papel==='gestor' ? [['catalogo','Produtos e perfis'],['equipe','Equipe da empresa'],['integridade','Integridade'],['auditoria','Auditoria']] : [])]), ['seguranca','Segurança da conta']];
   items.forEach(([key,label]) => { const b=button(label,()=>navigate(key),'nav-button'); b.dataset.page=key; nav.append(b); });
   // Equipe ThermoTrace sem MFA cai direto na ativação: o servidor recusa a área dela até lá.
   content=document.querySelector('#content'); navigate(user.mfa_obrigatorio && !user.mfa_ativo ? 'seguranca' : (demoStart && items.some(([k]) => k===demoStart) ? demoStart : items[0][0]));
@@ -368,7 +368,7 @@ function shell() {
 async function navigate(key, offset=0, query='') {
   page=key; const ticket=++view;
   document.querySelectorAll('[data-page]').forEach(n => n.setAttribute('aria-current',n.dataset.page===key?'page':'false'));
-  const titles={cargas:['Minhas cargas',area==='contratante'?'Consulte as cargas cadastradas na sua transportadora.':'Localize a carga e acompanhe os registros recebidos.'],recebidas:['Compartilhadas comigo','Cargas que outras empresas autorizaram sua empresa a consultar.'],catalogo:['Produtos e perfis','Critérios térmicos aprovados pela sua empresa e os produtos que os usam.'],seguranca:['Segurança da conta','Verificação em duas etapas com app autenticador.'],empresas:['Empresas cadastradas','Visão administrativa da equipe ThermoTrace.'],equipe:['Equipe da empresa','Pessoas com acesso ao ambiente da sua empresa.'],auditoria:['Auditoria','Eventos registrados pelo servidor, do mais antigo ao mais recente.'],conformidade:['Conformidade térmica','Viagens recentes das suas cargas: dentro da faixa, com excursão ou em andamento.'],acompanhamento:['Acompanhamento','Etiquetas em campo sem leitura final e celulares que pararam de enviar.'],integridade:['Integridade das evidências','Manifesto para guardar fora da ThermoTrace e conferir depois.']};
+  const titles={cargas:['Minhas cargas',area==='contratante'?'Consulte as cargas cadastradas na sua transportadora.':'Localize a carga e acompanhe os registros recebidos.'],recebidas:['Compartilhadas comigo','Cargas que outras empresas autorizaram sua empresa a consultar.'],catalogo:['Produtos e perfis','Critérios térmicos aprovados pela sua empresa e os produtos que os usam.'],seguranca:['Segurança da conta','Verificação em duas etapas com app autenticador.'],empresas:['Empresas cadastradas','Visão administrativa da equipe ThermoTrace.'],suporte:['Pedidos de suporte','Cargas que o cliente liberou para a equipe ThermoTrace consultar, por prazo.'],equipe:['Equipe da empresa','Pessoas com acesso ao ambiente da sua empresa.'],auditoria:['Auditoria','Eventos registrados pelo servidor, do mais antigo ao mais recente.'],conformidade:['Conformidade térmica','Viagens recentes das suas cargas: dentro da faixa, com excursão ou em andamento.'],acompanhamento:['Acompanhamento','Etiquetas em campo sem leitura final e celulares que pararam de enviar.'],integridade:['Integridade das evidências','Manifesto para guardar fora da ThermoTrace e conferir depois.']};
   content.replaceChildren(heading(...titles[key]));
   if (key==='cargas') {
     content.append(notice(area==='contratante'
@@ -387,17 +387,21 @@ async function navigate(key, offset=0, query='') {
   if (key==='acompanhamento') { try { await monitorPage(content,ticket); } catch(error){ if(ticket===view) showError(error,content); } return; }
   // Atualiza só a lista: o cartão com o código recém-gerado precisa continuar na tela.
   const codes=el('div',undefined,'stack'); let reload=()=>{};
-  if (key==='empresas') { content.append(notice('O acesso de suporte ao conteúdo das cargas exigirá autorização e registro de auditoria. Esta área mostra os cadastros das empresas e permite entregar o acesso do gestor.'),codes); const d=el('details'); d.append(el('summary','Cadastrar empresa'),companyForm(codes,()=>reload())); content.append(d); }
+  if (key==='empresas') { content.append(notice('Esta área mostra os cadastros das empresas e permite entregar o acesso do gestor. O conteúdo das cargas só abre em Pedidos de suporte, quando o cliente libera.'),codes); const d=el('details'); d.append(el('summary','Cadastrar empresa'),companyForm(codes,()=>reload())); content.append(d); }
   if (key==='equipe') { content.append(codes); const d=el('details'); d.append(el('summary','Convidar pessoa'),inviteForm(codes,()=>reload())); content.append(d); }
   if (key==='recebidas') content.append(notice(user.papel==='gestor'
     ? 'Aceite apenas convites que você reconhece. Depois do aceite, a equipe da sua empresa consulta somente esta carga; o dono pode encerrar o acesso a qualquer momento e vê cada consulta.'
     : 'Somente cargas com compartilhamento aceito pelo gestor da sua empresa aparecem aqui.'));
+  if (key==='suporte') content.append(notice('Assuma só o pedido que você vai atender: seu nome fica registrado. A carga abre somente para consulta, até o prazo ou até alguém encerrar, e cada consulta aparece na auditoria do cliente.'));
   const results=el('section'); results.setAttribute('aria-label','Resultados'); results.append(el('p','Carregando…','loading')); content.append(results);
   reload=async()=>{ try {
-    const path= key==='recebidas'?`/compartilhamentos/recebidos?situacao=pendente&situacao=ativo&limite=20&offset=${offset}`:key==='empresas'?`/plataforma/clientes?limite=20&offset=${offset}`:key==='equipe'?`/usuarios?limite=20&offset=${offset}`:key==='auditoria'?`/auditoria?limite=20&depois_id=${offset}`:query?`/remessas/localizar?valor=${encodeURIComponent(query)}&limite=20&offset=${offset}`:`/remessas?limite=20&offset=${offset}`;
+    const path= key==='suporte'?`/plataforma/suporte?situacao=pendente&situacao=ativo&limite=20&offset=${offset}`:key==='recebidas'?`/compartilhamentos/recebidos?situacao=pendente&situacao=ativo&limite=20&offset=${offset}`:key==='empresas'?`/plataforma/clientes?limite=20&offset=${offset}`:key==='equipe'?`/usuarios?limite=20&offset=${offset}`:key==='auditoria'?`/auditoria?limite=20&depois_id=${offset}`:query?`/remessas/localizar?valor=${encodeURIComponent(query)}&limite=20&offset=${offset}`:`/remessas?limite=20&offset=${offset}`;
     const data=await api.request(path); if (ticket!==view) return;
     const rows=query&&key==='cargas'?data.candidatas:data; results.replaceChildren();
-    if (!rows.length) results.append(empty('Nenhum registro nesta consulta',key==='cargas'?'Confira o código ou documento. Cargas e leituras que ainda estão só no celular não aparecem aqui.':key==='recebidas'?'Nenhuma empresa compartilhou uma carga com a sua, ou o acesso foi encerrado.':'Não há registros disponíveis nesta página.'));
+    if (!rows.length) results.append(empty('Nenhum registro nesta consulta',key==='suporte'?'Nenhum cliente liberou carga para suporte, ou as liberações já terminaram.':key==='cargas'?'Confira o código ou documento. Cargas e leituras que ainda estão só no celular não aparecem aqui.':key==='recebidas'?'Nenhuma empresa compartilhou uma carga com a sua, ou o acesso foi encerrado.':'Não há registros disponíveis nesta página.'));
+    else if (key==='suporte') results.append(table(['Carga','Cliente','Motivo','Situação','Prazo','Ações'],rows.map(c=>[
+      c.situacao==='ativo'?button(c.remessa_codigo,()=>detail(c.remessa_id,{...c,suporte:true}),'link-button'):c.remessa_codigo,
+      c.empresa_dona,c.motivo_concessao||'—',badge(shareStatus[c.situacao]||c.situacao),c.expira_em?date(c.expira_em):'—',supportActions(c,()=>navigate('suporte'))])));
     else if (key==='recebidas') results.append(table(['Carga','Dono da carga','Situação','Permissão','Prazo','Ações'],rows.map(c=>[
       c.situacao==='ativo'?button(c.remessa_codigo,()=>detail(c.remessa_id,c),'link-button'):c.remessa_codigo,
       c.empresa_dona,badge(shareStatus[c.situacao]||c.situacao),sharePermission(c),
@@ -598,7 +602,7 @@ async function sharingCard(r, ticket) {
   const send=el('button','Compartilhar esta carga','primary'); send.type='submit';
   form.append(cnpjLabel,prazoLabel,exp,opr,send);
   const load=async()=>{
-    const rows=await api.request(`/remessas/${r.id}/compartilhamentos`); if(ticket!==view)return;
+    const rows=(await api.request(`/remessas/${r.id}/compartilhamentos`)).filter(c=>c.papel!=='suporte'); if(ticket!==view)return;
     list.replaceChildren(rows.length?table(['Transportadora','Situação','Permissão','Prazo','Ações'],rows.map(c=>[c.empresa_parceira,badge(shareStatus[c.situacao]||c.situacao),sharePermission(c),c.expira_em?date(c.expira_em):'Até ser encerrado',shareActions(c,load)])):el('p','Esta carga não foi compartilhada.','muted'));
   };
   form.addEventListener('submit',async e=>{
@@ -613,16 +617,60 @@ async function sharingCard(r, ticket) {
   return card;
 }
 
+// TT-051: equipe ThermoTrace assume ou encerra um pedido de suporte.
+function supportActions(c, done) {
+  const box=el('div',undefined,'controls'), msg=el('div');
+  const run=(path,body)=>async e=>{
+    e.currentTarget.disabled=true; msg.replaceChildren();
+    try { await api.request(path,{method:'POST',body}); done(); }
+    catch(error){ e.currentTarget.disabled=false; showError(error,msg); }
+  };
+  if(c.situacao==='pendente') box.append(button('Assumir',run(`/plataforma/suporte/${c.id}/assumir`,{}),'primary'));
+  if(c.situacao==='pendente' || c.situacao==='ativo') {
+    const form=el('form',undefined,'search'), l=el('label','Motivo do encerramento','field'), input=el('input');
+    input.name='motivo'; input.minLength=10; input.maxLength=2000; input.required=true; l.append(input);
+    const ok=el('button','Confirmar encerramento','secondary'); ok.type='submit'; form.append(l,ok); form.hidden=true;
+    form.addEventListener('submit',e=>{e.preventDefault(); run(`/plataforma/suporte/${c.id}/encerrar`,{motivo:input.value.trim()})({currentTarget:ok});});
+    box.append(button('Encerrar',()=>{form.hidden=false;input.focus();}),form);
+  }
+  box.append(msg); return box;
+}
+
+// TT-051: o gestor do dono libera a carga para a equipe ThermoTrace, só para consultar.
+async function supportCard(r, ticket) {
+  const card=el('section',undefined,'card result');
+  card.append(el('h2','Suporte ThermoTrace'),
+    el('p','A equipe ThermoTrace não vê suas cargas. Se precisar de ajuda com esta, libere o acesso com o motivo e um prazo: a equipe só consulta (não baixa arquivos nem opera), cada consulta aparece na sua Auditoria e você encerra quando quiser.','muted'));
+  const list=el('div'), form=el('form',undefined,'share-form'), msg=el('div');
+  const motivoLabel=el('label','Motivo ou número do chamado','field'), motivo=el('input'); motivo.name='motivo'; motivo.minLength=10; motivo.maxLength=500; motivo.required=true; motivo.placeholder='Ex.: chamado 1234, coleta não aparece'; motivoLabel.append(motivo);
+  const [prazoLabel,prazo]=selectField('Prazo','horas',[['4','4 horas'],['24','24 horas'],['72','72 horas (máximo)']]); prazo.value='24';
+  const send=el('button','Liberar para o suporte','primary'); send.type='submit';
+  form.append(motivoLabel,prazoLabel,send);
+  const load=async()=>{
+    const rows=(await api.request(`/remessas/${r.id}/compartilhamentos`)).filter(c=>c.papel==='suporte'); if(ticket!==view)return;
+    list.replaceChildren(rows.length?table(['Motivo','Situação','Até','Ações'],rows.map(c=>[c.motivo_concessao||'—',badge(c.situacao==='pendente'?'Aguardando a equipe':shareStatus[c.situacao]||c.situacao),date(c.expira_em),shareActions(c,load)])):el('p','Esta carga nunca foi liberada para o suporte.','muted'));
+  };
+  form.addEventListener('submit',async e=>{
+    e.preventDefault(); msg.replaceChildren(); send.disabled=true;
+    try { await api.request(`/remessas/${r.id}/suporte`,{method:'POST',body:{motivo:motivo.value.trim(),horas:Number(prazo.value)}}); motivo.value=''; await load(); }
+    catch(error){ showError(error,msg); } finally { send.disabled=false; }
+  });
+  card.append(list,form,msg);
+  try { await load(); } catch(error) { showError(error,list); }
+  return card;
+}
+
 async function detail(id, share=null) {
   shared=share;
-  const back=()=>share?button('← Voltar às compartilhadas',()=>navigate('recebidas'),'secondary back'):button('← Voltar às cargas',()=>navigate('cargas'),'secondary back');
+  const back=()=>share?.suporte?button('← Voltar aos pedidos de suporte',()=>navigate('suporte'),'secondary back'):share?button('← Voltar às compartilhadas',()=>navigate('recebidas'),'secondary back'):button('← Voltar às cargas',()=>navigate('cargas'),'secondary back');
   const ticket=++view; content.replaceChildren(back(),el('p','Carregando carga…','loading'));
   try {
     const r=await api.request(`/remessas/${id}`); if(ticket!==view)return;
     // Chegou por outro caminho (acompanhamento): o servidor diz se a carga é de outra empresa e o que foi concedido.
     if(!share && r.acesso==='compartilhada') share=shared={empresa_dona:r.empresa_dona||'outra empresa',pode_operar:r.pode_operar,pode_exportar:r.pode_exportar};
     content.replaceChildren(back(),heading(r.codigo,r.descricao_carga||'Detalhes e evidências da carga'));
-    if(share) content.append(notice(`Carga de ${share.empresa_dona}, compartilhada com a sua empresa. Permissão: ${sharePermission(share).toLowerCase()}. ${share.pode_operar?'Os operadores da sua empresa iniciam o monitoramento e enviam leituras pelo aplicativo, com etiquetas e celulares da sua empresa. ':''}O dono vê cada consulta${share.pode_operar?' e cada leitura':''} e pode encerrar o acesso a qualquer momento.`));
+    if(share?.suporte) content.append(notice(`Carga de ${share.empresa_dona}, liberada para suporte até ${date(share.expira_em)}. Motivo: ${share.motivo_concessao}. Somente consulta; cada consulta aparece na auditoria do cliente.`));
+    else if(share) content.append(notice(`Carga de ${share.empresa_dona}, compartilhada com a sua empresa. Permissão: ${sharePermission(share).toLowerCase()}. ${share.pode_operar?'Os operadores da sua empresa iniciam o monitoramento e enviam leituras pelo aplicativo, com etiquetas e celulares da sua empresa. ':''}O dono vê cada consulta${share.pode_operar?' e cada leitura':''} e pode encerrar o acesso a qualquer momento.`));
     content.append(notice('Escolha uma coleta para consultar o gráfico e baixar os registros recebidos. Cada gráfico mostra o histórico daquele bipe; não soma coletas repetidas. A confirmação de parada da etiqueta ainda permanece no aplicativo.'));
     const grid=el('div',undefined,'grid'), summary=el('section',undefined,'card'), docs=el('section',undefined,'card');
     summary.append(el('h2','Resumo da carga'),values([['Situação',cargoStatus(r)],['Destinatário',r.destinatario_nome],['Criada em',date(r.criado_em)],['Intervalo',`${r.intervalo_segundos} segundos`]]));
@@ -635,7 +683,7 @@ async function detail(id, share=null) {
     if(!r.volumes.length)volumes.append(el('p','Nenhum volume cadastrado.','muted'));
     r.volumes.forEach(v=>{ const box=el('div',undefined,'volume'), h=el('div',undefined,'volume-header'), result=el('div',undefined,'result'); const nome=el('div'); nome.append(el('strong',`Volume ${v.sequencia}`),document.createTextNode(' '),badge(volumeStatus[v.status]||v.status)); if(v.identidade) nome.append(el('div',v.identidade,'muted')); h.append(nome); if(v.monitorado) h.append(button('Consultar coletas',e=>sessions(v.id,result,e.currentTarget,ticket))); else h.append(el('span','Aguardando ativação da etiqueta pelo aplicativo','muted')); box.append(h,result);volumes.append(box); });
     content.append(volumes);
-    if(!share && user.papel==='gestor' && r.empresa_id===user.empresa_id) { const card=await sharingCard(r,ticket); if(ticket===view) content.append(card); }
+    if(!share && user.papel==='gestor' && r.empresa_id===user.empresa_id) { const card=await sharingCard(r,ticket); if(ticket===view) content.append(card); const sup=await supportCard(r,ticket); if(ticket===view) content.append(sup); }
   } catch(error) { if(ticket===view){ content.querySelector('.loading')?.remove(); showError(error,content); } }
 }
 

@@ -125,7 +125,7 @@ def resumo(c, nomes_empresas, acesso, remessa=None, andamentos=None):
            "papel": c.papel, "escopo": ["consultar"] + (["exportar"] if c.pode_exportar else []) + (["operar"] if c.pode_operar else []),
            "pode_exportar": c.pode_exportar, "pode_operar": c.pode_operar, "situacao": s, "criado_em": c.criado_em, "expira_em": c.expira_em,
            "aceito_em": c.aceito_em, "recusado_em": c.recusado_em, "revogado_em": c.revogado_em,
-           "motivo_revogacao": c.motivo_revogacao,
+           "motivo_revogacao": c.motivo_revogacao, "motivo_concessao": c.motivo_concessao,
            "minha_parte": "dona" if c.empresa_dona_id == acesso.empresa.id else "parceira",
            "remessa": None}
     # A parceira só recebe dados da carga enquanto a concessão vale.
@@ -235,3 +235,39 @@ def recebidos(db, acesso, situacoes, limite, offset):
     lista = [c for c in db.scalars(q.order_by(CompartilhamentoRemessa.criado_em.desc(), CompartilhamentoRemessa.id))
              if situacao(c) in situacoes]
     return _resumir(db, acesso, lista[offset:offset+limite])
+
+
+# TT-051: suporte da equipe ThermoTrace. Mesmo compartilhamento, papel "suporte",
+# parceira = empresa da plataforma. Só consulta; prazo e motivo obrigatórios.
+
+def empresa_plataforma(db):
+    lista = list(db.scalars(select(Empresa).where(Empresa.tipo == TipoEmpresa.PLATAFORMA, Empresa.ativa.is_(True))))
+    if len(lista) != 1:
+        raise RegraDeNegocio("Suporte indisponível: a equipe ThermoTrace não está cadastrada neste ambiente.")
+    return lista[0]
+
+
+def conceder_suporte(db, acesso, remessa_id, body):
+    r = remessa_por_id(db, acesso.empresa.id, remessa_id, escrita=True)
+    plataforma = empresa_plataforma(db)
+    existente = db.scalar(select(CompartilhamentoRemessa).where(
+        CompartilhamentoRemessa.remessa_id == r.id, CompartilhamentoRemessa.empresa_parceira_id == plataforma.id,
+        CompartilhamentoRemessa.revogado_em.is_(None), CompartilhamentoRemessa.recusado_em.is_(None)))
+    if existente is not None and situacao(existente) != "expirado":
+        raise Conflito("Esta carga já está liberada para o suporte. Encerre a liberação atual antes de criar outra.")
+    if existente is not None:
+        existente.revogado_em = agora(); existente.revogado_por = acesso.usuario.id
+        existente.motivo_revogacao = "Substituído após o prazo."
+        db.flush()
+    # Prazo calculado no banco, no mesmo relógio do criado_em que a restrição de 72 h usa.
+    c = CompartilhamentoRemessa(remessa_id=r.id, remessa_codigo=r.codigo, empresa_dona_id=acesso.empresa.id,
+        empresa_parceira_id=plataforma.id, papel="suporte", pode_exportar=False, pode_operar=False,
+        expira_em=text("now() + make_interval(hours => :h)").bindparams(h=body.horas),
+        motivo_concessao=body.motivo, criado_por=acesso.usuario.id)
+    db.add(c); db.flush(); db.refresh(c)
+    evento = {"remessa_id": str(r.id), "remessa_codigo": r.codigo, "motivo": body.motivo,
+              "expira_em": c.expira_em.isoformat()}
+    for empresa in (acesso.empresa.id, plataforma.id):
+        auditar(db, "suporte_concedido", "compartilhamento_remessa", c.id, acesso.usuario,
+                empresa_id=empresa, depois=evento)
+    return resumo(c, nomes(db, [c.empresa_dona_id, c.empresa_parceira_id]), acesso, r)

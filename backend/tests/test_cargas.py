@@ -105,7 +105,9 @@ def test_dois_clientes_nao_acessam_carga_documento_produto(ambiente):
     assert c.get('/api/v1/produtos', headers=b).json() == []
     for path in [f"/remessas/{r['id']}", f"/produtos/{p['id']}"]:
         assert c.get('/api/v1'+path, headers=b).status_code == 404
-        assert c.get('/api/v1'+path, headers=staff).status_code == 403
+    # Equipe ThermoTrace: produto segue fechado; carga sem liberação de suporte (TT-051) some como inexistente.
+    assert c.get('/api/v1'+f"/produtos/{p['id']}", headers=staff).status_code == 403
+    assert c.get('/api/v1'+f"/remessas/{r['id']}", headers=staff).status_code == 404
     assert c.get('/api/v1/remessas/localizar', headers=b, params={'valor':'PED-123'}).json()['candidatas'] == []
     assert post(c, f"/remessas/{r['id']}/documentos", b, {'tipo':'pedido','numero':'X'}).status_code == 404
     assert post(c, f"/remessas/{r['id']}/cancelar", b, {'motivo':'Tentativa de outro cliente.'}).status_code == 404
