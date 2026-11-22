@@ -14,6 +14,7 @@ from app.services import mfa
 from app.core.security import agora, hash_token, token_acesso, verificar_senha, hasher
 from app.models import Usuario, Empresa, SessaoAuth
 from app.services.auditoria import auditar
+from app.core.rede import ip_atual
 
 
 def limitar_login(db, email, ip):
@@ -44,7 +45,8 @@ def emitir(db, usuario, familia_id=None, expira_em=None):
     refresh = secrets.token_urlsafe(48)
     sessao = SessaoAuth(id=uuid4(), usuario_id=usuario.id, token_hash=hash_token(refresh),
                        familia_id=familia_id or uuid4(),
-                       expira_em=expira_em or agora()+timedelta(days=obter_config().REFRESH_TOKEN_DIAS))
+                       expira_em=expira_em or agora()+timedelta(days=obter_config().REFRESH_TOKEN_DIAS),
+                       ip=ip_atual())
     db.add(sessao)
     db.flush()
     return {"access_token": token_acesso(usuario.id, sessao.id), "refresh_token": refresh,

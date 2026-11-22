@@ -14,6 +14,7 @@ from app.api.v1 import router_v1
 from app.core.config import obter_config
 from app.core.errors import registrar_tratadores
 from app.core.logging import configurar_logs, definir_request_id, obter_logger
+from app.core.rede import definir_ip_atual
 from app.db.session import verificar_banco, runtime_sem_privilegios_administrativos
 
 cfg = obter_config()
@@ -64,7 +65,8 @@ app = FastAPI(
         "auditoria que o servidor emitiu aquela sessão e hash e se ainda é a versão atual; não confere não revela nada. "
         "Versão 0.16: conformidade térmica (/conformidade): viagens recentes das cargas da empresa classificadas em "
         "conforme, com excursão, coletas divergentes, em andamento ou sem dados, a partir da mesma viagem do relatório. "
-        "Versão 0.17: site público na raiz (/), política de privacidade (/privacidade) e termos de uso (/termos), sem script."
+        "Versão 0.17: site público na raiz (/), política de privacidade (/privacidade) e termos de uso (/termos), sem script. "
+        "Versão 0.17.1: registro de acesso (Marco Civil, art. 15): IP gravado na sessão de login e em cada evento da auditoria."
     ),
     docs_url="/docs" if not cfg.em_producao else None,
     redoc_url="/redoc" if not cfg.em_producao else None,
@@ -97,6 +99,7 @@ async def rastrear_requisicao(request: Request, proximo):
     resposta, todos com o mesmo identificador.
     """
     rid = definir_request_id(request.headers.get("x-request-id"))
+    definir_ip_atual(request)
     inicio = time.perf_counter()
 
     resposta = await proximo(request)

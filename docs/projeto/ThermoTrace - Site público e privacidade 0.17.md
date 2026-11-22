@@ -32,5 +32,5 @@ O app pede localização e o portal guarda nome, e-mail e IP de quem usa. Sem po
 
 - [ ] Preencher na política e nos termos: razão social e CNPJ do controlador, e-mail do encarregado/canal de privacidade, prazo padrão de guarda das cargas, limites de responsabilidade e foro. Enquanto houver campo `pendente`, a faixa "Rascunho em revisão" fica (há teste que garante isso).
 - [ ] Revisão jurídica dos dois textos antes de retirar a faixa.
-- [ ] Confirmar que os registros de acesso (IP) ficam guardados por 6 meses, como a política promete pelo Marco Civil. Hoje o IP fica na sessão de autenticação e nos logs do Render; a retenção dos logs do Render precisa ser conferida no plano.
+- [x] Registros de acesso (IP) guardados por pelo menos 6 meses, como a política promete pelo Marco Civil. **Corrigido em 22/11 (API 0.17.1):** a frase anterior dizia que o IP ficava na sessão de autenticação, mas nenhum código gravava a coluna. Ver [[ThermoTrace - Registro de acesso 0.17.1]]. Os logs do Render deixam de ser a única fonte.
 - [ ] Quando o domínio tiver DNS, trocar `URL_SITE` no app.
