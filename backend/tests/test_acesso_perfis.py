@@ -19,6 +19,18 @@ from app.models.enums import PapelUsuario, TipoEmpresa
 from app.services import mfa
 
 SENHA = "Senha-sintetica-para-teste-42"
+
+def todos_clientes(c, headers):
+    """Percorre todas as páginas. Os testes de concorrência gravam empresas de verdade (precisam de
+    commit), e o banco local de testes acumula mais de 100 depois de algumas rodadas."""
+    todos, offset = [], 0
+    while True:
+        pagina = c.get(f"/api/v1/plataforma/clientes?limite=100&offset={offset}", headers=headers).json()
+        todos += pagina
+        if len(pagina) < 100:
+            return todos
+        offset += 100
+
 PERFIL = {"codigo": "TESTE-REFRIGERADO", "rotulo": "Produto sintético fechado",
           "min_c": "2.00", "max_c": "8.00", "evidencia": {
               "produto": "Produto sintético", "apresentacao": "Frasco teste",
@@ -246,7 +258,7 @@ def test_staff_provisiona_cliente_e_gestor_sem_senha_na_resposta(ambiente):
     assert r.status_code == 201, r.text
     assert r.json()["gestor"]["papel"] == "gestor"
     assert SENHA not in r.text and "senha_hash" not in r.text
-    clientes = c.get("/api/v1/plataforma/clientes?limite=100", headers=h).json()
+    clientes = todos_clientes(c, h)
     assert {str(users["a"].empresa_id), str(users["b"].empresa_id), r.json()["id"]}.issubset({e["id"] for e in clientes})
     tokens = c.post("/api/v1/auth/login", json={"email": "novo@example.org", "senha": SENHA}).json()
     assert c.get("/api/v1/auth/me", headers=headers(tokens)).json()["empresa_id"] == r.json()["id"]

@@ -1,4 +1,5 @@
 """IP do cliente e endereço público atrás do proxy do Render (Cloudflare na borda)."""
+import ipaddress
 import secrets
 
 import pytest
@@ -16,7 +17,7 @@ URL = "/api/v1/conferencia/viagem"
 
 def ip_novo():
     # Faixa de documentação; aleatório porque os limites ficam no banco por 5 minutos.
-    return f"2001:db8::{secrets.token_hex(2)}:{secrets.token_hex(2)}"
+    return str(ipaddress.ip_address(f"2001:db8::{secrets.token_hex(2)}:{secrets.token_hex(2)}"))  # forma canônica
 
 
 def requisicao(cabecalhos, cliente=("10.0.0.7", 1234), scheme="http"):
@@ -80,3 +81,61 @@ def test_relatorio_imprime_o_endereco_publico(ambiente, monkeypatch):  # noqa: F
     html = d[0].get(f"/api/v1/sessoes/{d[-1]['sessao_id']}/viagem?formato=html", headers=d[3]).text
     assert f"https://thermotrace-api.onrender.com/portal/conferir?sessao={d[-1]['sessao_id']}" in html
     assert "http://testserver" not in html
+
+
+# Registro de acesso (Marco Civil, art. 15): a política promete guardar IP, data e hora.
+
+def _login(c, u, ip):
+    from tests.test_acesso_perfis import SENHA
+    r = c.post("/api/v1/auth/login", json={"email": u.email, "senha": SENHA}, headers={"CF-Connecting-IP": ip})
+    assert r.status_code == 200, r.text
+    return r.json()
+
+
+def test_login_grava_ip_na_sessao_e_na_auditoria(ambiente, atras_da_cloudflare):  # noqa: F811
+    from sqlalchemy import select
+    from app.models import LogAuditoria, SessaoAuth
+    c, db, dados, _ = ambiente
+    u, ip = dados["a"], ip_novo()
+    _login(c, u, ip)
+    db.expire_all()
+    sessao = db.scalars(select(SessaoAuth).where(SessaoAuth.usuario_id == u.id)).all()[-1]
+    assert str(sessao.ip) == ip
+    log = db.scalar(select(LogAuditoria).where(LogAuditoria.usuario_id == u.id, LogAuditoria.acao == "login"))
+    assert str(log.ip) == ip and log.em is not None
+
+
+def test_renovacao_registra_o_ip_de_quem_renovou(ambiente, atras_da_cloudflare):  # noqa: F811
+    from sqlalchemy import select
+    from app.models import SessaoAuth
+    c, db, dados, _ = ambiente
+    u, ip_login, ip_refresh = dados["b"], ip_novo(), ip_novo()
+    tokens = _login(c, u, ip_login)
+    r = c.post("/api/v1/auth/refresh", json={"refresh_token": tokens["refresh_token"]},
+               headers={"CF-Connecting-IP": ip_refresh})
+    assert r.status_code == 200, r.text
+    db.expire_all()
+    ips = {str(s.ip) for s in db.scalars(select(SessaoAuth).where(SessaoAuth.usuario_id == u.id))}
+    assert {ip_login, ip_refresh} <= ips
+
+
+def test_login_recusado_tambem_fica_com_ip(ambiente, atras_da_cloudflare):  # noqa: F811
+    from sqlalchemy import select
+    from app.models import LogAuditoria
+    c, db, dados, _ = ambiente
+    ip = ip_novo()
+    r = c.post("/api/v1/auth/login", json={"email": dados["a"].email, "senha": "errada-mas-longa-123"},
+               headers={"CF-Connecting-IP": ip})
+    assert r.status_code == 401
+    db.expire_all()
+    assert db.scalar(select(LogAuditoria).where(LogAuditoria.acao == "login_recusado", LogAuditoria.ip == ip))
+
+
+def test_endereco_invalido_nao_vira_texto_na_coluna(ambiente):  # noqa: F811
+    # Sem cabeçalho configurado, o TestClient se apresenta como "testclient": não é IP, fica vazio.
+    from sqlalchemy import select
+    from app.models import SessaoAuth
+    c, db, dados, entrar = ambiente
+    entrar("op")
+    db.expire_all()
+    assert db.scalars(select(SessaoAuth).where(SessaoAuth.usuario_id == dados["op"].id)).all()[-1].ip is None

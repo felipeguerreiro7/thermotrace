@@ -7,7 +7,7 @@ from sqlalchemy import select, text, update
 
 from app.core.security import agora
 from app.models import ChaveIdempotencia, Empresa, LogAuditoria, TokenRecuperacao, Usuario
-from tests.test_acesso_perfis import ambiente, headers, SENHA
+from tests.test_acesso_perfis import ambiente, headers, SENHA, todos_clientes
 
 NOVA = 'Senha-nova-sintetica-123'
 
@@ -130,7 +130,7 @@ def test_staff_cadastra_empresa_com_codigo_e_redefine_gestor(ambiente):
     gestor_h = headers(login(c, email).json())
     assert c.get('/api/v1/auth/me', headers=gestor_h).json()['tipo_empresa'] == 'transportadora'
     empresa_id = r.json()['id']; gestor_id = r.json()['gestor']['id']
-    lista = {e['id']: e for e in c.get('/api/v1/plataforma/clientes?limite=100', headers=staff).json()}
+    lista = {e['id']: e for e in todos_clientes(c, staff)}
     assert [g['email'] for g in lista[empresa_id]['gestores']] == [email] and lista[empresa_id]['tipo'] == 'transportadora'
     novo = c.post(f'/api/v1/plataforma/clientes/{empresa_id}/gestores/{gestor_id}/codigo-acesso', headers=staff)
     assert novo.status_code == 201 and novo.json()['finalidade'] == 'redefinicao'
