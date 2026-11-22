@@ -28,7 +28,9 @@ data class EstadoEnvio(val sessaoId: String = "", val resumo: String = "", val b
     val pedidos: List<PedidoEnvio> = emptyList(), val ocupado: Boolean = false, val mensagem: String? = null,
     val viagem: ViagemServidor? = null, val viagemCarregando: Boolean = false, val viagemErro: String? = null)
 
-class EnvioViewModel(private val envio: EnvioColetas, private val db: ThermoTraceDb): ViewModel() {
+/** `aoVincular`: agenda o envio automático logo após o vínculo, sem esperar a rodada de 15 min. */
+class EnvioViewModel(private val envio: EnvioColetas, private val db: ThermoTraceDb,
+                     private val aoVincular: () -> Unit = {}): ViewModel() {
     private val _estado = MutableStateFlow(EstadoEnvio())
     val estado = _estado.asStateFlow()
     private fun executar(bloco: suspend () -> Unit) {
@@ -92,7 +94,8 @@ class EnvioViewModel(private val envio: EnvioColetas, private val db: ThermoTrac
     fun vincular() = executar {
         val e = _estado.value
         envio.vincular(e.sessaoId,checkNotNull(e.destino).id,checkNotNull(e.volume).id)
-        _estado.value = _estado.value.copy(mensagem="Destino confirmado. Toque em Enviar coletas para transmitir.")
+        aoVincular()
+        _estado.value = _estado.value.copy(mensagem="Destino confirmado. As coletas sobem sozinhas quando houver internet; toque em Enviar coletas para mandar agora e ver o recibo.")
     }
     fun enviar() = executar {
         val n = envio.enviar(_estado.value.sessaoId)

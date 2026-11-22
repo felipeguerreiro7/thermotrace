@@ -52,3 +52,4 @@ Risco principal: o ensaio físico. Se ele atrasar, o prazo atrasa junto; o resta
 - 22/11: registro de acesso (API 0.17.1): o banco não guardava o IP prometido na política; agora sessão e auditoria gravam. [[ThermoTrace - Registro de acesso 0.17.1]].
 - 22/11: suporte autorizado TT-051 (API 0.18): o cliente libera uma carga para a equipe ThermoTrace, com motivo e prazo de até 72 h, só para consulta e com cada consulta na auditoria dele. [[ThermoTrace - Suporte autorizado TT-051]].
 - 22/11: relatório em PDF e gráfico em PNG no servidor (TT-041, API 0.19), mesmo arquivo a cada download e hash na auditoria. Falta só o laudo assinado. [[ThermoTrace - Relatório em PDF TT-041]].
+- 22/11: melhorias de uso (portal 0.19.1, Android 0.9.2): auditoria legível, menu do celular, origem certa na viagem; tela inicial do app rolando inteira e envio logo após o vínculo. [[ThermoTrace - Melhorias portal 0.19.1 e Android 0.9.2]].

@@ -271,55 +271,46 @@ fun HomeScreen(
             )
         },
     ) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding)) {
-            TextButton(onClick = aoAbrirConta, modifier = Modifier.fillMaxWidth()) {
-                Text(if (contaVinculada) "Histórico desta conta · envie pelo detalhe da remessa"
-                    else "Modo local · registros sem vínculo com empresa")
+        // Uma lista só, rolando inteira. Antes, avisos, painel NFC e cartões ficavam
+        // fixos em cima e só a lista de remessas rolava: com dois ou três avisos
+        // ligados, a lista sumia da tela de um celular comum.
+        LazyColumn(
+            Modifier.fillMaxSize().padding(padding),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 88.dp),
+        ) {
+            item(key = "conta") {
+                TextButton(onClick = aoAbrirConta, modifier = Modifier.fillMaxWidth()) {
+                    Text(if (contaVinculada) "Conta conectada · as coletas sobem sozinhas quando há internet"
+                        else "Modo local · registros sem vínculo com empresa")
+                }
             }
 
-            if (naoExportadas > 0) {
+            if (naoExportadas > 0) item(key = "nao-exportadas") {
                 // Enquanto nao ha servidor, o laudo exportado e a unica copia
                 // fora deste aparelho — e o backup automatico esta desligado de
                 // proposito, porque cadeia de custodia nao vai para nuvem de
                 // terceiro. Perder o celular, aqui, apaga a prova.
-                Card(
-                    Modifier.fillMaxWidth().padding(16.dp, 8.dp),
-                    colors = CardDefaults.cardColors(containerColor = AmbarFundo),
-                    shape = RoundedCornerShape(10.dp),
-                ) {
-                    Text(
-                        "$naoExportadas coleta(s) existem somente neste celular. " +
-                            "Abra a remessa e use \"Ver laudo e exportar Excel\" para guardar " +
-                            "uma cópia salva em um destino escolhido. Salvar no celular não equivale a backup remoto.",
-                        Modifier.padding(14.dp),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = AmbarAlerta,
-                    )
-                }
+                AvisoAmbar(
+                    "$naoExportadas coleta(s) existem somente neste celular. " +
+                        "Abra a remessa e use \"Ver laudo e exportar Excel\" para guardar " +
+                        "uma cópia salva em um destino escolhido. Salvar no celular não equivale a backup remoto.",
+                )
             }
 
-            if (pendentes > 0) {
+            if (pendentes > 0) item(key = "pendentes") {
                 // O app funciona sem rede de propósito. Mas o operador precisa
                 // saber que ainda há evidência só no aparelho.
-                Card(
-                    Modifier.fillMaxWidth().padding(16.dp, 8.dp),
-                    colors = CardDefaults.cardColors(containerColor = AmbarFundo),
-                    shape = RoundedCornerShape(10.dp),
-                ) {
-                    Text(
-                        "$pendentes registro(s) preservados neste aparelho. " +
-                            (if (contaVinculada) "Abra a remessa e use Enviar coletas. Itens antigos sem evidência de início e alertas continuam locais."
-                            else "Entre na conta antes de novas operações online. Este histórico local não será atribuído automaticamente a uma empresa."),
-                        Modifier.padding(12.dp),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = AmbarAlerta,
-                    )
-                }
+                AvisoAmbar(
+                    "$pendentes registro(s) ainda não chegaram ao servidor. " +
+                        (if (contaVinculada) "Sobem sozinhos quando houver internet; coleta sem carga vinculada espera " +
+                            "você vincular no detalhe da remessa. Itens antigos sem evidência de início e alertas continuam locais."
+                        else "Entre na conta antes de novas operações online. Este histórico local não será atribuído automaticamente a uma empresa."),
+                )
             }
 
             // Antes do painel de leitura: se o NFC estiver desligado, encostar
             // a etiqueta nao faz nada e o operador conclui que o app quebrou.
-            AvisoNfc(Modifier.padding(16.dp, 8.dp))
+            item(key = "aviso-nfc") { AvisoNfc(Modifier.padding(16.dp, 8.dp)) }
 
             // ---- passo 3: o veredito, logo depois do bipe de encerramento --
             //
@@ -327,90 +318,88 @@ fun HomeScreen(
             // acabou de encerrar uma entrega quer ver o resultado, não o
             // lembrete de nota de outra remessa.
             estado.resultado?.let { r ->
-                CartaoEntregaConcluida(
-                    codigoRemessa = r.codigoRemessa,
-                    veredito = r.veredito,
-                    quantidadeMedicoes = r.quantidadeMedicoes,
-                    minimaC = r.minimaC,
-                    maximaC = r.maximaC,
-                    mktC = r.mktC,
-                    tempoForaFaixaSegundos = r.tempoForaFaixaSegundos,
-                    ocorrenciasNovas = r.ocorrenciasNovas,
-                    etiquetaLiberada = r.etiquetaLiberada,
-                    aoVerLaudo = {
-                        vm.dispensarResultado()
-                        aoAbrirLaudo(r.remessaId)
-                    },
-                    aoDispensar = vm::dispensarResultado,
-                    modifier = Modifier.padding(16.dp, 4.dp),
-                )
-            }
-
-            // ---- passo 2: a nota fiscal da remessa recém-ligada ------------
-            estado.emAberto?.let { aberta ->
-                CartaoNotaFiscal(
-                    codigoRemessa = aberta.codigo,
-                    documento = aberta.documento,
-                    etiquetaSerial = aberta.etiquetaSerial,
-                    aoBiparNota = biparNota,
-                    aoDigitarNota = digitarNota,
-                    aoAbrirRemessa = {
-                        vm.dispensarEmAberto()
-                        aoAbrirRemessa(aberta.id)
-                    },
-                    aoDispensar = vm::dispensarEmAberto,
-                    modifier = Modifier.padding(16.dp, 4.dp),
-                )
-            }
-
-            // O painel de leitura fica no TOPO e sempre ativo. É o ponto de
-            // partida do fluxo: bipar → ver estado → ligar → registrar.
-            PainelNfc(
-                titulo = "Aproxime a etiqueta",
-                instrucao = "O celular lê o estado sem gravar nada. Cada aproximação " +
-                    "executa uma única ação, como no aplicativo original.",
-                aguardando = estado.bipada == null,
-                modifier = Modifier.padding(16.dp, 12.dp),
-            )
-
-            estado.aviso?.let {
-                Card(
-                    Modifier.fillMaxWidth().padding(16.dp, 0.dp, 16.dp, 8.dp),
-                    colors = CardDefaults.cardColors(containerColor = AmbarFundo),
-                    shape = RoundedCornerShape(10.dp),
-                ) {
-                    Text(
-                        it, Modifier.padding(12.dp),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = AmbarAlerta,
+                item(key = "resultado") {
+                    CartaoEntregaConcluida(
+                        codigoRemessa = r.codigoRemessa,
+                        veredito = r.veredito,
+                        quantidadeMedicoes = r.quantidadeMedicoes,
+                        minimaC = r.minimaC,
+                        maximaC = r.maximaC,
+                        mktC = r.mktC,
+                        tempoForaFaixaSegundos = r.tempoForaFaixaSegundos,
+                        ocorrenciasNovas = r.ocorrenciasNovas,
+                        etiquetaLiberada = r.etiquetaLiberada,
+                        aoVerLaudo = {
+                            vm.dispensarResultado()
+                            aoAbrirLaudo(r.remessaId)
+                        },
+                        aoDispensar = vm::dispensarResultado,
+                        modifier = Modifier.padding(16.dp, 4.dp),
                     )
                 }
             }
 
+            // ---- passo 2: a nota fiscal da remessa recém-ligada ------------
+            estado.emAberto?.let { aberta ->
+                item(key = "nota") {
+                    CartaoNotaFiscal(
+                        codigoRemessa = aberta.codigo,
+                        documento = aberta.documento,
+                        etiquetaSerial = aberta.etiquetaSerial,
+                        aoBiparNota = biparNota,
+                        aoDigitarNota = digitarNota,
+                        aoAbrirRemessa = {
+                            vm.dispensarEmAberto()
+                            aoAbrirRemessa(aberta.id)
+                        },
+                        aoDispensar = vm::dispensarEmAberto,
+                        modifier = Modifier.padding(16.dp, 4.dp),
+                    )
+                }
+            }
+
+            // O painel de leitura fica no TOPO e sempre ativo. É o ponto de
+            // partida do fluxo: bipar → ver estado → ligar → registrar.
+            item(key = "painel-nfc") {
+                PainelNfc(
+                    titulo = "Aproxime a etiqueta",
+                    instrucao = "O celular lê o estado sem gravar nada. Cada aproximação " +
+                        "executa uma única ação, como no aplicativo original.",
+                    aguardando = estado.bipada == null,
+                    modifier = Modifier.padding(16.dp, 12.dp),
+                )
+            }
+
+            estado.aviso?.let { aviso ->
+                item(key = "aviso") { AvisoAmbar(aviso, Modifier.padding(16.dp, 0.dp, 16.dp, 8.dp)) }
+            }
+
             if (remessas.isEmpty()) {
-                Column(
-                    Modifier.fillMaxWidth().padding(32.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Text(
-                        "Nenhuma remessa ainda",
-                        style = MaterialTheme.typography.titleMedium,
-                        textAlign = TextAlign.Center,
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        "Encoste uma etiqueta para começar. Ela é cadastrada, ligada e " +
-                            "vira uma remessa na mesma aproximação.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                    )
+                item(key = "vazio") {
+                    Column(
+                        Modifier.fillMaxWidth().padding(32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Text(
+                            "Nenhuma remessa ainda",
+                            style = MaterialTheme.typography.titleMedium,
+                            textAlign = TextAlign.Center,
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            "Encoste uma etiqueta para começar. Ela é cadastrada, ligada e " +
+                                "vira uma remessa na mesma aproximação.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
                 }
             } else {
                 // A busca só aparece quando a lista já é grande o bastante
                 // para justificar: numa lista de três remessas ela é ruído
                 // ocupando a altura de um cartão.
-                if (remessas.size >= LIMIAR_BUSCA) {
+                if (remessas.size >= LIMIAR_BUSCA) item(key = "busca") {
                     OutlinedTextField(
                         value = estado.busca,
                         onValueChange = vm::buscar,
@@ -428,72 +417,85 @@ fun HomeScreen(
                     )
                 }
 
-                LazyRow(
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                        horizontal = 16.dp
-                    ),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    items(FiltroRemessa.entries.toList(), key = { it.name }) { filtro ->
-                        val quantas = contagem.de(filtro)
-                        FilterChip(
-                            selected = estado.filtro == filtro,
-                            onClick = { vm.filtrar(filtro) },
-                            // O contador no chip evita o toque inútil: dá para
-                            // ver que não há nada aguardando leitura sem trocar
-                            // de recorte para descobrir.
-                            label = { Text("${filtro.rotulo} · $quantas") },
-                        )
+                item(key = "filtros") {
+                    LazyRow(
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        items(FiltroRemessa.entries.toList(), key = { it.name }) { filtro ->
+                            val quantas = contagem.de(filtro)
+                            FilterChip(
+                                selected = estado.filtro == filtro,
+                                onClick = { vm.filtrar(filtro) },
+                                // O contador no chip evita o toque inútil: dá para
+                                // ver que não há nada aguardando leitura sem trocar
+                                // de recorte para descobrir.
+                                label = { Text("${filtro.rotulo} · $quantas") },
+                            )
+                        }
                     }
+                    Spacer(Modifier.height(4.dp))
                 }
-                Spacer(Modifier.height(4.dp))
 
                 if (visiveis.isEmpty()) {
-                    Column(
-                        Modifier.fillMaxWidth().padding(32.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        Text(
-                            "Nada neste recorte",
-                            style = MaterialTheme.typography.titleMedium,
-                            textAlign = TextAlign.Center,
-                        )
-                        Spacer(Modifier.height(6.dp))
-                        Text(
-                            if (estado.busca.isBlank())
-                                "Nenhuma remessa em \"${estado.filtro.rotulo}\"."
-                            else
-                                "Nenhuma remessa combina com \"${estado.busca}\" " +
-                                    "em \"${estado.filtro.rotulo}\".",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center,
-                        )
-                        if (estado.filtro != FiltroRemessa.TODAS || estado.busca.isNotBlank()) {
-                            Spacer(Modifier.height(8.dp))
-                            TextButton(onClick = {
-                                vm.buscar("")
-                                vm.filtrar(FiltroRemessa.TODAS)
-                            }) { Text("Mostrar todas") }
+                    item(key = "recorte-vazio") {
+                        Column(
+                            Modifier.fillMaxWidth().padding(32.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            Text(
+                                "Nada neste recorte",
+                                style = MaterialTheme.typography.titleMedium,
+                                textAlign = TextAlign.Center,
+                            )
+                            Spacer(Modifier.height(6.dp))
+                            Text(
+                                if (estado.busca.isBlank())
+                                    "Nenhuma remessa em \"${estado.filtro.rotulo}\"."
+                                else
+                                    "Nenhuma remessa combina com \"${estado.busca}\" " +
+                                        "em \"${estado.filtro.rotulo}\".",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center,
+                            )
+                            if (estado.filtro != FiltroRemessa.TODAS || estado.busca.isNotBlank()) {
+                                Spacer(Modifier.height(8.dp))
+                                TextButton(onClick = {
+                                    vm.buscar("")
+                                    vm.filtrar(FiltroRemessa.TODAS)
+                                }) { Text("Mostrar todas") }
+                            }
                         }
                     }
                 } else {
-                    LazyColumn(
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        items(visiveis, key = { it.id }) { remessa ->
-                            CartaoRemessa(
-                                remessa = remessa,
-                                aoClicar = { aoAbrirRemessa(remessa.id) },
-                                aoSegurar = { if (!contaVinculada) vm.pedirParaApagar(remessa) },
-                            )
-                        }
-                        item { Spacer(Modifier.height(72.dp)) }
+                    items(visiveis, key = { it.id }) { remessa ->
+                        CartaoRemessa(
+                            remessa = remessa,
+                            aoClicar = { aoAbrirRemessa(remessa.id) },
+                            aoSegurar = { if (!contaVinculada) vm.pedirParaApagar(remessa) },
+                            modifier = Modifier.padding(16.dp, 5.dp),
+                        )
                     }
                 }
             }
         }
+    }
+}
+
+/** Aviso âmbar da Home: mesmo cartão para pendência, cópia só local e mensagem da última ação. */
+@Composable
+private fun AvisoAmbar(texto: String, modifier: Modifier = Modifier.padding(16.dp, 8.dp)) {
+    Card(
+        modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = AmbarFundo),
+        shape = RoundedCornerShape(10.dp),
+    ) {
+        Text(
+            texto, Modifier.padding(12.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = AmbarAlerta,
+        )
     }
 }
 
@@ -506,6 +508,7 @@ private fun CartaoRemessa(
     remessa: RemessaEntity,
     aoClicar: () -> Unit,
     aoSegurar: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val perfil = PerfilTermico.porCodigo(remessa.perfilTermicoCodigo)
     val formato = DateTimeFormatter.ofPattern("dd/MM HH:mm").withZone(ZoneId.systemDefault())
@@ -518,7 +521,7 @@ private fun CartaoRemessa(
     }
 
     Card(
-        Modifier.fillMaxWidth().combinedClickable(
+        modifier.fillMaxWidth().combinedClickable(
             onClick = aoClicar,
             // Segurar apaga. Nao ha botao de lixeira no cartao de proposito:
             // o toque acidental numa lista de remessas em transporte seria

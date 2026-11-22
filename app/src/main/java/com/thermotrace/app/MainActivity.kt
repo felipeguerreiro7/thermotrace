@@ -107,7 +107,8 @@ private class Fabrica(private val app: ThermoTraceApp, private val dados: DadosL
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T = when {
-        modelClass.isAssignableFrom(com.thermotrace.app.ui.screens.EnvioViewModel::class.java) -> com.thermotrace.app.ui.screens.EnvioViewModel(dados.envio,dados.db)
+        modelClass.isAssignableFrom(com.thermotrace.app.ui.screens.EnvioViewModel::class.java) -> com.thermotrace.app.ui.screens.EnvioViewModel(dados.envio,dados.db,
+            aoVincular = { com.thermotrace.app.data.conta.EnvioAutomaticoWorker.agendarAgora(app) })
         modelClass.isAssignableFrom(ContaViewModel::class.java) -> ContaViewModel(app.conta)
         modelClass.isAssignableFrom(HomeViewModel::class.java) ->
             HomeViewModel(repo, alertas, dados.preferencias, dados.fluxo)
