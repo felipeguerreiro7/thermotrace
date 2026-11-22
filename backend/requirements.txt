@@ -23,6 +23,12 @@ xlsxwriter==3.2.9
 # QR code de conferência no relatório (SVG, Python puro, sem dependências)
 segno==1.6.6
 
+# Relatório em PDF e gráfico em PNG no servidor (TT-041). Python puro + Pillow com wheels;
+# sem cairo nem navegador no contêiner. charset-normalizer é dependência do reportlab.
+reportlab==4.5.1
+pillow==12.3.0
+charset-normalizer==3.5.2
+
 # Logs estruturados
 structlog==26.1.0
 

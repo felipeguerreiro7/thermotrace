@@ -119,6 +119,9 @@ def decimal_br(v):
 
 def exportar(d, formato):
     if formato == 'svg': return svg(d), 'image/svg+xml'
+    if formato in ('pdf', 'png'):
+        from app.services import relatorio_pdf  # TT-041: bytes, não texto
+        return (relatorio_pdf.coleta(d), 'application/pdf') if formato == 'pdf' else (relatorio_pdf.png(d, d['tipo']), 'image/png')
     if formato == 'csv':
         s = io.StringIO(newline=''); w = csv.writer(s, delimiter=';')
         w.writerow(['leitura_id', d['leitura_id']]); w.writerow(['versao', d['versao']])

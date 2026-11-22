@@ -22,7 +22,7 @@ router=APIRouter(tags=['Recepção de evidências'])
 
 @router.get('/sessoes/{sessao_id}/leituras/{leitura_id}/temperaturas')
 def temperaturas_da_coleta(sessao_id:UUID, leitura_id:UUID,
-        formato:Literal['json','csv','svg','html']='json',
+        formato:Literal['json','csv','svg','html','pdf','png']='json',
         acesso:Acesso=Depends(leitor), db:Session=Depends(obter_sessao)):
     # Consulta basta para o JSON; CSV/SVG/HTML exigem escopo de exportação na concessão.
     s,r,v,comp=ingestao.sessao_legivel(db,acesso,sessao_id,exportar=formato!='json')
@@ -37,7 +37,7 @@ def temperaturas_da_coleta(sessao_id:UUID, leitura_id:UUID,
         auditar_acesso(db,'temperaturas_consultadas','leitura_etiqueta',l.id,acesso,r,comp,evento)
         return dados
     conteudo,mime=temperaturas.exportar(dados,formato)
-    evento['sha256_arquivo']=hashlib.sha256(conteudo.encode('utf-8')).hexdigest()
+    evento['sha256_arquivo']=hashlib.sha256(conteudo if isinstance(conteudo,bytes) else conteudo.encode('utf-8')).hexdigest()
     auditar_acesso(db,'temperaturas_exportadas','leitura_etiqueta',l.id,acesso,r,comp,evento)
     return Response(conteudo,media_type=mime,headers={
         'Content-Disposition':f'attachment; filename="ThermoTrace-{leitura_id}.{formato}"',
@@ -46,7 +46,7 @@ def temperaturas_da_coleta(sessao_id:UUID, leitura_id:UUID,
 
 
 @router.get('/sessoes/{sessao_id}/viagem')
-def viagem_da_sessao(sessao_id:UUID, request:Request, formato:Literal['json','csv','svg','html']='json',
+def viagem_da_sessao(sessao_id:UUID, request:Request, formato:Literal['json','csv','svg','html','pdf','png']='json',
         acesso:Acesso=Depends(leitor), db:Session=Depends(obter_sessao)):
     """WEB-12: viagem consolidada a partir de todas as coletas recebidas da sessão."""
     s,r,v,comp=ingestao.sessao_legivel(db,acesso,sessao_id,exportar=formato!='json')
@@ -61,7 +61,7 @@ def viagem_da_sessao(sessao_id:UUID, request:Request, formato:Literal['json','cs
         return dados
     conferir_em=f"{url_publica(request)}/portal/conferir?sessao={sessao_id}&hash={dados['hash_projecao']}"
     conteudo,mime=viagem.exportar(dados,formato,conferir_em)
-    evento['sha256_arquivo']=hashlib.sha256(conteudo.encode('utf-8')).hexdigest()
+    evento['sha256_arquivo']=hashlib.sha256(conteudo if isinstance(conteudo,bytes) else conteudo.encode('utf-8')).hexdigest()
     auditar_acesso(db,'viagem_exportada','sessao_monitoramento',sessao_id,acesso,r,comp,evento)
     return Response(conteudo,media_type=mime,headers={
         'Content-Disposition':f'attachment; filename="ThermoTrace-viagem-{sessao_id}.{formato}"',

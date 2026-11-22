@@ -101,6 +101,9 @@ def consolidar(sessao, leituras, carga, integra):
 def exportar(d, formato, conferir_em=None):
     """`conferir_em`: endereço público do portal para conferir o relatório (só no HTML)."""
     if formato == 'svg': return svg(d), 'image/svg+xml'
+    if formato in ('pdf', 'png'):
+        from app.services import relatorio_pdf  # TT-041: bytes, não texto
+        return (relatorio_pdf.viagem(d, conferir_em), 'application/pdf') if formato == 'pdf' else (relatorio_pdf.png(d, 'viagem'), 'image/png')
     if formato == 'csv':
         s = io.StringIO(newline=''); w = csv.writer(s, delimiter=';')
         for k in ('sessao_id', 'versao', 'hash_projecao', 'base_leitura_id', 'conferencia'): w.writerow([k, d[k]])
