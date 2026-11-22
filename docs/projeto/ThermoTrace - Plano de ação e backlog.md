@@ -329,7 +329,7 @@ Quadro único do estado atual. Os blocos acima ficam como histórico. "Código p
 | TT-031 fila offline e reenvio | Código pronto: envio automático Android 0.8.8 | Teste instrumentado no aparelho; modo avião do roteiro físico |
 | TT-032 concorrência e conflito | Parcial: recepção concorrente testada; viagem mostra coletas que discordam | Continuidade da sessão entre dois celulares |
 | TT-040 série e gráfico no app | Código pronto: viagem do servidor nas telas de envio e da remessa (Android 0.9.0, 20/11) | Ensaio em aparelho com dois celulares na mesma carga |
-| TT-041 exportações | Parcial: CSV, SVG e relatório HTML com hash, por coleta e por viagem; XLSX no app | PDF/PNG; laudo assinado |
+| TT-041 exportações | Parcial: CSV, SVG, PNG, relatório HTML e PDF determinístico com hash, por coleta e por viagem (API 0.19, 22/11); XLSX no app | Laudo assinado (decidir quem assina e com qual certificado) |
 | TT-050 portal do cliente | Feito: cargas, busca, detalhe, viagem, equipe, auditoria, acompanhamento, integridade | WEB-09 no ambiente publicado |
 | TT-051 portal da equipe ThermoTrace | Feito: cadastrar empresa, entregar acesso do gestor e suporte autorizado por carga, com prazo e auditoria no dono (API 0.18, 22/11) | Empresa da plataforma no banco do Render; conferir no WEB-04 |
 | TT-060 proteção de evidências | Feito no código: cadeia local + manifesto externo (API 0.11) | Política de guarda dos dumps de backup (contêm dados de clientes) |

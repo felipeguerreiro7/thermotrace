@@ -38,10 +38,10 @@ export function temperaturePanel(data,download,titulo='Temperaturas desta coleta
     label.append(input);panel.append(label,selected);choose(0);
   }else panel.append(node('p','Sem série disponível para desenhar. Consulte os avisos e a evidência original.','muted'));
   const actions=node('div',undefined,'thermal-actions'),error=node('div');error.setAttribute('role','alert');
-  for(const [format,label] of [['csv','Baixar medições (CSV)'],['svg','Baixar gráfico (SVG)'],['html','Baixar relatório']]){
+  for(const [format,label] of [['pdf','Baixar relatório (PDF)'],['csv','Baixar medições (CSV)'],['png','Baixar gráfico (PNG)'],['svg','Gráfico em SVG'],['html','Relatório em HTML']]){
     const b=node('button',label,'secondary');b.type='button';b.addEventListener('click',()=>download(format,b,error));actions.append(b);
   }
-  panel.append(actions,error,node('p','O relatório pode ser impresso ou salvo em PDF pelo navegador. Recebimento e coerência interna não comprovam calibração, parada da etiqueta ou liberação do produto.','hint'));
+  panel.append(actions,error,node('p','O PDF traz o QR para conferir o relatório sem conta; o PNG serve para colar em e-mail ou mensagem. Recebimento e coerência interna não comprovam calibração, parada da etiqueta ou liberação do produto.','hint'));
   const provenance=node('details');provenance.append(node('summary','Origem e rastreabilidade'),node('p',`Coleta: ${data.leitura_id}\nVersão de cálculo: ${data.versao}\nHash da evidência: ${data.hash_evidencia}\nHash desta projeção: ${data.hash_projecao}`,'sample-detail'));
   panel.append(provenance);return panel;
 }
