@@ -1,0 +1,73 @@
+# Monitoramento do serviço publicado (TT-066).
+#
+# A cada 30 minutos confere saúde e banco, versão publicada contra a main e as páginas do
+# site (.github/scripts/conferir-saude.sh). Se falhar, abre uma issue "Serviço com problema"
+# (ou comenta na que já estiver aberta): o GitHub avisa o dono do repositório por e-mail e no
+# celular. Quando volta ao normal, comenta e fecha a issue sozinho.
+#
+# Sem custo e sem segredo: usa só endereços públicos e o token do próprio workflow.
+# Atenção: o GitHub pausa agendamentos de repositório sem atividade por 60 dias; um commit
+# ou "Run workflow" manual reativa.
+
+name: monitoramento
+
+on:
+  schedule:
+    - cron: "7,37 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: monitoramento
+  cancel-in-progress: false
+
+env:
+  # Trocar por https://thermotrace.com.br quando o domínio tiver DNS (variável do repositório).
+  URL_MONITORADA: ${{ vars.URL_MONITORADA || 'https://thermotrace-api.onrender.com' }}
+  TITULO: "Serviço com problema (monitoramento automático)"
+
+jobs:
+  conferir:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 50   # o horário do último commit que mudou a versão
+
+      - name: Conferir serviço
+        id: conferir
+        run: |
+          set +e
+          bash .github/scripts/conferir-saude.sh "$URL_MONITORADA"
+          rc=$?
+          echo "falhou=$([ "$rc" -ne 0 ] && echo sim || echo nao)" >> "$GITHUB_OUTPUT"
+
+      - name: Abrir ou atualizar a issue
+        if: steps.conferir.outputs.falhou == 'sim'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          aberta=$(gh issue list --state open --search "in:title \"$TITULO\"" --json number -q '.[0].number')
+          corpo="$(printf 'Conferência de %s em %s:\n\n' "$URL_MONITORADA" "$(date -u '+%d/%m/%Y %H:%M UTC')"; sed 's/^/- /' problemas.txt; printf '\n[Execução](%s/%s/actions/runs/%s)\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID")"
+          if [ -n "$aberta" ]; then
+            gh issue comment "$aberta" --body "$corpo"
+          else
+            gh issue create --title "$TITULO" --body "$corpo
+
+          Esta issue fecha sozinha quando a conferência voltar a passar."
+          fi
+          exit 1   # a execução fica vermelha no Actions também
+
+      - name: Fechar a issue se voltou ao normal
+        if: steps.conferir.outputs.falhou == 'nao'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          aberta=$(gh issue list --state open --search "in:title \"$TITULO\"" --json number -q '.[0].number')
+          if [ -n "$aberta" ]; then
+            gh issue close "$aberta" --comment "Voltou ao normal em $(date -u '+%d/%m/%Y %H:%M UTC'). [Execução]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)"
+          fi
