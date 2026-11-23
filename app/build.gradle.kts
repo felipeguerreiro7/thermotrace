@@ -24,8 +24,8 @@ android {
         // 26 por causa de java.time. Abaixo disso exigiria desugaring.
         minSdk = 26
         targetSdk = 37
-        versionCode = 23
-        versionName = "0.9.1"
+        versionCode = 24
+        versionName = "0.9.2"
         testInstrumentationRunner = "com.thermotrace.app.EscopoInstrumentation"
     }
 

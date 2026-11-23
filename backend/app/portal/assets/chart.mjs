@@ -14,7 +14,7 @@ const number=v=>v===null?'—':new Intl.NumberFormat('pt-BR',{maximumFractionDig
 
 export function temperaturePanel(data,download,titulo='Temperaturas desta coleta'){
   const panel=node('section',undefined,'temperature-panel');
-  panel.append(node('h3',titulo),node('p',`${data.tipo} · coletada em ${date(data.lida_em)} · ${data.origem==='simulacao'?'SIMULAÇÃO':'Declaração do aplicativo'}`,'muted'));
+  panel.append(node('h3',titulo),node('p',`${data.tipo} · coletada em ${date(data.lida_em)} · ${data.origem==='simulacao'?'SIMULAÇÃO':data.origem==='indisponivel'?'Origem não informada':'Declaração do aplicativo'}`,'muted'));
   const labels={coerente:'Cabeçalho e série coerentes',divergente:'Divergência: precisa de conferência',nao_avaliavel:'Conferência não avaliável'};
   panel.append(node('p',labels[data.conferencia]||'Conferência indisponível',`thermal-status ${data.conferencia==='coerente'?'coherent':'attention'}`));
   for(const a of data.avisos)panel.append(node('p',a,'notice'));

@@ -1,3 +1,4 @@
+from typing import Literal
 from uuid import UUID
 from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy import select, update
@@ -152,9 +153,27 @@ def desativar_usuario(usuario_id: UUID, acesso: Acesso = Depends(gestor), db: Se
 
 @router.get("/auditoria")
 def auditoria(limite: int = Query(50, ge=1, le=100), depois_id: int = Query(0, ge=0),
+               ordem: Literal["antigos", "recentes"] = "antigos", antes_id: int | None = Query(None, ge=1),
                acesso: Acesso = Depends(gestor), db: Session = Depends(obter_sessao)):
     # Cursor estável; não retorna hashes, tokens, e-mails de tentativas ou segredos.
-    rows = db.scalars(select(LogAuditoria).where(LogAuditoria.empresa_id == acesso.empresa.id,
-                      LogAuditoria.id > depois_id).order_by(LogAuditoria.id).limit(limite))
-    return [{"id": e.id, "em": e.em, "usuario_id": e.usuario_id, "acao": e.acao,
-             "entidade": e.entidade, "entidade_id": e.entidade_id, "depois": e.depois} for e in rows]
+    # "recentes" (portal): do mais novo para trás, com `antes_id` como cursor.
+    q = select(LogAuditoria).where(LogAuditoria.empresa_id == acesso.empresa.id)
+    if ordem == "recentes":
+        q = q.where(LogAuditoria.id < antes_id) if antes_id else q
+        q = q.order_by(LogAuditoria.id.desc())
+    else:
+        q = q.where(LogAuditoria.id > depois_id).order_by(LogAuditoria.id)
+    rows = list(db.scalars(q.limit(limite)))
+    # Nome de quem agiu, e a empresa quando não é a própria (transportadora, equipe ThermoTrace no suporte).
+    # O e-mail fica de fora: o nome basta para o gestor reconhecer a pessoa.
+    autores = {u.id: u for u in db.scalars(select(Usuario).where(Usuario.id.in_({e.usuario_id for e in rows if e.usuario_id})))}
+    empresas = {x.id: x.razao_social for x in db.scalars(select(Empresa).where(
+        Empresa.id.in_({u.empresa_id for u in autores.values()} - {acesso.empresa.id})))}
+    saida = []
+    for e in rows:
+        u = autores.get(e.usuario_id)
+        saida.append({"id": e.id, "em": e.em, "usuario_id": e.usuario_id, "acao": e.acao,
+                      "entidade": e.entidade, "entidade_id": e.entidade_id, "depois": e.depois,
+                      "usuario_nome": u.nome if u else None,
+                      "usuario_empresa": empresas.get(u.empresa_id) if u else None})
+    return saida
