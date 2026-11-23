@@ -333,7 +333,7 @@ Quadro único do estado atual. Os blocos acima ficam como histórico. "Código p
 | TT-050 portal do cliente | Feito: cargas, busca, detalhe, viagem, equipe, auditoria, acompanhamento, integridade | WEB-09 no ambiente publicado |
 | TT-051 portal da equipe ThermoTrace | Feito: cadastrar empresa, entregar acesso do gestor e suporte autorizado por carga, com prazo e auditoria no dono (API 0.18, 22/11) | Empresa da plataforma no banco do Render; conferir no WEB-04 |
 | TT-060 proteção de evidências | Feito no código: cadeia local + manifesto externo (API 0.11) | Política de guarda dos dumps de backup (contêm dados de clientes) |
-| TT-061 / TT-066 backup e monitoramento | Parcial: backup e restauração comprovados localmente; acompanhamento da operação no portal | Repetir no Render; rotina automática; alerta de falha |
+| TT-061 / TT-066 backup e monitoramento | Parcial: backup e restauração comprovados localmente; acompanhamento da operação no portal; alerta de falha a cada 30 min por issue no GitHub, inclusive deploy travado (23/11) | Backup no Render e rotina automática (decisão de plano) |
 | TT-062 pipeline, assinatura, distribuição | Parcial: CI no GitHub, APK de piloto assinado, instalação por cabo | Atualizar versão assinada no aparelho sem perder dados |
 | TT-063 piloto real | Aberto | Tudo acima + parceiro (TT-007) |
 | TT-004 / TT-005 / TT-006 | Abertos: maior risco do prazo | Ensaio físico com o [[ThermoTrace - Roteiro do ensaio físico de novembro]] |
